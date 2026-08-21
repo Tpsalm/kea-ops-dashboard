@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
   Activity, BarChart3, Bell, Building2, CalendarDays, CheckCircle2,
@@ -66,10 +67,10 @@ const roleData = [
   { name: "Supervisors", value: 28, color: "#f59e0b" }, { name: "TSRs", value: 14, color: "#8b5cf6" }
 ];
 const nav = [
-  { label: "Overview", icon: LayoutDashboard }, { label: "Live map", icon: Map },
-  { label: "Workforce", icon: Users }, { label: "Stores & products", icon: Store },
-  { label: "VSR operations", icon: Route }, { label: "Performance", icon: BarChart3 },
-  { label: "Client portal", icon: Building2 }
+  { label: "Overview", icon: LayoutDashboard, path: "/" }, { label: "Live map", icon: Map, path: "/live-map" },
+  { label: "Workforce", icon: Users, path: "/workforce" }, { label: "Stores & products", icon: Store, path: "/stores" },
+  { label: "VSR operations", icon: Route, path: "/vsr-operations" }, { label: "Performance", icon: BarChart3, path: "/performance" },
+  { label: "Client portal", icon: Building2, path: "/client-portal" }
 ];
 
 function Tip({ active, payload, label }: { active?: boolean; payload?: Array<{name:string; value:number; color:string}>; label?: string }) {
@@ -84,7 +85,7 @@ function SelectBox({ label, value, options, onChange }: { label: string; value: 
 export default function Dashboard() {
   const [dark, setDark] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
-  const [activeNav, setActiveNav] = useState("Overview");
+  const [activeNav] = useState("Overview");
   const [region, setRegion] = useState("All regions");
   const [role, setRole] = useState("All roles");
   const [period, setPeriod] = useState("Last 30 days");
@@ -112,16 +113,6 @@ export default function Dashboard() {
 
   function flash(message: string) { setNotice(message); window.setTimeout(() => setNotice(""), 2600); }
   function goTo(id: string) { window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 30); }
-  function handleNav(label: string) {
-    setActiveNav(label); setMobileNav(false);
-    if (label === "Overview") { setRole("All roles"); goTo("overview"); }
-    if (label === "Live map") goTo("live-map");
-    if (label === "Workforce") goTo("workforce");
-    if (label === "Stores & products") { setKpiFocus("Stores covered"); goTo("live-map"); }
-    if (label === "VSR operations") { setRole("VSR"); setPage(1); goTo("workforce"); }
-    if (label === "Performance") goTo("performance");
-    if (label === "Client portal") setPanel("client");
-  }
   function chooseSort(key: keyof Staff) { if (sort === key) setAsc(!asc); else { setSort(key); setAsc(true); } }
   async function exportReport(format: "csv" | "pbix") {
     try {
@@ -158,8 +149,8 @@ export default function Dashboard() {
     <aside className={mobileNav ? "sidebar open" : "sidebar"}>
       <div className="brand"><div className="brand-mark">K</div><div><strong>KEA</strong><span>Operations Intelligence</span></div><button className="close-nav" onClick={()=>setMobileNav(false)}><X size={20}/></button></div>
       <div className="workspace"><div className="avatar">KO</div><div><small>WORKSPACE</small><b>KEA Operations</b></div><ChevronDown size={15}/></div>
-      <nav><p>ANALYTICS</p>{nav.map(({label,icon:Icon})=><button type="button" key={label} className={activeNav===label?"active":""} onClick={()=>handleNav(label)}><Icon size={18}/><span>{label}</span>{label==="Live map"&&<i>LIVE</i>}</button>)}</nav>
-      <nav className="manage"><p>MANAGE</p><button type="button" onClick={()=>setPanel("data")}><ShieldCheck size={18}/><span>Data quality</span></button><button type="button" onClick={()=>setPanel("model")}><Network size={18}/><span>Data model</span></button><button type="button" onClick={()=>setPanel("reports")}><FileSpreadsheet size={18}/><span>Reports</span></button><button type="button" onClick={()=>setPanel("settings")}><Settings size={18}/><span>Settings</span></button></nav>
+      <nav><p>ANALYTICS</p>{nav.map(({label,icon:Icon,path})=><Link key={label} href={path} className={activeNav===label?"active":""} onClick={()=>setMobileNav(false)}><Icon size={18}/><span>{label}</span>{label==="Live map"&&<i>LIVE</i>}</Link>)}</nav>
+      <nav className="manage"><p>MANAGE</p><button type="button" onClick={()=>{setPanel("data");setMobileNav(false)}}><ShieldCheck size={18}/><span>Data quality</span></button><button type="button" onClick={()=>{setPanel("model");setMobileNav(false)}}><Network size={18}/><span>Data model</span></button><button type="button" onClick={()=>{setPanel("reports");setMobileNav(false)}}><FileSpreadsheet size={18}/><span>Reports</span></button><button type="button" onClick={()=>{setPanel("settings");setMobileNav(false)}}><Settings size={18}/><span>Settings</span></button></nav>
       <div className="sidebar-foot"><div className="user-avatar">KA</div><div><b>KEA Administrator</b><span>Operations · Full access</span></div><MoreHorizontal size={18}/></div>
     </aside>
 
@@ -181,7 +172,7 @@ export default function Dashboard() {
         </section>
 
         <section className="row ops-row">
-          <article className="card map-card" id="live-map"><div className="card-head"><div><h2>Geographic operations</h2><p>Live Nigerian map · every staff member with GPS coordinates</p></div><button type="button" className="text-btn" onClick={()=>{setActiveNav("Live map");setFullMap(true)}}>Open full map <ChevronRight size={15}/></button></div><OperationsMap staff={staff} selected={selectedPin} onSelect={setSelectedPin} region={region} role={role}/></article>
+          <article className="card map-card" id="live-map"><div className="card-head"><div><h2>Geographic operations</h2><p>Live Nigerian map · every staff member with GPS coordinates</p></div><button type="button" className="text-btn" onClick={()=>setFullMap(true)}>Open full map <ChevronRight size={15}/></button></div><OperationsMap staff={staff} selected={selectedPin} onSelect={setSelectedPin} region={region} role={role}/></article>
           <article className="card completion-card"><div className="card-head"><div><h2>Visit completion</h2><p>Planned vs completed by region</p></div><button type="button" aria-label="Completion chart options" onClick={()=>setPanel("completion")}><MoreHorizontal size={18}/></button></div><div className="completion-summary"><strong>87.4%</strong><span><TrendingUp size={13}/> 4.6%</span><small>overall completion</small></div><div className="bar-wrap"><ResponsiveContainer width="100%" height="100%"><BarChart data={completionData} margin={{top:5,right:5,left:-20,bottom:0}}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)"/><XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill:"var(--muted)",fontSize:10}}/><YAxis axisLine={false} tickLine={false} tick={{fill:"var(--muted)",fontSize:10}}/><Tooltip content={<Tip/>}/><Bar dataKey="planned" fill="var(--bar-muted)" radius={[4,4,0,0]}/><Bar dataKey="completed" fill="#2563eb" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div></article>
         </section>
 
