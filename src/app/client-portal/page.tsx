@@ -7,7 +7,6 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Res
 import { AppShell } from "../../components/app-shell";
 import { FilterBar, KpiGrid, PageHeading, SelectBox } from "../shared";
 import { activities as allActivities, allStaff, clients, products as allProducts, stores as allStores, type Client } from "../hierarchy-data";
-import { activityData as fieldActivityData } from "../data";
 
 const OperationsMap = dynamic(() => import("../operations-map"), { ssr: false, loading: () => <div className="map-loading">Loading map...</div> });
 const colors = ["#2563eb", "#14b8a6", "#f59e0b", "#8b5cf6"];
@@ -23,11 +22,32 @@ export default function ClientPortalPage() {
   const [detail, setDetail] = useState<{ title: string; text: string } | null>(null);
   const client = useMemo<Client>(() => clientFilter === "All clients" ? { id: "all", name: "All clients", sector: "All projects", stores: allStores.length, completion: "", status: "Active" } : clients.find(item => item.name === clientFilter) ?? clients[0], [clientFilter]);
   const staff = useMemo(() => allStaff.filter(item => (clientFilter === "All clients" || item.clientId === client.id) && (region === "All regions" || item.region === region) && (role === "All roles" || item.role === role)), [client, clientFilter, region, role]);
-  const stores = useMemo(() => allStores.filter(item => (clientFilter === "All clients" || item.clientId === client.id) && (region === "All regions" || item.region === region)), [client, clientFilter, region]);
+  const stores = useMemo(() => allStores.filter(item => {
+    if (clientFilter !== "All clients" && item.clientId !== client.id) return false;
+    if (region !== "All regions" && item.region !== region) return false;
+    if (role === "All roles") return true;
+    if (role === "Merchandiser") return staff.some(member => member.id === item.merchandiserId);
+    if (role === "Supervisor") return staff.some(member => member.id === item.supervisorId);
+    if (role === "TSR") return staff.some(member => member.id === item.tsrId);
+    return staff.some(member => member.role === "VSR" && member.territory === item.territory);
+  }), [client, clientFilter, region, role, staff]);
   const products = useMemo(() => allProducts.filter(item => stores.some(store => store.id === item.storeId)), [stores]);
-  const activities = useMemo(() => allActivities.filter(item => staff.some(member => member.id === item.staffId)), [staff]);
+  const activities = useMemo(() => {
+    const latest = Math.max(...allActivities.map(item => Date.parse(item.date)));
+    const rangeDays = dateRange === "Today" ? 1 : dateRange === "Last 7 days" ? 7 : dateRange === "This quarter" ? 92 : 30;
+    return allActivities.filter(item => staff.some(member => member.id === item.staffId) && latest - Date.parse(item.date) < rangeDays * 24 * 60 * 60 * 1000);
+  }, [dateRange, staff]);
   const completion = average(staff.map(item => item.completion));
-  const activityTrend = fieldActivityData;
+  const activityTrend = useMemo(() => {
+    const daily = new Map<string, { day: string; visits: number; checks: number }>();
+    activities.forEach(activity => {
+      const entry = daily.get(activity.date) ?? { day: activity.date.slice(5), visits: 0, checks: 0 };
+      if (activity.type === "Store visit") entry.visits += 1;
+      if (activity.type === "Product check") entry.checks += 1;
+      daily.set(activity.date, entry);
+    });
+    return [...daily.values()].sort((a, b) => a.day.localeCompare(b.day));
+  }, [activities]);
   const workforceMix = ["Merchandiser", "VSR", "Supervisor", "TSR"].map(role => ({ name: role, value: staff.filter(item => item.role === role).length }));
   const completionByRegion = [...new Set(stores.map(store => store.region))].map(region => ({ name: region, planned: stores.filter(store => store.region === region).length + 2, completed: stores.filter(store => store.region === region && store.status === "Healthy").length + 1 }));
   const kpis = [
