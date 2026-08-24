@@ -6,6 +6,7 @@ import { MapContainer, Marker, Polyline, Popup, ScaleControl, TileLayer, Tooltip
 import "leaflet/dist/leaflet.css";
 
 import { nigeriaLocations, type NigeriaLocation } from "./nigeria-locations";
+import { allStaff } from "./hierarchy-data";
 export { nigeriaLocations };
 export type { NigeriaLocation };
 
@@ -13,6 +14,8 @@ export type StaffPoint = {
   id: string; name: string; role: "VSR" | "TSR" | "Supervisor" | "Merchandiser";
   region: string; territory: string; route: string; status: string;
   visits: number; completion: number; lat: number; lng: number;
+  parentId?: string;
+  childrenIds?: string[];
 };
 
 // Role → colour mapping (matches the workforce donut chart).
@@ -122,24 +125,45 @@ function staffIcon(role: StaffPoint["role"], selected: boolean) {
   });
 }
 
+export interface VSRRoute {
+  vsrId: string;
+  vsrName: string;
+  routeName: string;
+  territory: string;
+  coordinates: [number, number][];
+  stores: string[];
+}
+
+export interface OperationsMapProps {
+  staff: StaffPoint[];
+  selected: number;
+  onSelect: (index: number) => void;
+  region: string;
+  role: string;
+  viewMode?: "all" | "vsr-routes" | "merchandiser-stores" | "supervisor-team" | "tsr-territory";
+  selectedStaffId?: string;
+  vsrRoutes?: VSRRoute[];
+}
+
 export default function OperationsMap({
   staff,
   selected,
   onSelect,
   region,
   role,
-}: {
-  staff: StaffPoint[];
-  selected: number;
-  onSelect: (index: number) => void;
-  region: string;
-  role: string;
-}) {
+  viewMode = "all",
+  selectedStaffId,
+  vsrRoutes = [],
+}: OperationsMapProps) {
   const filtered = staff
     .map((s, i) => ({ s, i }))
     .filter(({ s }) => (region === "All regions" || s.region === region))
     .filter(({ s }) => (role === "All roles" || s.role === role));
-  const visible = filtered.length ? filtered : staff.map((s, i) => ({ s, i }));
+  const visible = filtered;
+
+  if (!visible.length) {
+    return <div className="map-placeholder"><strong>No matching locations</strong><small>Try a different region or role filter.</small></div>;
+  }
 
   // Spread coincident coordinates so every staff pin is separately visible.
   const spread = useMemo(
@@ -156,12 +180,18 @@ export default function OperationsMap({
   const roleCounts: Record<StaffPoint["role"], number> = { VSR: 0, Merchandiser: 0, Supervisor: 0, TSR: 0 };
   visible.forEach(({ s }) => { roleCounts[s.role] += 1; });
 
+  // Get selected staff for role-specific views
+  const selectedStaff = useMemo(() => {
+    if (!selectedStaffId) return null;
+    return allStaff.find(s => s.id === selectedStaffId) ?? null;
+  }, [selectedStaffId]);
+
   return (
     <div className="real-map-shell">
       <MapContainer
         ref={mapRef}
         center={currentPos}
-        zoom={7}
+        zoom={viewMode === "vsr-routes" && selectedStaff?.role === "VSR" ? 12 : 7}
         minZoom={5}
         maxZoom={18}
         scrollWheelZoom
@@ -177,13 +207,82 @@ export default function OperationsMap({
           subdomains="abcd"
           maxZoom={19}
         />
-        {routeGroups.map((route, index) => (
+
+        {/* VSR Route Visualization */}
+        {viewMode === "vsr-routes" && selectedStaff?.role === "VSR" && vsrRoutes.length > 0 && (
+          <>
+            {vsrRoutes.map((route, index) => (
+              <Polyline
+                key={route.vsrId}
+                positions={route.coordinates}
+                pathOptions={{ 
+                  color: ROLE_COLORS.VSR, 
+                  weight: 4, 
+                  opacity: 0.7, 
+                  dashArray: "10 5",
+                  lineCap: "round",
+                  lineJoin: "round"
+                }}
+              />
+            ))}
+            {/* Route start/end markers */}
+            {vsrRoutes.map((route) => (
+              <>
+                <Marker key={`${route.vsrId}-start`} position={route.coordinates[0]}>
+                  <Tooltip direction="top" offset={[0, -30]} opacity={0.95}>
+                    Route Start: {route.routeName}
+                  </Tooltip>
+                  <Popup minWidth={200}>
+                    <div className="leaflet-popup-card">
+                      <small style={{ color: ROLE_COLORS.VSR }}>VSR Route</small>
+                      <strong>{route.vsrName}</strong>
+                      <p>Route: {route.routeName}</p>
+                      <p>Territory: {route.territory}</p>
+                      <p>Stops: {route.coordinates.length}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+                <Marker key={`${route.vsrId}-end`} position={route.coordinates[route.coordinates.length - 1]}>
+                  <Tooltip direction="top" offset={[0, -30]} opacity={0.95}>
+                    Route End: {route.routeName}
+                  </Tooltip>
+                </Marker>
+              </>
+            ))}
+          </>
+        )}
+
+        {/* Merchandiser Store Markers - Show exact store locations */}
+        {viewMode === "merchandiser-stores" && selectedStaff?.role === "Merchandiser" && (
+          <>
+            {/* Stores will be passed as additional markers - handled by parent */}
+          </>
+        )}
+
+        {/* Supervisor Team Markers */}
+        {viewMode === "supervisor-team" && selectedStaff?.role === "Supervisor" && (
+          <>
+            {/* Team member markers will be added by parent */}
+          </>
+        )}
+
+        {/* TSR Territory Coverage */}
+        {viewMode === "tsr-territory" && selectedStaff?.role === "TSR" && (
+          <>
+            {/* Territory boundary polygon could be added here */}
+          </>
+        )}
+
+        {/* Default route groups for overview */}
+        {viewMode === "all" && routeGroups.map((route, index) => (
           <Polyline
             key={index}
             positions={route}
             pathOptions={{ color: index ? "#14b8a6" : "#2563eb", weight: 2, opacity: 0.4, dashArray: "6 6" }}
           />
         ))}
+
+        {/* Staff Markers */}
         {visible.map(({ s, i }, arrIndex) => (
           <Marker
             key={s.id}
@@ -210,6 +309,7 @@ export default function OperationsMap({
             </Popup>
           </Marker>
         ))}
+
         <MapResizeHandler />
         <MapTracker positions={positions} focusIndex={focusIndex} />
         <ScaleControl position="bottomleft" imperial={false} />
