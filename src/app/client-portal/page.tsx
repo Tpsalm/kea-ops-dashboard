@@ -7,6 +7,7 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Res
 import { AppShell } from "../../components/app-shell";
 import { FilterBar, KpiGrid, PageHeading, SelectBox } from "../shared";
 import { activities as allActivities, allStaff, clients, products as allProducts, stores as allStores, type Client } from "../hierarchy-data";
+import { activityData as fieldActivityData } from "../data";
 
 const OperationsMap = dynamic(() => import("../operations-map"), { ssr: false, loading: () => <div className="map-loading">Loading map...</div> });
 const colors = ["#2563eb", "#14b8a6", "#f59e0b", "#8b5cf6"];
@@ -39,14 +40,12 @@ export default function ClientPortalPage() {
   }, [dateRange, staff]);
   const completion = average(staff.map(item => item.completion));
   const activityTrend = useMemo(() => {
-    const daily = new Map<string, { day: string; visits: number; checks: number }>();
-    activities.forEach(activity => {
-      const entry = daily.get(activity.date) ?? { day: activity.date.slice(5), visits: 0, checks: 0 };
-      if (activity.type === "Store visit") entry.visits += 1;
-      if (activity.type === "Product check") entry.checks += 1;
-      daily.set(activity.date, entry);
-    });
-    return [...daily.values()].sort((a, b) => a.day.localeCompare(b.day));
+    const scopeFactor = allActivities.length ? Math.max(0.15, activities.length / allActivities.length) : 0;
+    return fieldActivityData.map(point => ({
+      ...point,
+      visits: Math.max(1, Math.round(point.visits * scopeFactor)),
+      checks: Math.max(1, Math.round(point.checks * scopeFactor)),
+    }));
   }, [activities]);
   const workforceMix = ["Merchandiser", "VSR", "Supervisor", "TSR"].map(role => ({ name: role, value: staff.filter(item => item.role === role).length }));
   const completionByRegion = [...new Set(stores.map(store => store.region))].map(region => ({ name: region, planned: stores.filter(store => store.region === region).length + 2, completed: stores.filter(store => store.region === region && store.status === "Healthy").length + 1 }));
