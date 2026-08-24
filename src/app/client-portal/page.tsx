@@ -5,8 +5,8 @@ import dynamic from "next/dynamic";
 import { BarChart3, CheckCircle2, Download, Eye, MapPin, ShieldCheck, TrendingUp, Users, X } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AppShell } from "../../components/app-shell";
-import { KpiGrid, PageHeading, SelectBox } from "../shared";
-import { allStaff, clients, getActivitiesByClient, getProductsByClient, getStoresByClient, type Client } from "../hierarchy-data";
+import { FilterBar, KpiGrid, PageHeading, SelectBox } from "../shared";
+import { activities as allActivities, allStaff, clients, products as allProducts, stores as allStores, type Client } from "../hierarchy-data";
 import { activityData as fieldActivityData } from "../data";
 
 const OperationsMap = dynamic(() => import("../operations-map"), { ssr: false, loading: () => <div className="map-loading">Loading map...</div> });
@@ -14,16 +14,18 @@ const colors = ["#2563eb", "#14b8a6", "#f59e0b", "#8b5cf6"];
 function average(values: number[]) { return values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0; }
 
 export default function ClientPortalPage() {
-  const [clientId, setClientId] = useState(clients[0].id);
+  const [clientFilter, setClientFilter] = useState("All clients");
+  const [region, setRegion] = useState("All regions");
+  const [role, setRole] = useState("All roles");
   const [dateRange, setDateRange] = useState("Last 30 days");
   const [selectedPin, setSelectedPin] = useState(0);
   const [mapOpen, setMapOpen] = useState(false);
   const [detail, setDetail] = useState<{ title: string; text: string } | null>(null);
-  const client = useMemo<Client>(() => clients.find(item => item.id === clientId) ?? clients[0], [clientId]);
-  const staff = useMemo(() => allStaff.filter(item => item.clientId === clientId), [clientId]);
-  const stores = useMemo(() => getStoresByClient(clientId), [clientId]);
-  const products = useMemo(() => getProductsByClient(clientId), [clientId]);
-  const activities = useMemo(() => getActivitiesByClient(clientId), [clientId]);
+  const client = useMemo<Client>(() => clientFilter === "All clients" ? { id: "all", name: "All clients", sector: "All projects", stores: allStores.length, completion: "", status: "Active" } : clients.find(item => item.name === clientFilter) ?? clients[0], [clientFilter]);
+  const staff = useMemo(() => allStaff.filter(item => (clientFilter === "All clients" || item.clientId === client.id) && (region === "All regions" || item.region === region) && (role === "All roles" || item.role === role)), [client, clientFilter, region, role]);
+  const stores = useMemo(() => allStores.filter(item => (clientFilter === "All clients" || item.clientId === client.id) && (region === "All regions" || item.region === region)), [client, clientFilter, region]);
+  const products = useMemo(() => allProducts.filter(item => stores.some(store => store.id === item.storeId)), [stores]);
+  const activities = useMemo(() => allActivities.filter(item => staff.some(member => member.id === item.staffId)), [staff]);
   const completion = average(staff.map(item => item.completion));
   const activityTrend = fieldActivityData;
   const workforceMix = ["Merchandiser", "VSR", "Supervisor", "TSR"].map(role => ({ name: role, value: staff.filter(item => item.role === role).length }));
@@ -38,7 +40,7 @@ export default function ClientPortalPage() {
 
   return <AppShell>
     <PageHeading eyebrow="OPERATIONS ANALYTICS · PERFORMANCE" title="Performance" subtitle={`Understand productivity, completion, and workforce output for ${client.name}.`} actions={<><SelectBox label="DATE RANGE" value={dateRange} options={["Today", "Last 7 days", "Last 30 days", "This quarter"]} onChange={setDateRange} /><button className="primary" onClick={() => openDetail("Client report", `${client.name} has ${activities.length} activities across ${stores.length} stores.`)}><Download size={16} /> Export</button></>} />
-    <section className="filters" style={{ justifyContent: "space-between", marginBottom: 10 }}><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{clients.map(item => <button key={item.id} className={`secondary ${clientId === item.id ? "chosen" : ""}`} onClick={() => { setClientId(item.id); setSelectedPin(0); }}>{item.name}</button>)}</div><button className="reset" onClick={() => setDateRange("Last 30 days")}><TrendingUp size={14} /> Reset</button></section>
+    <FilterBar region={region} onRegion={value => { setRegion(value); setSelectedPin(0); }} role={role} onRole={value => { setRole(value); setSelectedPin(0); }} client={clientFilter} onClient={value => { setClientFilter(value); setSelectedPin(0); }} onReset={() => { setRegion("All regions"); setRole("All roles"); setClientFilter("All clients"); setDateRange("Last 30 days"); setSelectedPin(0); }} />
     <KpiGrid items={kpis} focus="" onFocus={label => openDetail(label, `${label}: ${kpis.find(item => item.label === label)?.value ?? "0"}.`)} />
     <section className="row charts-row client-top-row">
       <article className="card chart-clickable" role="button" tabIndex={0} onClick={() => openDetail("Activity breakdown", `${activities.length} activities are recorded for ${client.name}. The trend shows visits and product checks across the reporting period.`)}><div className="card-head"><div><h2>Activity breakdown</h2><p>Visits and product checks over time</p></div><div className="legend"><span><i className="blue" />Visits</span><span><i className="teal" />Product checks</span></div></div><div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><AreaChart data={activityTrend} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}><defs><linearGradient id="clientActivityFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563eb" stopOpacity={.2} /><stop offset="100%" stopColor="#2563eb" stopOpacity={0} /></linearGradient></defs><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" /><XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} /><YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} /><Tooltip /><Area type="monotone" dataKey="checks" stroke="#14b8a6" strokeWidth={2} fill="transparent" /><Area type="monotone" dataKey="visits" stroke="#2563eb" strokeWidth={2.5} fill="url(#clientActivityFill)" /></AreaChart></ResponsiveContainer></div></article>
