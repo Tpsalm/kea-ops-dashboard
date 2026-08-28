@@ -1,16 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { ArrowRight, KeyRound, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import useAuth from "../../lib/useAuth";
-
-const roles = [
-  ["superadmin@kea.com", "Super Admin", "Authorise divisions, accounts, and new outlets"],
-  ["vsr@kea.com", "VSR", "Route execution and store visits"],
-  ["supervisor@kea.com", "Supervisor", "Team coverage and approvals"],
-  ["fieldteam@kea.com", "Merchandiser / TSR", "Store execution and field activity"],
-] as const;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,7 +19,7 @@ export default function LoginPage() {
     setError("");
     try {
       const signedInUser = await signIn(email, password);
-      router.push(signedInUser.role === "super-admin" ? "/" : `/portal/${signedInUser.role}`);
+      router.push(signedInUser.role === "super-admin" ? "/admin" : `/portal/${signedInUser.role}`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to sign in.");
     } finally {
@@ -39,14 +32,14 @@ export default function LoginPage() {
       <section className="auth-brand"><img className="auth-brand-image" src="/brand/kea-logo.jpg" alt="KEA Corporate Hospitality Services brand campaign" /><div className="brand-logo auth-logo" aria-label="KEA Corporate Hospitality Services"><b className="logo-k">k</b><b className="logo-e">e</b><b className="logo-a">a</b><small>Corporate Hospitality Services</small></div><p>KEA GROUP</p><h1>Talent management<br />for every field team.</h1><span>One secure workspace for people, outlets, routes, and growth.</span></section>
       <section className="auth-panel">
         <div className="auth-kicker"><ShieldCheck size={16} /> SECURE WORKSPACE</div>
-        <h2>Sign in to KEA</h2><p className="auth-muted">Use your organisation account to open the right dashboard.</p>
+        <h2>Sign in to KEA</h2><p className="auth-muted">Use the organisation account created for you by the Super Admin.</p>
         <form onSubmit={submit}>
           <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
           <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
           {error && <p className="auth-error">{error}</p>}
           <button className="primary auth-submit" disabled={busy}>{busy ? "Signing in..." : "Continue"}<ArrowRight size={16} /></button>
         </form>
-        <div className="demo-access"><div><KeyRound size={15} /><b>Review access by role</b></div><small>Demo password: <strong>kea12345</strong></small>{roles.map(([address, label, description]) => <button type="button" key={address} onClick={() => { setEmail(address); setPassword("kea12345"); }}><span><b>{label}</b><small>{description}</small></span><ArrowRight size={15} /></button>)}</div>
+        <p className="auth-policy">No self-service sign up. Contact your Super Admin if you need an account or password reset.</p>
       </section>
     </main>
   );
