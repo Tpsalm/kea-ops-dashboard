@@ -4,12 +4,13 @@
 // used by every dedicated tab page so navigation is consistent across routes.
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, CheckCircle2, ChevronDown, ChevronRight, FileSpreadsheet, Menu, Moon,
-  MoreHorizontal, Network, Search, Settings, ShieldCheck, Sun, UserRound, X,
+  Bell, CheckCircle2, ChevronDown, ChevronRight, Menu, Moon,
+  MoreHorizontal, Search, Settings, ShieldCheck, Sun, UserRound, X,
 } from "lucide-react";
 import { NAV, activeNavLabel } from "../app/data";
+import useAuth from "../lib/useAuth";
 
 export function AppShell({
   children,
@@ -23,6 +24,8 @@ export function AppShell({
   onSearch?: (q: string) => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const activeNav = activeNavLabel(pathname);
   const [dark, setDark] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
@@ -35,6 +38,11 @@ export function AppShell({
     window.setTimeout(() => setNotice(""), 2600);
   }
 
+  if (loading || !user) {
+    if (!loading && !user) router.replace("/login");
+    return <main className="auth-loading">Checking secure workspace...</main>;
+  }
+
   return (
     <div className={dark ? "app dark" : "app"}>
       {notice && <div className="toast"><CheckCircle2 size={17} />{notice}</div>}
@@ -42,10 +50,10 @@ export function AppShell({
       <aside className={mobileNav ? "sidebar open" : "sidebar"}>
         <div className="brand">
           <div className="brand-mark">K</div>
-          <div><strong>KEA</strong><span>Operations Intelligence</span></div>
+          <div><strong>KEA GROUP</strong><span>Talent Management System</span></div>
           <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={20} /></button>
         </div>
-        <div className="workspace"><div className="avatar">KO</div><div><small>WORKSPACE</small><b>KEA Operations</b></div><ChevronDown size={15} /></div>
+        <div className="workspace"><div className="avatar">KG</div><div><small>WORKSPACE</small><b>KEA GROUP</b></div><ChevronDown size={15} /></div>
         <nav>
           <p>ANALYTICS</p>
           {NAV.map(({ label, icon: Icon, path }) => (
@@ -57,8 +65,6 @@ export function AppShell({
         <nav className="manage">
           <p>MANAGE</p>
           <button type="button" onClick={() => { setPanel("manage"); setMobileNav(false); }}><ShieldCheck size={18} /><span>Data quality</span></button>
-          <button type="button" onClick={() => { setPanel("manage"); setMobileNav(false); }}><Network size={18} /><span>Data model</span></button>
-          <button type="button" onClick={() => { setPanel("manage"); setMobileNav(false); }}><FileSpreadsheet size={18} /><span>Reports</span></button>
           <button type="button" onClick={() => { setPanel("settings"); setMobileNav(false); }}><Settings size={18} /><span>Settings</span></button>
         </nav>
         <div className="sidebar-foot"><div className="user-avatar">KA</div><div><b>KEA Administrator</b><span>Operations · Full access</span></div><MoreHorizontal size={18} /></div>
@@ -94,11 +100,7 @@ export function AppShell({
             <div className="modal-head"><div><small>KEA OPERATIONS</small><h2>Management tools</h2></div><button type="button" onClick={() => setPanel(null)} aria-label="Close panel"><X size={19} /></button></div>
             <div className="modal-body">
               <p className="modal-label">ADVANCED TOOLS</p>
-              <div className="modal-grid">
-                <button type="button" onClick={() => setPanel(null)}><ShieldCheck size={20} /><b>Data quality</b><span>Validation and record health checks</span></button>
-                <button type="button" onClick={() => setPanel(null)}><Network size={20} /><b>Data model</b><span>Operational relationship hierarchy</span></button>
-                <button type="button" onClick={() => setPanel(null)}><FileSpreadsheet size={20} /><b>Reports</b><span>Exports and Power BI packs</span></button>
-              </div>
+              <div className="modal-grid"><button type="button" onClick={() => setPanel(null)}><ShieldCheck size={20} /><b>Data quality</b><span>Validation and record health checks</span></button></div>
               <div className="modal-actions">
                 <button type="button" className="secondary" onClick={() => setPanel(null)}>Close</button>
                 <Link href="/" onClick={() => setPanel(null)} className="primary" style={{ textDecoration: "none" }}>Open on Overview</Link>

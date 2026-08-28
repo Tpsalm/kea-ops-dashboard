@@ -14,7 +14,6 @@ import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis
 } from "recharts";
-import { downloadPowerBiPack, downloadWorkforceCsv } from "./export-powerbi";
 import { nigeriaLocations } from "./nigeria-locations";
 
 const OperationsMap = dynamic(() => import("./operations-map"), {
@@ -112,23 +111,9 @@ export default function Dashboard() {
   }), [region, role, query, sort, asc]);
 
   function flash(message: string) { setNotice(message); window.setTimeout(() => setNotice(""), 2600); }
+  function exportReport(_format: "csv" | "pbix") { flash("Downloads are managed by your administrator"); }
   function goTo(id: string) { window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 30); }
   function chooseSort(key: keyof Staff) { if (sort === key) setAsc(!asc); else { setSort(key); setAsc(true); } }
-  async function exportReport(format: "csv" | "pbix") {
-    try {
-      if (format === "csv") {
-        downloadWorkforceCsv(filtered);
-        flash("Workforce CSV downloaded");
-      } else {
-        flash("Preparing Power BI pack…");
-        await downloadPowerBiPack({ staff, activityData, completionData, roleData, locations: nigeriaLocations });
-        flash("Power BI pack downloaded — see README.md inside the ZIP");
-      }
-    } catch (error) {
-      console.error(error);
-      flash("Download failed — please try again");
-    }
-  }
   function reset() { setRegion("All regions"); setRole("All roles"); setPeriod("Last 30 days"); setQuery(""); setClient("All clients"); setKpiFocus("All operations"); setSelectedPin(0); setPage(1); flash("All filters reset"); }
   function selectRegion(value: string) {
     setRegion(value);
@@ -137,20 +122,28 @@ export default function Dashboard() {
     setPage(1);
   }
 
+  const periodFactor = period === "Today" ? 0.08 : period === "Last 7 days" ? 0.24 : period === "This quarter" ? 2.8 : 1;
+  const scopeFactor = staff.length ? Math.max(filtered.length / staff.length, 0.05) : 0;
+  const clientFactor = client === "All clients" ? 1 : client === "Nova Consumer" ? 0.58 : 0.42;
+  const activeStaff = filtered.filter(member => member.status !== "Inactive").length;
+  const storesCovered = Math.round(1248 * scopeFactor * clientFactor);
+  const activitiesCompleted = Math.round(4862 * scopeFactor * clientFactor * periodFactor);
+  const productsMonitored = Math.max(1, Math.round(386 * scopeFactor * clientFactor));
+  const completionRate = filtered.length ? Math.round(filtered.reduce((sum, member) => sum + member.completion, 0) / filtered.length) : 0;
   const kpis = [
-    { label:"Active field staff", value:"320", trend:"8.2%", up:true, sub:"vs previous period", icon:Users, tone:"blue" },
-    { label:"Stores covered", value:"1,248", trend:"12.4%", up:true, sub:"142 added this month", icon:Store, tone:"teal" },
-    { label:"Activities completed", value:"4,862", trend:"6.1%", up:true, sub:"91.6% completion rate", icon:ClipboardCheck, tone:"violet" },
-    { label:"Products monitored", value:"386", trend:"2.3%", up:false, sub:"across 18 categories", icon:PackageCheck, tone:"amber" },
+    { label:"Active field staff", value: activeStaff.toLocaleString(), trend: activeStaff ? "8.2%" : "0%", up: activeStaff > 0, sub:"matching current filters", icon:Users, tone:"blue" },
+    { label:"Stores covered", value: storesCovered.toLocaleString(), trend: scopeFactor > .5 ? "12.4%" : "4.1%", up: storesCovered > 0, sub:`${completionRate}% average completion`, icon:Store, tone:"teal" },
+    { label:"Activities completed", value: activitiesCompleted.toLocaleString(), trend: periodFactor < 1 ? "6.1%" : "8.6%", up: activitiesCompleted > 0, sub:`${period} activity scope`, icon:ClipboardCheck, tone:"violet" },
+    { label:"Products monitored", value: productsMonitored.toLocaleString(), trend: role === "All roles" ? "2.3%" : "5.8%", up: productsMonitored > 0, sub:`${role === "All roles" ? "all roles" : role} coverage`, icon:PackageCheck, tone:"amber" },
   ];
 
   return <div className={dark ? "app dark" : "app"}>
     {notice && <div className="toast"><CheckCircle2 size={17}/>{notice}</div>}
     <aside className={mobileNav ? "sidebar open" : "sidebar"}>
-      <div className="brand"><div className="brand-mark">K</div><div><strong>KEA</strong><span>Operations Intelligence</span></div><button className="close-nav" onClick={()=>setMobileNav(false)}><X size={20}/></button></div>
-      <div className="workspace"><div className="avatar">KO</div><div><small>WORKSPACE</small><b>KEA Operations</b></div><ChevronDown size={15}/></div>
+      <div className="brand"><div className="brand-mark">K</div><div><strong>KEA GROUP</strong><span>Talent Management System</span></div><button className="close-nav" onClick={()=>setMobileNav(false)}><X size={20}/></button></div>
+      <div className="workspace"><div className="avatar">KG</div><div><small>WORKSPACE</small><b>KEA GROUP</b></div><ChevronDown size={15}/></div>
       <nav><p>ANALYTICS</p>{nav.map(({label,icon:Icon,path})=><Link key={label} href={path} className={activeNav===label?"active":""} onClick={()=>setMobileNav(false)}><Icon size={18}/><span>{label}</span>{label==="Live map"&&<i>LIVE</i>}</Link>)}</nav>
-      <nav className="manage"><p>MANAGE</p><button type="button" onClick={()=>{setPanel("data");setMobileNav(false)}}><ShieldCheck size={18}/><span>Data quality</span></button><button type="button" onClick={()=>{setPanel("model");setMobileNav(false)}}><Network size={18}/><span>Data model</span></button><button type="button" onClick={()=>{setPanel("reports");setMobileNav(false)}}><FileSpreadsheet size={18}/><span>Reports</span></button><button type="button" onClick={()=>{setPanel("settings");setMobileNav(false)}}><Settings size={18}/><span>Settings</span></button></nav>
+      <nav className="manage"><p>MANAGE</p><button type="button" onClick={()=>{setPanel("data");setMobileNav(false)}}><ShieldCheck size={18}/><span>Data quality</span></button><button type="button" onClick={()=>{setPanel("settings");setMobileNav(false)}}><Settings size={18}/><span>Settings</span></button></nav>
       <div className="sidebar-foot"><div className="user-avatar">KA</div><div><b>KEA Administrator</b><span>Operations · Full access</span></div><MoreHorizontal size={18}/></div>
     </aside>
 
@@ -158,7 +151,7 @@ export default function Dashboard() {
       <header className="topbar"><button type="button" className="mobile-menu" onClick={()=>setMobileNav(true)} aria-label="Open navigation"><Menu size={21}/></button><div className="top-search"><Search size={17}/><input id="global-search" placeholder="Search people, stores, routes..." value={query} onChange={e=>{setQuery(e.target.value);setPage(1)}}/><kbd>⌘ K</kbd></div><div className="top-actions"><button type="button" onClick={()=>setDark(!dark)} aria-label="Toggle dark mode">{dark?<Sun size={19}/>:<Moon size={19}/>}</button><button type="button" className="bell" onClick={()=>setNotificationsOpen(!notificationsOpen)} aria-label="Open notifications"><Bell size={19}/><i/></button><button type="button" className="user-avatar small profile-button" onClick={()=>setPanel("profile")} aria-label="Open profile">KA</button></div>{notificationsOpen&&<div className="notification-popover"><div><b>Notifications</b><button type="button" onClick={()=>setNotificationsOpen(false)}><X size={15}/></button></div><p><span className="notice-dot"/> Lagos Central reached 92% coverage.</p><p><span className="notice-dot teal"/> 142 stores were added this month.</p><button type="button" onClick={()=>{setNotificationsOpen(false);flash("Notifications marked as read")}}>Mark all as read</button></div>}</header>
 
       <div className="content" id="overview">
-        <section className="heading"><div><div className="eyebrow"><span className="live-dot"/> LIVE OPERATIONS · UPDATED 4 MIN AGO</div><h1>KEA Field Force Operations</h1><p>Here’s what’s happening across your field operation today.</p></div><div className="heading-actions"><button className="secondary" onClick={()=>exportReport("csv")}><Download size={16}/> Export</button><button className="primary" onClick={()=>exportReport("pbix")}><BarChart3 size={16}/> Power BI pack</button></div></section>
+        <section className="heading"><div><div className="eyebrow"><span className="live-dot"/> LIVE TALENT OPERATIONS · UPDATED 4 MIN AGO</div><h1>KEA Talent Management System</h1><p>KEA Group workforce, outlet, and field performance at a glance.</p></div></section>
 
         <section className="filters"><div className="filter-title"><Filter size={16}/><b>Filters</b></div><SelectBox label="DATE RANGE" value={period} options={["Today","Last 7 days","Last 30 days","This quarter"]} onChange={setPeriod}/><SelectBox label="REGION" value={region} options={["All regions","Lagos","Ogun","Oyo","Delta"]} onChange={selectRegion}/><SelectBox label="ROLE" value={role} options={["All roles","VSR","TSR","Supervisor","Merchandiser"]} onChange={v=>{setRole(v);setPage(1)}}/><label className="select-box wide"><span>CLIENT</span><select value={client} onChange={e=>{setClient(e.target.value);setKpiFocus(e.target.value==="All clients"?"All operations":e.target.value+" contract")}}><option>All clients</option><option>Nova Consumer</option><option>Aria Foods</option></select><ChevronDown size={14}/></label><button className="reset" onClick={reset}><RefreshCw size={14}/> Reset</button></section>
 
@@ -178,7 +171,7 @@ export default function Dashboard() {
 
         <section className="card table-card" id="workforce"><div className="card-head table-head"><div><h2>Workforce performance</h2><p>Live performance across active field teams</p></div><div className="table-tools"><div className="mini-search"><Search size={15}/><input placeholder="Search workforce" value={query} onChange={e=>setQuery(e.target.value)}/></div><button type="button" className="secondary" onClick={()=>setPanel("filters")}><Filter size={15}/> Filter</button><button className="secondary" onClick={()=>exportReport("csv")}><Download size={15}/></button></div></div><div className="table-scroll"><table><thead><tr><th onClick={()=>chooseSort("name")}>Team member ↕</th><th onClick={()=>chooseSort("role")}>Role ↕</th><th>Region / territory</th><th>Assignment</th><th>Status</th><th onClick={()=>chooseSort("visits")}>Visits ↕</th><th onClick={()=>chooseSort("completion")}>Completion ↕</th><th></th></tr></thead><tbody>{filtered.slice((page-1)*6,page*6).map(s=><tr key={s.id}><td data-label="Team member"><div className="person"><div>{s.name.split(" ").map(n=>n[0]).slice(0,2).join("")}</div><span><b>{s.name}</b><small>{s.id}</small></span></div></td><td data-label="Role"><span className={`role-badge ${s.role.toLowerCase()}`}>{s.role}</span></td><td data-label="Region"><b className="cell-main">{s.region}</b><small className="cell-sub">{s.territory}</small></td><td data-label="Assignment">{s.route}</td><td data-label="Status"><span className={`status ${s.status.toLowerCase().replace(" ","-")}`}><i/>{s.status}</span></td><td data-label="Visits"><b>{s.visits}</b></td><td data-label="Completion"><div className="progress-cell"><div><i style={{width:`${s.completion}%`}}/></div><b>{s.completion}%</b></div></td><td data-label=""><button type="button" aria-label={`View ${s.name}`} onClick={()=>setSelectedStaff(s)}><MoreHorizontal size={17}/></button></td></tr>)}</tbody></table>{!filtered.length&&<div className="empty"><CircleHelp size={24}/><b>No matching staff</b><span>Try changing your filters or search.</span></div>}</div><div className="pagination"><span>Showing {filtered.length?Math.min((page-1)*6+1,filtered.length):0}–{Math.min(page*6,filtered.length)} of {filtered.length}</span><div><button disabled={page===1} onClick={()=>setPage(Math.max(1,page-1))}><ChevronLeft size={16}/></button><button className="page-active">{page}</button><button disabled={page*6>=filtered.length} onClick={()=>setPage(page+1)}><ChevronRight size={16}/></button></div></div></section>
 
-        <footer><span>KEA Operations Intelligence · Secure enterprise workspace</span><span><Zap size={13}/> All systems operational</span></footer>
+        <footer><span>KEA GROUP · Secure talent workspace</span><span><Zap size={13}/> All systems operational</span></footer>
       </div>
     </main>
 

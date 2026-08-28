@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KEA Operations Intelligence",
+  title: "KEA Talent Management System",
   description:
-    "Field force, merchandising, geographic coverage, and workforce performance intelligence for KEA operations.",
+    "KEA Group talent, field workforce, outlet, and performance management.",
 };
 
 export const viewport: Viewport = {

@@ -14,8 +14,9 @@ import useAuth from "../../lib/useAuth";
 // endpoint; replace this with real authentication (cookies/JWT) in production.
 
 export default function WorkforcePage() {
-  const { user } = useAuth();
-  const [viewerType, setViewerType] = useState(user.role === "client" ? "client" : "internal");
+  const { user: authUser } = useAuth();
+  const user = authUser ?? { role: "super-admin" as const, allowedClientIds: ["client-a", "client-b"] };
+  const [viewerType, setViewerType] = useState<"client" | "internal">("internal");
 
   const [region, setRegion] = useState("All regions");
   const [role, setRole] = useState("All roles");
@@ -152,7 +153,7 @@ export default function WorkforcePage() {
         />
 
         <div>
-          {user.role !== 'client' ? (
+          {user.role !== 'field-team' ? (
             <div className="viewer-toggle" role="tablist" aria-label="Viewer type">
               <button className={viewerType === 'internal' ? 'active' : ''} onClick={() => setViewerType('internal')}>Internal</button>
               <button className={viewerType === 'client' ? 'active' : ''} onClick={() => setViewerType('client')}>Client</button>

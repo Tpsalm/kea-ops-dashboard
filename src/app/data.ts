@@ -2,7 +2,7 @@
 // These same datasets power the Overview dashboard and every dedicated tab page.
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3, Building2, LayoutDashboard, Map, Route, Store, Users,
+  BarChart3, Building2, LayoutDashboard, Map, Store, Users,
   FileText, ClipboardCheck, ShieldCheck, Network, Search, MapPin,
   PackageCheck, Activity, Layers, TrendingUp
 } from "lucide-react";
@@ -76,7 +76,6 @@ export const NAV: { label: string; path: string; icon: LucideIcon }[] = [
   { label: "Live map", path: "/live-map", icon: Map },
   { label: "Workforce", path: "/workforce", icon: Users },
   { label: "Stores & products", path: "/stores", icon: Store },
-  { label: "VSR operations", path: "/vsr-operations", icon: Route },
   { label: "Performance", path: "/performance", icon: BarChart3 },
   { label: "Hierarchy", path: "/hierarchy", icon: Layers },
   { label: "Activities", path: "/activities", icon: Activity },
