@@ -6,7 +6,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, CheckCircle2, ChevronDown, ChevronRight, Menu, Moon,
+  Bell, CheckCircle2, ChevronRight, Menu, Moon,
   MoreHorizontal, Search, Settings, ShieldCheck, Sun, UserRound, X,
 } from "lucide-react";
 import { NAV, activeNavLabel } from "../app/data";
@@ -53,7 +53,6 @@ export function AppShell({
           <div><strong>KEA GROUP</strong><span>Talent Management System</span></div>
           <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={20} /></button>
         </div>
-        <div className="workspace"><div className="avatar">KG</div><div><small>WORKSPACE</small><b>KEA GROUP</b></div><ChevronDown size={15} /></div>
         <nav>
           <p>ANALYTICS</p>
           {NAV.map(({ label, icon: Icon, path }) => (
