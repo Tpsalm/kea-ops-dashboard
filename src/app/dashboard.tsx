@@ -68,7 +68,7 @@ const roleData = [
 const nav = [
   { label: "Overview", icon: LayoutDashboard, path: "/" }, { label: "Live map", icon: Map, path: "/live-map" },
   { label: "Workforce", icon: Users, path: "/workforce" }, { label: "Stores & products", icon: Store, path: "/stores" },
-  { label: "VSR operations", icon: Route, path: "/vsr-operations" }, { label: "Performance", icon: BarChart3, path: "/performance" },
+  { label: "Performance", icon: BarChart3, path: "/performance" },
   { label: "Client portal", icon: Building2, path: "/client-portal" }
 ];
 

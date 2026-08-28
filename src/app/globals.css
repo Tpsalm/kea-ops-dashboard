@@ -1,4 +1,5 @@
 .auth-policy{margin:24px 0 0;padding-top:18px;border-top:1px solid #dce6e2;color:#657772;font-size:12px;line-height:1.5}
+.auth-recovery{border:0;background:transparent;color:#6b9f34;font-size:12px;font-weight:700;text-align:right;padding:0;cursor:pointer}.auth-recovery:hover{text-decoration:underline}.auth-success{margin:0;color:#2f8a3b;font-size:13px}
 @import "tailwindcss";
 
 :root{--bg:#f7faf3;--card:#fff;--text:#263322;--muted:#71806b;--line:#e1e8d8;--soft:#f4f8ed;--nav:#26351f;--nav-text:#c2ceb9;--blue:#8fc63d;--teal:#6b9f34;--orange:#f58220;--bar-muted:#dfe8d2;--shadow:0 1px 2px rgba(47,67,31,.05),0 5px 18px rgba(47,67,31,.06)}

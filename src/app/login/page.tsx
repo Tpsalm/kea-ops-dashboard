@@ -7,11 +7,12 @@ import useAuth from "../../lib/useAuth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, resetPassword } = useAuth();
   const [email, setEmail] = useState("superadmin@kea.com");
   const [password, setPassword] = useState("kea12345");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [recoverySent, setRecoverySent] = useState(false);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -27,6 +28,19 @@ export default function LoginPage() {
     }
   }
 
+  async function recoverPassword() {
+    setBusy(true);
+    setError("");
+    try {
+      await resetPassword(email);
+      setRecoverySent(true);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Unable to send recovery email.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="auth-page">
       <section className="auth-brand"><div className="brand-logo auth-logo" aria-label="KEA Corporate Hospitality Services"><b className="logo-k">k</b><b className="logo-e">e</b><b className="logo-a">a</b><small>Corporate Hospitality Services</small></div><p>KEA GROUP</p><h1>Talent management<br />for every field team.</h1><span>One secure workspace for people, outlets, routes, and growth.</span></section>
@@ -36,7 +50,9 @@ export default function LoginPage() {
         <form onSubmit={submit}>
           <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
           <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+          <button type="button" className="auth-recovery" onClick={recoverPassword} disabled={busy}>Forgot password?</button>
           {error && <p className="auth-error">{error}</p>}
+          {recoverySent && <p className="auth-success">Recovery email sent. Check your inbox.</p>}
           <button className="primary auth-submit" disabled={busy}>{busy ? "Signing in..." : "Continue"}<ArrowRight size={16} /></button>
         </form>
         <p className="auth-policy">No self-service sign up. Contact your Super Admin if you need an account or password reset.</p>

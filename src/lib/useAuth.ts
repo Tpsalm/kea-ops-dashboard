@@ -84,5 +84,11 @@ export default function useAuth() {
     localStorage.removeItem("kea_user");
   }
 
-  return { user, loading, setUser, signIn, signOut } as const;
+  async function resetPassword(email: string) {
+    if (!supabase) throw new Error("Password recovery requires a configured Supabase account.");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login` });
+    if (error) throw error;
+  }
+
+  return { user, loading, setUser, signIn, signOut, resetPassword } as const;
 }

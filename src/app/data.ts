@@ -80,7 +80,6 @@ export const NAV: { label: string; path: string; icon: LucideIcon }[] = [
   { label: "Hierarchy", path: "/hierarchy", icon: Layers },
   { label: "Activities", path: "/activities", icon: Activity },
   { label: "Data Quality", path: "/data-quality", icon: ShieldCheck },
-  { label: "Reports", path: "/reports", icon: FileText },
   { label: "Audit Trail", path: "/audit-trail", icon: Search },
   { label: "Client portal", path: "/client-portal", icon: Building2 },
 ];
