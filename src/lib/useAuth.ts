@@ -82,6 +82,7 @@ export default function useAuth() {
     if (supabase) await supabase.auth.signOut();
     setUser(null);
     localStorage.removeItem("kea_user");
+    document.cookie = "kea_auth=; Path=/; Max-Age=0; SameSite=Lax";
   }
 
   async function resetPassword(email: string) {

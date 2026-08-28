@@ -20,7 +20,10 @@ export default function LoginPage() {
     setError("");
     try {
       const signedInUser = await signIn(email, password);
-      router.push(signedInUser.role === "super-admin" ? "/admin" : `/portal/${signedInUser.role}`);
+      document.cookie = "kea_auth=1; Path=/; Max-Age=28800; SameSite=Lax";
+      const defaultPath = signedInUser.role === "super-admin" ? "/admin" : `/portal/${signedInUser.role}`;
+      const nextPath = new URLSearchParams(window.location.search).get("next");
+      router.push(nextPath?.startsWith("/admin") || nextPath?.startsWith("/portal/") ? nextPath : defaultPath);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to sign in.");
     } finally {
