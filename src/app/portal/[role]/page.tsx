@@ -31,5 +31,5 @@ export default function RolePortalPage() {
   if (!user) { router.replace("/login"); return <main className="auth-loading">Redirecting to sign in...</main>; }
   if (user.role !== "super-admin" && user.role !== role) return <main className="auth-loading">This role dashboard is not assigned to your account.</main>;
 
-  return <AppShell contentClassName="role-portal"><div className="portal-top"><button className="back-link" onClick={() => { signOut(); router.push("/login"); }}><ArrowLeft size={15} /> Sign out</button></div><RoleContent role={role} copy={copy} user={user} navigate={(path) => router.push(path)} /></AppShell>;
+  return <AppShell contentClassName={`role-portal role-${role}`}><div className="portal-top"><button className="back-link" onClick={() => { signOut(); router.push("/login"); }}><ArrowLeft size={15} /> Sign out</button></div><RoleContent role={role} copy={copy} user={user} navigate={(path) => router.push(path)} /></AppShell>;
 }
