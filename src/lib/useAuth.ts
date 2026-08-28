@@ -13,6 +13,18 @@ export const demoUsers: Record<string, User> = {
   "fieldteam@kea.com": { email: "fieldteam@kea.com", name: "Field Team Demo", role: "field-team", allowedClientIds: ["client-a"] },
 };
 
+function mapSupabaseUser(authUser: { id: string; email?: string; user_metadata?: Record<string, unknown> }): User {
+  const metadata = authUser.user_metadata ?? {};
+  const role = metadata.role;
+  return {
+    id: authUser.id,
+    email: authUser.email ?? "",
+    name: typeof metadata.name === "string" ? metadata.name : authUser.email ?? "KEA user",
+    role: role === "super-admin" || role === "vsr" || role === "supervisor" || role === "field-team" ? role : "field-team",
+    allowedClientIds: Array.isArray(metadata.allowedClientIds) ? metadata.allowedClientIds.filter((value): value is string => typeof value === "string") : ["client-a"],
+  };
+}
+
 export default function useAuth() {
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === "undefined") return null;
@@ -33,12 +45,14 @@ export default function useAuth() {
     }
     if (supabase) {
       supabase.auth.getUser().then(({ data }) => {
-        if (data.user) {
-          const metadata = data.user.user_metadata ?? {};
-          setUser({ id: data.user.id, email: data.user.email ?? "", name: metadata.name ?? data.user.email ?? "KEA user", role: metadata.role ?? "field-team", allowedClientIds: metadata.allowedClientIds ?? ["client-a"] });
-        }
+        setUser(data.user ? mapSupabaseUser(data.user) : null);
         setLoading(false);
       });
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ? mapSupabaseUser(session.user) : null);
+        setLoading(false);
+      });
+      return () => listener.subscription.unsubscribe();
     }
   }, []);
 
@@ -54,8 +68,7 @@ export default function useAuth() {
     if (supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      const metadata = data.user.user_metadata ?? {};
-      const signedInUser = { id: data.user.id, email, name: metadata.name ?? email, role: metadata.role ?? "field-team", allowedClientIds: metadata.allowedClientIds ?? ["client-a"] } as User;
+      const signedInUser = mapSupabaseUser(data.user);
       setUser(signedInUser);
       return signedInUser;
     }
