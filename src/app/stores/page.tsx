@@ -16,15 +16,19 @@ const stores = [
 export default function StoresPage() {
   const [region, setRegion] = useState("All regions");
   const visible = useMemo(() => stores.filter((store) => region === "All regions" || store.region === region), [region]);
+  const storesCovered = visible.length;
+  const productAvailability = visible.length ? Math.round(visible.reduce((sum, store) => sum + store.availability, 0) / visible.length * 10) / 10 : 0;
+  const storesNeedingReview = visible.filter((store) => store.status === "Needs review").length;
+  const productsMonitored = visible.reduce((sum, store) => sum + store.products, 0);
   return (
     <AppShell>
       <PageHeading eyebrow="RETAIL EXECUTION · STORES & PRODUCTS" title="Stores & products" subtitle="Monitor store coverage, product availability, and execution health across every territory." />
       <FilterBar region={region} onRegion={setRegion} onReset={() => setRegion("All regions")} />
       <section className="kpi-grid">
-        <article className="kpi"><div className="kpi-icon blue"><Store size={20} /></div><span>Stores covered</span><strong>1,248</strong><div className="trend up"><TrendingUp size={14} /><b>12.4%</b><small>this month</small></div></article>
-        <article className="kpi"><div className="kpi-icon teal"><PackageCheck size={20} /></div><span>Product availability</span><strong>91.6%</strong><div className="trend up"><TrendingUp size={14} /><b>4.8%</b><small>vs last period</small></div></article>
-        <article className="kpi"><div className="kpi-icon amber"><Store size={20} /></div><span>Stores needing review</span><strong>86</strong><div className="trend down"><span>●</span><b>7.1%</b><small>of store base</small></div></article>
-        <article className="kpi"><div className="kpi-icon violet"><PackageCheck size={20} /></div><span>Products monitored</span><strong>386</strong><div className="trend up"><TrendingUp size={14} /><b>2.3%</b><small>across 18 categories</small></div></article>
+        <article className="kpi"><div className="kpi-icon blue"><Store size={20} /></div><span>Stores covered</span><strong>{storesCovered.toLocaleString()}</strong><div className="trend up"><TrendingUp size={14} /><b>12.4%</b><small>matching region</small></div></article>
+        <article className="kpi"><div className="kpi-icon teal"><PackageCheck size={20} /></div><span>Product availability</span><strong>{productAvailability}%</strong><div className="trend up"><TrendingUp size={14} /><b>4.8%</b><small>matching region</small></div></article>
+        <article className="kpi"><div className="kpi-icon amber"><Store size={20} /></div><span>Stores needing review</span><strong>{storesNeedingReview}</strong><div className="trend down"><span>●</span><b>7.1%</b><small>matching region</small></div></article>
+        <article className="kpi"><div className="kpi-icon violet"><PackageCheck size={20} /></div><span>Products monitored</span><strong>{productsMonitored.toLocaleString()}</strong><div className="trend up"><TrendingUp size={14} /><b>2.3%</b><small>matching region</small></div></article>
       </section>
       <section className="card table-card">
         <div className="card-head table-head"><div><h2>Territory store health</h2><p>Latest product and visit checks from the field</p></div></div>

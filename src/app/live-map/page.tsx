@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { CompletionCard, FilterBar, MapCard, PageHeading } from "../shared";
-import { staff } from "../data";
+import { completionData, staff } from "../data";
 
 export default function LiveMapPage() {
   const [region, setRegion] = useState("All regions");
   const [role, setRole] = useState("All roles");
   const [selectedPin, setSelectedPin] = useState(0);
+  const visibleStaff = useMemo(() => staff.filter((member) => (region === "All regions" || member.region === region) && (role === "All roles" || member.role === role)), [region, role]);
+  const completion = visibleStaff.length ? Math.round(visibleStaff.reduce((sum, member) => sum + member.completion, 0) / visibleStaff.length) : 0;
+  const visibleCompletion = completionData.map((item) => {
+    const matching = visibleStaff.filter((member) => member.region === item.name);
+    const planned = matching.reduce((sum, member) => sum + member.visits, 0);
+    return { name: item.name, planned, completed: Math.round(planned * (matching.length ? matching.reduce((sum, member) => sum + member.completion, 0) / matching.length / 100 : 0)) };
+  });
 
   return (
     <AppShell contentClassName="map-page">
@@ -26,7 +33,7 @@ export default function LiveMapPage() {
       />
       <section className="row ops-row">
         <MapCard
-          staff={staff}
+          staff={visibleStaff}
           selected={selectedPin}
           onSelect={setSelectedPin}
           region={region}
@@ -34,7 +41,7 @@ export default function LiveMapPage() {
           title="Nigeria field coverage"
           subtitle="15 staff live on the ground · click a pin for details"
         />
-        <CompletionCard onMore={() => undefined} />
+        <CompletionCard data={visibleCompletion} completion={`${completion}%`} onMore={() => undefined} />
       </section>
     </AppShell>
   );

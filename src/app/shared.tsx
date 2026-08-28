@@ -1,7 +1,7 @@
 "use client";
 
 // Reusable presentational components shared by all dedicated tab pages.
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -88,11 +88,13 @@ export type Kpi = {
   icon: LucideIcon; tone: string;
 };
 
-export function KpiGrid({ items, focus, onFocus }: { items: Kpi[]; focus: string; onFocus: (label: string) => void }) {
+export function KpiGrid({ items, focus, onFocus }: { items: Kpi[]; focus?: string; onFocus?: (label: string) => void }) {
+  const [selected, setSelected] = useState("");
+  const activeFocus = focus || selected;
   return (
     <section className="kpi-grid">
       {items.map(({ label, value, trend, up, sub, icon: Icon, tone }) => (
-        <button className={`kpi ${focus === label ? "selected" : ""}`} key={label} onClick={() => onFocus(label)}>
+        <button className={`kpi ${activeFocus === label ? "selected" : ""}`} key={label} onClick={() => { setSelected(label); onFocus?.(label); }}>
           <div className={`kpi-icon ${tone}`}><Icon size={20} /></div>
           <MoreHorizontal className="kpi-more" size={18} />
           <span>{label}</span>
@@ -109,7 +111,7 @@ export function KpiGrid({ items, focus, onFocus }: { items: Kpi[]; focus: string
 
 /* ----------------------------- chart cards ----------------------------- */
 
-export function ActivityCard({ onMore }: { onMore: () => void }) {
+export function ActivityCard({ onMore, data = activityData }: { onMore: () => void; data?: typeof activityData }) {
   return (
     <article className="card activity-card">
       <div className="card-head">
@@ -122,7 +124,7 @@ export function ActivityCard({ onMore }: { onMore: () => void }) {
       </div>
       <div className="chart-wrap">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={activityData} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
+          <AreaChart data={data} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
             <defs>
               <linearGradient id="blueFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#2563eb" stopOpacity={0.22} />
@@ -142,7 +144,7 @@ export function ActivityCard({ onMore }: { onMore: () => void }) {
   );
 }
 
-export function WorkforceMixCard({ onMore }: { onMore: () => void }) {
+export function WorkforceMixCard({ onMore, data = roleData, total }: { onMore: () => void; data?: typeof roleData; total?: number }) {
   return (
     <article className="card workforce-card">
       <div className="card-head">
@@ -152,16 +154,16 @@ export function WorkforceMixCard({ onMore }: { onMore: () => void }) {
       <div className="donut-wrap">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={roleData} innerRadius={62} outerRadius={82} paddingAngle={3} dataKey="value" stroke="none">
-              {roleData.map((d) => <Cell key={d.name} fill={d.color} />)}
+            <Pie data={data} innerRadius={62} outerRadius={82} paddingAngle={3} dataKey="value" stroke="none">
+              {data.map((d) => <Cell key={d.name} fill={d.color} />)}
             </Pie>
             <Tooltip content={<Tip />} />
           </PieChart>
         </ResponsiveContainer>
-        <div className="donut-total"><strong>320</strong><span>STAFF</span></div>
+        <div className="donut-total"><strong>{total ?? data.reduce((sum, item) => sum + item.value, 0)}</strong><span>STAFF</span></div>
       </div>
       <div className="role-legend">
-        {roleData.map((d) => (
+        {data.map((d) => (
           <div key={d.name}><span><i style={{ background: d.color }} />{d.name}</span><b>{d.value}</b></div>
         ))}
       </div>
@@ -169,17 +171,17 @@ export function WorkforceMixCard({ onMore }: { onMore: () => void }) {
   );
 }
 
-export function CompletionCard({ onMore }: { onMore: () => void }) {
+export function CompletionCard({ onMore, data = completionData, completion = "87.4%" }: { onMore: () => void; data?: typeof completionData; completion?: string }) {
   return (
     <article className="card completion-card">
       <div className="card-head">
         <div><h2>Visit completion</h2><p>Planned vs completed by region</p></div>
         <button type="button" aria-label="Completion chart options" onClick={onMore}><MoreHorizontal size={18} /></button>
       </div>
-      <div className="completion-summary"><strong>87.4%</strong><span><TrendingUp size={13} /> 4.6%</span><small>overall completion</small></div>
+      <div className="completion-summary"><strong>{completion}</strong><span><TrendingUp size={13} /> 4.6%</span><small>overall completion</small></div>
       <div className="bar-wrap">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={completionData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
@@ -194,7 +196,6 @@ export function CompletionCard({ onMore }: { onMore: () => void }) {
 }
 
 /* ------------------------------- map card ------------------------------ */
-
 export function MapCard({
   staff, selected, onSelect, region, role,
   title = "Geographic operations",

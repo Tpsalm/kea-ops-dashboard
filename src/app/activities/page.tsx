@@ -30,7 +30,10 @@ export default function ActivitiesPage() {
   type keyOfActivity = keyof Activity;
 
   const filteredActivities = useMemo(() => {
-    let result = activities;
+    let result = [...activities];
+    const latestDate = Math.max(...activities.map((activity) => Date.parse(activity.date)));
+    const rangeDays = dateRange === "Today" ? 1 : dateRange === "Last 7 days" ? 7 : dateRange === "This quarter" ? 92 : 30;
+    result = result.filter((activity) => latestDate - Date.parse(activity.date) < rangeDays * 24 * 60 * 60 * 1000);
     
     if (region !== "All regions") {
       const staffInRegion = allStaff.filter(s => s.region === region).map(s => s.id);
@@ -60,7 +63,7 @@ export default function ActivitiesPage() {
       const av = a[sort]; const bv = b[sort];
       return (typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv))) * (asc ? 1 : -1);
     });
-  }, [region, role, activityType, query, sort, asc]);
+  }, [region, role, activityType, dateRange, query, sort, asc]);
 
   const kpis = useMemo(() => {
     const total = filteredActivities.length;
