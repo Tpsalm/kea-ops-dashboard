@@ -49,7 +49,7 @@ export function AppShell({
 
       <aside className={mobileNav ? "sidebar open" : "sidebar"}>
         <div className="brand">
-          <div className="brand-mark">K</div>
+          <div className="brand-logo" aria-label="KEA Corporate Hospitality Services"><b className="logo-k">k</b><b className="logo-e">e</b><b className="logo-a">a</b><small>Corporate Hospitality Services</small></div>
           <div><strong>KEA GROUP</strong><span>Talent Management System</span></div>
           <button className="close-nav" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={20} /></button>
         </div>

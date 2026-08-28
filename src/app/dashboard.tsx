@@ -149,7 +149,7 @@ export default function Dashboard() {
   return <div className={dark ? "app dark" : "app"}>
     {notice && <div className="toast"><CheckCircle2 size={17}/>{notice}</div>}
     <aside className={mobileNav ? "sidebar open" : "sidebar"}>
-      <div className="brand"><div className="brand-mark">K</div><div><strong>KEA GROUP</strong><span>Talent Management System</span></div><button className="close-nav" onClick={()=>setMobileNav(false)}><X size={20}/></button></div>
+      <div className="brand"><div className="brand-logo" aria-label="KEA Corporate Hospitality Services"><b className="logo-k">k</b><b className="logo-e">e</b><b className="logo-a">a</b><small>Corporate Hospitality Services</small></div><div><strong>KEA GROUP</strong><span>Talent Management System</span></div><button className="close-nav" onClick={()=>setMobileNav(false)}><X size={20}/></button></div>
       <div className="workspace"><div className="avatar">KG</div><div><small>WORKSPACE</small><b>KEA GROUP</b></div><ChevronDown size={15}/></div>
       <nav><p>ANALYTICS</p>{nav.map(({label,icon:Icon,path})=><Link key={label} href={path} className={activeNav===label?"active":""} onClick={()=>setMobileNav(false)}><Icon size={18}/><span>{label}</span>{label==="Live map"&&<i>LIVE</i>}</Link>)}</nav>
       <nav className="manage"><p>MANAGE</p><button type="button" onClick={()=>{setPanel("data");setMobileNav(false)}}><ShieldCheck size={18}/><span>Data quality</span></button><button type="button" onClick={()=>{setPanel("settings");setMobileNav(false)}}><Settings size={18}/><span>Settings</span></button></nav>
