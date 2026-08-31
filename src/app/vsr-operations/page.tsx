@@ -120,6 +120,10 @@ export default function VsrOperationsPage() {
     setPage(1);
   }
 
+  function scrollToSection(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <div className="vsr-reference">
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
@@ -130,10 +134,10 @@ export default function VsrOperationsPage() {
           <button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>
         <nav>
-          <a href="#vsr-overview" className="active"><Gauge size={15} /> Overview</a>
-          <a href="#vsr-funding"><Flag size={15} /> Funding tracker</a>
-          <a href="#vsr-routes"><Route size={15} /> Route board</a>
-          <a href="#vsr-risk"><ShieldCheck size={15} /> Risk & compliance</a>
+          <a href="#vsr-overview" className="active" onClick={(event) => { event.preventDefault(); scrollToSection("vsr-overview"); }}><Gauge size={15} /> Overview</a>
+          <a href="#vsr-funding" onClick={(event) => { event.preventDefault(); scrollToSection("vsr-funding"); }}><Flag size={15} /> Funding tracker</a>
+          <a href="#vsr-routes" onClick={(event) => { event.preventDefault(); scrollToSection("vsr-routes"); }}><Route size={15} /> Route board</a>
+          <a href="#vsr-risk" onClick={(event) => { event.preventDefault(); scrollToSection("vsr-risk"); }}><ShieldCheck size={15} /> Risk & compliance</a>
         </nav>
         <button className="reference-settings"><Settings size={15} /> Settings <MoreHorizontal size={15} /></button>
       </aside>
