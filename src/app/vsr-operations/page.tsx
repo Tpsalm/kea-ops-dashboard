@@ -72,6 +72,7 @@ export default function VsrOperationsPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [mobileNav, setMobileNav] = useState(false);
+  const [activeSection, setActiveSection] = useState("vsr-overview");
 
   const trackerRows = useMemo(() => {
     return vsrTrackerRows.filter((row) => {
@@ -115,16 +116,15 @@ export default function VsrOperationsPage() {
     setPage(1);
   }
 
-  function scrollToSection(id: string) {
+  function navigateTo(id: string) {
+    setActiveSection(id);
     const el = document.getElementById(id);
     if (!el) return;
     const currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-    const top = el.getBoundingClientRect().top + currentScroll - 48;
-    try {
-      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-    } catch {
-      window.scrollTo(0, Math.max(0, top));
-    }
+    const top = Math.max(0, el.getBoundingClientRect().top + currentScroll - 48);
+    window.scrollTo(0, top);
+    document.documentElement.scrollTop = top;
+    document.body.scrollTop = top;
   }
 
   return (
@@ -137,10 +137,10 @@ export default function VsrOperationsPage() {
           <button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>
         <nav>
-          <button type="button" className="active" onClick={() => scrollToSection("vsr-overview")}><Gauge size={15} /> Overview</button>
-          <button type="button" onClick={() => scrollToSection("vsr-funding")}><Flag size={15} /> Funding tracker</button>
-          <button type="button" onClick={() => scrollToSection("vsr-routes")}><Route size={15} /> Route board</button>
-          <button type="button" onClick={() => scrollToSection("vsr-risk")}><ShieldCheck size={15} /> Risk & compliance</button>
+          <button type="button" className={activeSection === "vsr-overview" ? "active" : ""} onClick={() => navigateTo("vsr-overview")}><Gauge size={15} /> Overview</button>
+          <button type="button" className={activeSection === "vsr-funding" ? "active" : ""} onClick={() => navigateTo("vsr-funding")}><Flag size={15} /> Funding tracker</button>
+          <button type="button" className={activeSection === "vsr-routes" ? "active" : ""} onClick={() => navigateTo("vsr-routes")}><Route size={15} /> Route board</button>
+          <button type="button" className={activeSection === "vsr-risk" ? "active" : ""} onClick={() => navigateTo("vsr-risk")}><ShieldCheck size={15} /> Risk & compliance</button>
         </nav>
         <button className="reference-settings"><Settings size={15} /> Settings <MoreHorizontal size={15} /></button>
       </aside>
