@@ -121,7 +121,10 @@ export default function VsrOperationsPage() {
   }
 
   function scrollToSection(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 48;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }
 
   return (
