@@ -6,8 +6,8 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, CheckCircle2, ChevronRight, Menu, Moon,
-  MoreHorizontal, Search, Settings, ShieldCheck, Sun, UserRound, X,
+  Bell, CheckCircle2, ChevronRight, Database, FileText, LayoutDashboard, Map, Menu, Moon,
+  MoreHorizontal, Network, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
 } from "lucide-react";
 import { NAV, activeNavLabel } from "../app/data";
 import useAuth from "../lib/useAuth";
@@ -27,6 +27,16 @@ export function AppShell({
   const router = useRouter();
   const { user, loading } = useAuth();
   const activeNav = activeNavLabel(pathname);
+  const superAdminNav = [
+    { label: "Global performance", path: "/admin", icon: LayoutDashboard },
+    { label: "Users & roles", path: "/hierarchy", icon: Users },
+    { label: "Territories & routes", path: "/live-map", icon: Map },
+    { label: "API integrations", path: "/reports", icon: Network },
+    { label: "Funding & deployment", path: "/vsr-operations", icon: Store },
+    { label: "System logs", path: "/audit-trail", icon: Database },
+    { label: "Audit trail", path: "/audit-trail", icon: FileText },
+  ];
+  const shellNav = user?.role === "super-admin" ? superAdminNav : NAV;
   const [dark, setDark] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -44,7 +54,7 @@ export function AppShell({
   }
 
   return (
-    <div className={dark ? "app dark" : "app"}>
+    <div className={`${dark ? "app dark" : "app"}${user.role === "super-admin" ? " super-admin-shell" : ""}`}>
       {notice && <div className="toast"><CheckCircle2 size={17} />{notice}</div>}
 
       <aside className={mobileNav ? "sidebar open" : "sidebar"}>
@@ -55,7 +65,7 @@ export function AppShell({
         </div>
         <nav>
           <p>ANALYTICS</p>
-          {NAV.map(({ label, icon: Icon, path }) => (
+          {shellNav.map(({ label, icon: Icon, path }) => (
             <Link key={label} href={path} className={activeNav === label ? "active" : ""} onClick={() => setMobileNav(false)}>
               <Icon size={18} /><span>{label}</span>{label === "Live map" && <i>LIVE</i>}
             </Link>

@@ -229,6 +229,22 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .reference-filters>button.filter-toggle{display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#07535a;color:#fff;border-color:#07535a}
 .funnel-panel>.recharts-responsive-container{padding:8px 18px 14px;box-sizing:border-box}
 .funnel-panel .recharts-wrapper{overflow:visible}
+.super-admin-shell .sidebar{width:150px;background:#07535a;padding:0 9px}
+.super-admin-shell .main{margin-left:150px}
+.super-admin-shell .brand{height:58px;padding:0 3px;gap:5px}
+.super-admin-shell .brand-logo{width:42px;height:32px}
+.super-admin-shell .brand-logo b{font-size:27px}
+.super-admin-shell .brand-logo small{display:none}
+.super-admin-shell .brand strong{font-size:12px}
+.super-admin-shell .brand span{font-size:6px;color:#acd0cd}
+.super-admin-shell .sidebar nav p{font-size:7px;color:#9fc9c6;margin:12px 7px 6px}
+.super-admin-shell .sidebar nav a{height:34px;color:#c9e2e2;font-size:9px;padding:0 7px;gap:8px;text-transform:uppercase}
+.super-admin-shell .sidebar nav a:hover,.super-admin-shell .sidebar nav a.active{background:#126b70}
+.super-admin-shell .sidebar nav a.active:before{left:-9px;background:#b6d335}
+.super-admin-shell .sidebar .manage{display:none}
+.super-admin-shell .sidebar-foot{display:none}
+.super-admin-shell .content{max-width:1500px;padding:20px 24px}
+@media(max-width:900px){.super-admin-shell .sidebar{width:230px}.super-admin-shell .main{margin-left:0}.super-admin-shell .sidebar.open{transform:translateX(0)}}
 
 @media(max-width:400px){
   .kpi-grid{grid-template-columns:1fr 1fr;gap:8px}

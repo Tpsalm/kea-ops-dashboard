@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Activity, AlertTriangle, BarChart3, Bell, Building2, ChevronDown,
   Database, FileText, Flag, Gauge, KeyRound, Layers3, Map, Menu,
@@ -36,6 +37,7 @@ function Panel({ title, subtitle, children, className = "" }: { title: string; s
 }
 
 export default function SuperAdminDashboard() {
+  const router = useRouter();
   const [region, setRegion] = useState("All regions");
   const [role, setRole] = useState("All roles");
   const [client, setClient] = useState("All clients");
@@ -72,11 +74,12 @@ export default function SuperAdminDashboard() {
   const qualityRows = useMemo(() => regions.slice(1, 6).map((name, index) => ({ state: name, errors: Math.max(0, Math.round((filteredStaff.filter((person) => person.region === name).length || 1) * (index % 3 === 0 ? 1.4 : .3))), region: regions[index + 2] ?? "Lagos", error: index % 3 === 0 ? 1 : 0 })), [filteredStaff]);
 
   const resetFilters = () => { setRegion("All regions"); setRole("All roles"); setClient("All clients"); setSearch(""); setSelectedPin(0); };
+  const openAdminSection = (path: string) => router.push(`${path}?from=admin`);
 
   return <div className="super-admin-reference">
     <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
       <div className="reference-brand"><div className="reference-logo"><b>k</b><b>e</b><b>a</b></div><strong>KEA GROUP</strong><small>Talent Management System</small><button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button></div>
-      <nav><Link href="/admin" className="active"><Gauge size={15} /> Global performance</Link><Link href="/hierarchy"><Users size={15} /> Users & roles</Link><Link href="/live-map"><Map size={15} /> Territories & routes</Link><Link href="/reports"><Network size={15} /> API integrations</Link><Link href="/vsr-operations"><Store size={15} /> Funding & deployment</Link><Link href="/audit-trail"><Database size={15} /> System logs</Link><Link href="/audit-trail"><FileText size={15} /> Audit trail</Link></nav>
+      <nav><Link href="/admin" className="active"><Gauge size={15} /> Global performance</Link><button type="button" onClick={() => openAdminSection("/hierarchy")}><Users size={15} /> Users & roles</button><button type="button" onClick={() => openAdminSection("/live-map")}><Map size={15} /> Territories & routes</button><button type="button" onClick={() => openAdminSection("/reports")}><Network size={15} /> API integrations</button><button type="button" onClick={() => openAdminSection("/vsr-operations")}><Store size={15} /> Funding & deployment</button><button type="button" onClick={() => openAdminSection("/audit-trail")}><Database size={15} /> System logs</button><button type="button" onClick={() => openAdminSection("/audit-trail")}><FileText size={15} /> Audit trail</button></nav>
       <button className="reference-settings"><Settings size={15} /> Settings <MoreHorizontal size={15} /></button>
     </aside>
     <main className="reference-main">
