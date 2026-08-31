@@ -3,17 +3,18 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SuperAdminDashboard from "./super-admin-dashboard";
-import useAuth from "../../lib/useAuth";
+import useAuth, { roleHome } from "../../lib/useAuth";
 
 export default function AdminPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const isAdmin = user?.role === "super-admin" || user?.role === "admin";
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
-    else if (!loading && user && user.role !== "super-admin") router.replace(`/portal/${user.role}`);
-  }, [loading, router, user]);
+    else if (!loading && user && !isAdmin) router.replace(roleHome(user.role));
+  }, [loading, router, user, isAdmin]);
 
-  if (loading || !user || user.role !== "super-admin") return <main className="auth-loading">Checking secure workspace...</main>;
+  if (loading || !user || !isAdmin) return <main className="auth-loading">Checking secure workspace...</main>;
   return <SuperAdminDashboard />;
 }

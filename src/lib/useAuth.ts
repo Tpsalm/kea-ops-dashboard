@@ -3,16 +3,34 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
-export type AppRole = "super-admin" | "vsr" | "supervisor" | "field-team";
+export type AppRole = "super-admin" | "admin" | "vsr" | "supervisor" | "merchandiser" | "tsr" | "field-team";
 export type User = { id?: string; email: string; name: string; role: AppRole; allowedClientIds: string[] };
+
+export function roleHome(role: AppRole): string {
+  switch (role) {
+    case "super-admin":
+    case "admin":
+      return "/admin";
+    case "vsr":
+      return "/vsr-operations";
+    case "merchandiser":
+      return "/merchandiser";
+    case "tsr":
+      return "/tsr";
+    case "supervisor":
+      return "/portal/supervisor";
+    default:
+      return "/portal/field-team";
+  }
+}
 
 export const demoUsers: Record<string, User> = {
   "superadmin@kea.com": { email: "superadmin@kea.com", name: "Super Admin", role: "super-admin", allowedClientIds: ["client-a", "client-b"] },
   "admin@kea.com": { email: "admin@kea.com", name: "KEA Administrator", role: "super-admin", allowedClientIds: ["client-a", "client-b"] },
   "vsr@kea.com": { email: "vsr@kea.com", name: "VSR Demo", role: "vsr", allowedClientIds: ["client-a"] },
   "supervisor@kea.com": { email: "supervisor@kea.com", name: "Supervisor Demo", role: "supervisor", allowedClientIds: ["client-a"] },
-  "merchandiser@kea.com": { email: "merchandiser@kea.com", name: "Merchandiser Demo", role: "field-team", allowedClientIds: ["client-a"] },
-  "tsr@kea.com": { email: "tsr@kea.com", name: "TSR Demo", role: "field-team", allowedClientIds: ["client-a"] },
+  "merchandiser@kea.com": { email: "merchandiser@kea.com", name: "Merchandiser Demo", role: "merchandiser", allowedClientIds: ["client-a"] },
+  "tsr@kea.com": { email: "tsr@kea.com", name: "TSR Demo", role: "tsr", allowedClientIds: ["client-a"] },
   "fieldteam@kea.com": { email: "fieldteam@kea.com", name: "Field Team Demo", role: "field-team", allowedClientIds: ["client-a"] },
 };
 
@@ -23,7 +41,11 @@ function mapSupabaseUser(authUser: { id: string; email?: string; user_metadata?:
     id: authUser.id,
     email: authUser.email ?? "",
     name: typeof metadata.name === "string" ? metadata.name : authUser.email ?? "KEA user",
-    role: role === "super-admin" || role === "vsr" || role === "supervisor" || role === "field-team" ? role : "field-team",
+    role:
+      role === "super-admin" || role === "admin" || role === "vsr" || role === "supervisor" ||
+      role === "merchandiser" || role === "tsr" || role === "field-team"
+        ? role
+        : "field-team",
     allowedClientIds: Array.isArray(metadata.allowedClientIds) ? metadata.allowedClientIds.filter((value): value is string => typeof value === "string") : ["client-a"],
   };
 }

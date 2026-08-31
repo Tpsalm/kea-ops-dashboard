@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
-import useAuth from "../../lib/useAuth";
+import useAuth, { roleHome } from "../../lib/useAuth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function LoginPage() {
     try {
       const signedInUser = await signIn(email, password);
       document.cookie = "kea_auth=1; Path=/; Max-Age=28800; SameSite=Lax";
-      const defaultPath = signedInUser.role === "super-admin" ? "/admin" : `/portal/${signedInUser.role}`;
+      const defaultPath = roleHome(signedInUser.role);
       const nextPath = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null;
       router.push(nextPath?.startsWith("/admin") || nextPath?.startsWith("/portal/") ? nextPath : defaultPath);
     } catch (reason) {
