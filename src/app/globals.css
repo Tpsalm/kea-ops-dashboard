@@ -429,3 +429,37 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 @media(max-width:460px){
   .reference-filters{grid-template-columns:1fr}
 }
+
+/* ========================================================================
+   VSR Operations Console — dedicated teal/green ops layout
+   ======================================================================== */
+.vsr-reference{min-height:100vh;background:#f3f4f6;color:#17221f;display:flex;font-family:Arial,Helvetica,sans-serif}
+.vsr-reference .reference-kpis{grid-template-columns:repeat(4,1fr)}
+.vsr-panel-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);gap:8px;margin-bottom:8px}
+.vsr-donut{position:relative;height:210px;padding:4px 8px 0}
+.vsr-donut .donut-total strong{font-size:20px}
+.vsr-donut .donut-total span{font-size:7px}
+.vsr-legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;padding:2px 14px 14px;font-size:9px}
+.vsr-legend div{display:flex;justify-content:space-between;align-items:center}
+.vsr-legend span{display:flex;align-items:center;gap:5px;color:#73807b}
+.vsr-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.vsr-legend b{font-size:11px;color:#18231f}
+.vsr-route-stats{display:grid;gap:2px;padding:6px 14px 14px}
+.vsr-route-stats>div{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #edf0ee}
+.vsr-route-stats>div:last-child{border-bottom:0}
+.vsr-route-stats svg{color:#07535a;flex:none}
+.vsr-route-stats span{display:grid}
+.vsr-route-stats b{font-size:13px;color:#18231f}
+.vsr-route-stats small{font-size:8px;color:#73807b}
+.vsr-table-panel{min-width:0;margin-top:8px}
+.vsr-table-panel>header svg{color:#07535a}
+.vsr-table-panel .table-scroll{max-height:520px;overflow:auto}
+.vsr-table-panel .pagination{border-top:1px solid #e0e5e3;background:#fff}
+@media(max-width:800px){
+  .vsr-reference .reference-kpis{grid-template-columns:1fr 1fr}
+  .vsr-panel-grid{grid-template-columns:1fr}
+  .vsr-donut{height:230px}
+}
+@media(max-width:460px){
+  .vsr-reference .reference-kpis{grid-template-columns:1fr}
+}
