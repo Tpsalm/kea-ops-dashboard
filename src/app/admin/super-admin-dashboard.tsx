@@ -1,20 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import {
-  Area, AreaChart, CartesianGrid, Cell, Funnel, FunnelChart, LabelList,
+  Area, AreaChart, CartesianGrid, Cell,
   Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { Building2, Flag, PieChart as PieIcon, ShieldCheck, Users } from "lucide-react";
 import { staff, vsrTrackerRows, type Role } from "../data";
 import { AppShell } from "../../components/app-shell";
 import { FilterBar, KpiGrid, MapCard, PageHeading } from "../shared";
-
-const OperationsMap = dynamic(() => import("../operations-map"), {
-  ssr: false,
-  loading: () => <div className="map-loading">Loading operations map...</div>,
-});
 
 const roleColors: Record<Role, string> = {
   VSR: "#0e918a", TSR: "#f39a28", Supervisor: "#8fc63d", Merchandiser: "#55b8bb",
@@ -137,16 +131,25 @@ export default function SuperAdminDashboard() {
         <div className="card-head">
           <div><h2>Funding deployment funnel</h2><p>Proposed → Funded → Deployed</p></div>
         </div>
-        <div className="chart-wrap" style={{ height: 280 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <FunnelChart margin={{ top: 12, right: 90, left: 32, bottom: 12 }}>
-              <Tooltip />
-              <Funnel dataKey="value" data={funding} isAnimationActive>
-                <LabelList position="right" offset={12} fill="var(--text)" stroke="none" dataKey="name" />
-                {funding.map((item, index) => <Cell key={item.name} fill={["#356bc2", "#85c83b", "#e89a26"][index]} />)}
-              </Funnel>
-            </FunnelChart>
-          </ResponsiveContainer>
+        <div style={{ padding: "6px 17px 20px", display: "grid", gap: 14 }}>
+          {funding.map((item, index) => {
+            const max = Math.max(...funding.map((f) => f.value), 1);
+            const width = Math.max(16, Math.round((item.value / max) * 100));
+            const colors = ["#356bc2", "#85c83b", "#e89a26"];
+            return (
+              <div key={item.name}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <b style={{ fontSize: 12, color: "var(--text)" }}>{item.name}</b>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: colors[index] }}>{item.value}</span>
+                </div>
+                <div style={{ height: 26, background: "var(--soft)", borderRadius: 6, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${width}%`, background: colors[index], borderRadius: 6, transition: "width .4s ease", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>{item.value}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
