@@ -8,8 +8,11 @@ export type User = { id?: string; email: string; name: string; role: AppRole; al
 
 export const demoUsers: Record<string, User> = {
   "superadmin@kea.com": { email: "superadmin@kea.com", name: "Super Admin", role: "super-admin", allowedClientIds: ["client-a", "client-b"] },
+  "admin@kea.com": { email: "admin@kea.com", name: "KEA Administrator", role: "super-admin", allowedClientIds: ["client-a", "client-b"] },
   "vsr@kea.com": { email: "vsr@kea.com", name: "VSR Demo", role: "vsr", allowedClientIds: ["client-a"] },
   "supervisor@kea.com": { email: "supervisor@kea.com", name: "Supervisor Demo", role: "supervisor", allowedClientIds: ["client-a"] },
+  "merchandiser@kea.com": { email: "merchandiser@kea.com", name: "Merchandiser Demo", role: "field-team", allowedClientIds: ["client-a"] },
+  "tsr@kea.com": { email: "tsr@kea.com", name: "TSR Demo", role: "field-team", allowedClientIds: ["client-a"] },
   "fieldteam@kea.com": { email: "fieldteam@kea.com", name: "Field Team Demo", role: "field-team", allowedClientIds: ["client-a"] },
 };
 
