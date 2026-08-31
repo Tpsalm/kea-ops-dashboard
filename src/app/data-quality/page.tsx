@@ -3,11 +3,11 @@
 import { useState, useMemo } from "react";
 import {
   CheckCircle2, AlertCircle, AlertTriangle, Search, ChevronLeft, ChevronRight,
-  Download, RefreshCw, Filter, MapPin, UserRound, Store as StoreIcon, PackageCheck,
+  Download, RefreshCw, MapPin, UserRound, Store as StoreIcon, PackageCheck,
   MoreHorizontal, Eye, ArrowLeft, Database, ShieldCheck
 } from "lucide-react";
 import { AppShell } from "../../components/app-shell";
-import { PageHeading, FilterBar, KpiGrid, EmptyState, SelectBox } from "../shared";
+import { PageHeading, KpiGrid, EmptyState, SelectBox } from "../shared";
 import { 
   allStaff, stores, products, activities, vsrRoutes,
   getStaffById, getStoresByMerchandiser, getProductsByStore,
@@ -397,12 +397,6 @@ export default function DataQualityPage() {
         }
       />
       
-      <FilterBar
-        region={""}
-        onRegion={() => {}}
-        onReset={handleReset}
-      />
-      
       <div className="filters" style={{marginTop: 8}}>
         <SelectBox 
           label="SEVERITY" 
@@ -420,11 +414,12 @@ export default function DataQualityPage() {
           <Search size={15} />
           <input placeholder="Search issues..." value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
         </div>
+        <button className="reset" type="button" onClick={handleReset}><RefreshCw size={14} /> Reset</button>
       </div>
 
       <KpiGrid items={kpis} focus="" onFocus={() => {}} />
 
-      <div style={{display: "grid", gridTemplateColumns: "1fr 380px", gap: 16}}>
+      <div className="detail-grid narrow">
         <section className="card table-card">
           <div className="card-head table-head">
             <div>

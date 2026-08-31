@@ -4,10 +4,10 @@ import { useState, useMemo } from "react";
 import {
   CalendarDays, Download, FileText, BarChart3, Clock, CheckCircle2,
   AlertCircle, RefreshCw, Mail, Printer, Share2, ChevronLeft, ChevronRight,
-  MoreHorizontal, Eye, Edit, Trash2, Plus, Filter, Search
+  MoreHorizontal, Eye, Edit, Trash2, Plus, Search
 } from "lucide-react";
 import { AppShell } from "../../components/app-shell";
-import { PageHeading, FilterBar, KpiGrid, SelectBox, EmptyState } from "../shared";
+import { PageHeading, KpiGrid, SelectBox, EmptyState } from "../shared";
 import { 
   allStaff, stores, products, activities, vsrRoutes, calculateKPIs,
   getStaffByClient, getStoresByClient, getProductsByClient, getActivitiesByClient,
@@ -287,12 +287,6 @@ export default function ReportsPage() {
         }
       />
       
-      <FilterBar
-        region={""}
-        onRegion={() => {}}
-        onReset={handleReset}
-      />
-      
       <div className="filters" style={{marginTop: 8}}>
         <SelectBox 
           label="CLIENT" 
@@ -316,6 +310,7 @@ export default function ReportsPage() {
           <Search size={15} />
           <input placeholder="Search reports..." value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
         </div>
+        <button className="reset" type="button" onClick={handleReset}><RefreshCw size={14} /> Reset</button>
       </div>
 
       <KpiGrid items={kpis} focus="" onFocus={() => {}} />
@@ -488,7 +483,7 @@ export default function ReportsPage() {
                 <p style={{marginTop: 8, color: "var(--muted)"}}>{selectedReport.description}</p>
               </div>
               
-              <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16}}>
+              <div className="modal-two-col" style={{marginBottom: 16}}>
                 <div>
                   <h4>Schedule</h4>
                   <p><strong>Frequency:</strong> {typeLabels[selectedReport.type]}</p>

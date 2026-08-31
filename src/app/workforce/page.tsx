@@ -145,7 +145,7 @@ export default function WorkforcePage() {
 
   return (
     <AppShell searchValue={query} onSearch={(q) => { setQuery(q); setPage(1); }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="heading-row">
         <PageHeading
           eyebrow={viewerType === 'client' ? "CLIENT PORTAL" : "FIELD FORCE · WORKFORCE"}
           title={viewerType === 'client' ? "Client dashboard" : "Workforce"}

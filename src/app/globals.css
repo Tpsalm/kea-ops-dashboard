@@ -358,3 +358,46 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
   .auth-panel input{min-height:48px}
   .auth-submit{min-height:48px}
 }
+
+/* ========================================================================
+   Missing interactive control styles (filter buttons, theme toggle, viewer)
+   ======================================================================== */
+.filter-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px}
+.filter-buttons button{min-height:36px;padding:0 14px;border:1px solid var(--line);background:var(--soft);color:var(--text);border-radius:7px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.filter-buttons button:hover{border-color:#b8d77c;background:#f2f8e7}
+.filter-buttons button.chosen{border-color:#759f2c;background:#8fbd36;color:#203018;box-shadow:0 3px 8px rgba(143,189,54,.22)}
+.theme-options{display:flex;gap:8px}
+.theme-options button{flex:1;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:var(--soft);color:var(--text);border-radius:8px;font-size:11px;font-weight:700;transition:.15s}
+.theme-options button.chosen{border-color:#759f2c;background:#8fbd36;color:#203018}
+.viewer-toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--soft);padding:3px;gap:2px}
+.viewer-toggle button{border:0;background:none;color:var(--muted);font-size:11px;font-weight:700;padding:7px 14px;border-radius:6px;transition:.15s}
+.viewer-toggle button.active{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+.viewer-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.08em;color:#0c9b6b;background:#e8f9f2;border:1px solid #cdeee0;padding:6px 10px;border-radius:20px}
+
+/* Responsive two-column detail panels used by Audit Trail and Data Quality */
+.detail-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+.detail-grid.narrow{grid-template-columns:minmax(0,1fr) 380px}
+.detail-grid .card{margin-bottom:0}
+
+/* Header rows used on the Workforce page */
+.heading-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.heading-row .heading{flex:1}
+.client-dashboard-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.client-dashboard-head .heading{flex:1}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.modal-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:14px;box-shadow:var(--shadow)}
+.chart-card h4{margin:0 0 8px;font-size:13px}
+.chart-card pre{margin:0;white-space:pre-wrap;word-break:break-word}
+
+@media(max-width:900px){
+  .detail-grid,.detail-grid.narrow{grid-template-columns:1fr;gap:12px}
+  .detail-grid .card{margin-bottom:12px}
+  .filters .mini-search{width:100%;min-width:0}
+  .filters .mini-search input{font-size:16px!important}
+  .viewer-toggle{width:100%;justify-content:stretch}
+  .viewer-toggle button{flex:1}
+  .heading-row,.client-dashboard-head{flex-direction:column;align-items:stretch}
+  .charts{grid-template-columns:1fr}
+  .modal-two-col{grid-template-columns:1fr}
+}

@@ -7,7 +7,7 @@ import {
   ArrowLeft, ShieldCheck, AlertTriangle
 } from "lucide-react";
 import { AppShell } from "../../components/app-shell";
-import { PageHeading, FilterBar, KpiGrid, SelectBox, EmptyState } from "../shared";
+import { PageHeading, KpiGrid, SelectBox, EmptyState } from "../shared";
 
 type AuditAction = "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "EXPORT" | "IMPORT" | "ASSIGN" | "UNASSIGN";
 type AuditEntity = "Staff" | "Store" | "Product" | "Activity" | "Route" | "Client" | "User" | "Report";
@@ -246,12 +246,6 @@ export default function AuditTrailPage() {
         }
       />
       
-      <FilterBar
-        region={""}
-        onRegion={() => {}}
-        onReset={handleReset}
-      />
-      
       <div className="filters" style={{marginTop: 8}}>
         <SelectBox 
           label="ACTION" 
@@ -281,11 +275,12 @@ export default function AuditTrailPage() {
           <Search size={15} />
           <input placeholder="Search audit log..." value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />
         </div>
+        <button className="reset" type="button" onClick={handleReset}><RefreshCw size={14} /> Reset</button>
       </div>
 
       <KpiGrid items={kpis} focus="" onFocus={() => {}} />
 
-      <div style={{display: "grid", gridTemplateColumns: "1fr 400px", gap: 16}}>
+      <div className="detail-grid">
         <section className="card table-card">
           <div className="card-head table-head">
             <div>
