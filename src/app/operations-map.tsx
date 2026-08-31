@@ -160,12 +160,6 @@ export default function OperationsMap({
     .filter(({ s }) => (region === "All regions" || s.region === region))
     .filter(({ s }) => (role === "All roles" || s.role === role));
   const visible = filtered;
-
-  if (!visible.length) {
-    return <div className="map-placeholder"><strong>No matching locations</strong><small>Try a different region or role filter.</small></div>;
-  }
-
-  // Spread coincident coordinates so every staff pin is separately visible.
   const spread = useMemo(
     () => spreadCoincidentPoints(visible.map(v => v.s)),
     [visible]
@@ -185,6 +179,10 @@ export default function OperationsMap({
     if (!selectedStaffId) return null;
     return allStaff.find(s => s.id === selectedStaffId) ?? null;
   }, [selectedStaffId]);
+
+  if (!visible.length) {
+    return <div className="map-placeholder"><strong>No matching locations</strong><small>Try a different region or role filter.</small></div>;
+  }
 
   return (
     <div className="real-map-shell">
