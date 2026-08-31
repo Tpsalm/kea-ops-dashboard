@@ -6,7 +6,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, CheckCircle2, ChevronRight, Database, FileText, LayoutDashboard, Map, Menu, Moon,
+  Bell, CheckCircle2, ChevronRight, Database, FileText, Gauge, LayoutDashboard, Map, Menu, Moon,
   MoreHorizontal, Network, PackageCheck, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
 } from "lucide-react";
 import { NAV } from "../app/data";
@@ -33,6 +33,7 @@ export function AppShell({
     { label: "API integrations", path: "/reports", icon: Network },
     { label: "Funding & deployment", path: "/vsr-operations", icon: Store },
     { label: "Merchandising", path: "/merchandiser", icon: PackageCheck },
+    { label: "TSR dashboard", path: "/tsr", icon: Gauge },
     { label: "System logs", path: "/system-logs", icon: Database },
     { label: "Audit trail", path: "/audit-trail", icon: FileText },
   ];

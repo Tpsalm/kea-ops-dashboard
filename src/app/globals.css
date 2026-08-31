@@ -576,3 +576,33 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 .merch-reference.dark .vsr-target-row{background:#16213a;border-color:#233247}
 .merch-reference.dark .merch-photo-grid figure{background:#16213a;border-color:#233247}
 @media(max-width:800px){.merch-photo-grid{grid-template-columns:1fr 1fr}}
+
+/* ========================================================================
+   TSR Console — territory, pipeline, accounts, outlets, map, supervisors
+   ======================================================================== */
+.tsr-reference{min-height:100vh;background:#f3f6f1;color:#14251a;display:flex;font-family:Arial,Helvetica,sans-serif}
+.tsr-reference .reference-rail{background:linear-gradient(180deg,#14532d,#166534);color:#dcfce7}
+.tsr-reference .reference-brand strong{color:#fff}
+.tsr-reference .reference-brand small{color:#bbf7d0}
+.tsr-reference .reference-logo b:first-child{color:#a6ce39}
+.tsr-reference .reference-logo b:nth-child(2){color:#f58220}
+.tsr-reference .reference-logo b:last-child{color:#fbbf24}
+.tsr-reference .reference-rail nav button{color:#dcfce7}
+.tsr-reference .reference-rail nav button:hover,.tsr-reference .reference-rail nav button.active{background:#22c55e;color:#052e16}
+.tsr-reference .reference-settings{color:#dcfce7}
+.tsr-reference .vsr-page-title{color:#166534}
+.tsr-reference .admin-panel>header svg{color:#166534}
+.tsr-reference .reference-kpis article b{color:#14532d}
+.tsr-reference.dark{background:#0b1220;color:#e2e8f0}
+.tsr-reference.dark .reference-topbar{background:#111c30;border-color:#233247}
+.tsr-reference.dark .reference-search{background:#16213a;color:#94a3b8;border:1px solid #233247}
+.tsr-reference.dark .reference-search input{color:#e2e8f0}
+.tsr-reference.dark .admin-panel,.tsr-reference.dark .reference-kpis article{background:#16213a;border-color:#233247}
+.tsr-reference.dark .admin-panel>header h2,.tsr-reference.dark .reference-kpis article b,.tsr-reference.dark .reference-kpis article span{color:#e2e8f0}
+.tsr-reference.dark .admin-panel>header p,.tsr-reference.dark .reference-kpis article small{color:#94a3b8}
+.tsr-reference.dark th{background:#1e2b47;color:#94a3b8}
+.tsr-reference.dark td{color:#cbd5e1;border-color:#233247}
+.tsr-reference.dark tbody tr:hover{background:#1a2740}
+.tsr-reference.dark .vsr-settings-list span,.tsr-reference.dark .vsr-target-row b{color:#e2e8f0}
+.tsr-reference.dark .vsr-target-row{background:#16213a;border-color:#233247}
+.tsr-reference .map-card{border:1px solid #dfe6e1;border-radius:8px;overflow:hidden}
