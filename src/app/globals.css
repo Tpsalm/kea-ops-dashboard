@@ -467,3 +467,32 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 @media(max-width:460px){
   .vsr-reference .reference-kpis{grid-template-columns:1fr}
 }
+
+/* ========================================================================
+   Page identity accents — each page tells its own visual story
+   ======================================================================== */
+.page-admin{--accent:#8fbd36;--accent-soft:#f2f8e7;--accent-ink:#3c5212}
+.page-live-map{--accent:#0284c7;--accent-soft:#e0f2fe;--accent-ink:#075985}
+.page-workforce{--accent:#0d9488;--accent-soft:#ccfbf1;--accent-ink:#115e59}
+.page-stores{--accent:#d97706;--accent-soft:#fef3c7;--accent-ink:#92400e}
+.page-performance{--accent:#7c3aed;--accent-soft:#ede9fe;--accent-ink:#5b21b6}
+.page-hierarchy{--accent:#4f46e5;--accent-soft:#e0e7ff;--accent-ink:#3730a3}
+.page-activities{--accent:#16a34a;--accent-soft:#dcfce7;--accent-ink:#166534}
+.page-data-quality{--accent:#dc2626;--accent-soft:#fee2e2;--accent-ink:#991b1b}
+.page-audit-trail{--accent:#64748b;--accent-soft:#e2e8f0;--accent-ink:#334155}
+.page-client-portal{--accent:#0891b2;--accent-soft:#cffafe;--accent-ink:#155e75}
+.page-reports{--accent:#9333ea;--accent-soft:#f3e8ff;--accent-ink:#6b21a8}
+.page-system-logs{--accent:#06b6d4;--accent-soft:#cffafe;--accent-ink:#0e7490}
+
+.content[class*="page-"] .heading{border-left:4px solid var(--accent);padding-left:16px;border-radius:4px}
+.content[class*="page-"] .eyebrow{color:var(--accent)}
+.content[class*="page-"] .live-dot{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.content[class*="page-"] .primary{border-color:var(--accent);background:var(--accent);color:#fff}
+.content[class*="page-"] .primary:hover{filter:brightness(1.06)}
+.content[class*="page-"] .text-btn{color:var(--accent)!important}
+.content[class*="page-"] .filter-title{color:var(--accent)}
+.content[class*="page-"] .kpi:hover,.content[class*="page-"] .kpi.selected{border-color:var(--accent)}
+.content[class*="page-"] .kpi.selected:after{background:var(--accent)}
+.content[class*="page-"] .kpi-icon.blue,.content[class*="page-"] .kpi-icon.teal,.content[class*="page-"] .kpi-icon.violet,.content[class*="page-"] .kpi-icon.amber{background:var(--accent-soft);color:var(--accent)}
+.content[class*="page-"] .select-box:hover{border-color:var(--accent)}
+.content[class*="page-"] .mini-search:focus-within{border-color:var(--accent)}

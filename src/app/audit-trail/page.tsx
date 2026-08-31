@@ -230,7 +230,7 @@ export default function AuditTrailPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell contentClassName="page-audit-trail">
       <PageHeading
         eyebrow="AUDIT TRAIL · DATA CHANGE HISTORY"
         title="Audit Trail"

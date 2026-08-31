@@ -60,7 +60,7 @@ export default function SuperAdminDashboard() {
   ];
 
   return (
-    <AppShell searchValue={search} onSearch={setSearch}>
+    <AppShell contentClassName="page-admin" searchValue={search} onSearch={setSearch}>
       <PageHeading
         eyebrow="SUPER ADMIN · GLOBAL PERFORMANCE"
         title="Global performance"

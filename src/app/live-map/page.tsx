@@ -18,7 +18,7 @@ export default function LiveMapPage() {
   });
 
   return (
-    <AppShell contentClassName="map-page">
+    <AppShell contentClassName="map-page page-live-map">
       <PageHeading
         eyebrow="LIVE GEOGRAPHIC OPERATIONS · UPDATED 4 MIN AGO"
         title="Live map"

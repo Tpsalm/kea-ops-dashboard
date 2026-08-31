@@ -274,7 +274,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell contentClassName="page-reports">
       <PageHeading
         eyebrow="AUTOMATED REPORTS · SCHEDULE & GENERATE"
         title="Reports Center"

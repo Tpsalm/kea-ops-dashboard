@@ -378,7 +378,7 @@ export default function DataQualityPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell contentClassName="page-data-quality">
       <PageHeading
         eyebrow="DATA QUALITY · VALIDATION & EXCEPTIONS"
         title="Data Quality Dashboard"

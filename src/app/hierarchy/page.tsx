@@ -499,7 +499,7 @@ export default function HierarchyPage() {
   };
 
   return (
-    <AppShell>
+    <AppShell contentClassName="page-hierarchy">
       <PageHeading
         eyebrow="WORKFORCE HIERARCHY · DRILL-DOWN NAVIGATION"
         title="Organizational Hierarchy"

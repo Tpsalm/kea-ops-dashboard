@@ -103,7 +103,7 @@ export default function ActivitiesPage() {
   const visibleActivities = filteredActivities.slice((safePage - 1) * 10, safePage * 10);
 
   return (
-    <AppShell>
+    <AppShell contentClassName="page-activities">
       <PageHeading
         eyebrow="FIELD ACTIVITIES · EVIDENCE TRACKING"
         title="Field Activities"

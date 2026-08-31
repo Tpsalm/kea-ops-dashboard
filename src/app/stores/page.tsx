@@ -21,7 +21,7 @@ export default function StoresPage() {
   const storesNeedingReview = visible.filter((store) => store.status === "Needs review").length;
   const productsMonitored = visible.reduce((sum, store) => sum + store.products, 0);
   return (
-    <AppShell>
+    <AppShell contentClassName="page-stores">
       <PageHeading eyebrow="RETAIL EXECUTION · STORES & PRODUCTS" title="Stores & products" subtitle="Monitor store coverage, product availability, and execution health across every territory." />
       <FilterBar region={region} onRegion={setRegion} onReset={() => setRegion("All regions")} />
       <section className="kpi-grid">

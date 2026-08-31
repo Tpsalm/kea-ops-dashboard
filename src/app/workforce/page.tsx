@@ -144,7 +144,7 @@ export default function WorkforcePage() {
   }
 
   return (
-    <AppShell searchValue={query} onSearch={(q) => { setQuery(q); setPage(1); }}>
+    <AppShell contentClassName="page-workforce" searchValue={query} onSearch={(q) => { setQuery(q); setPage(1); }}>
       <div className="heading-row">
         <PageHeading
           eyebrow={viewerType === 'client' ? "CLIENT PORTAL" : "FIELD FORCE · WORKFORCE"}

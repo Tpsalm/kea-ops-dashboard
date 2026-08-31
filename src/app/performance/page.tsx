@@ -30,7 +30,7 @@ export default function PerformancePage() {
     { label: "Quality score", value: `${visibleActivities.length ? Math.round(visibleActivities.reduce((sum, activity) => sum + activity.completion, 0) / visibleActivities.length) : 0}%`, trend: "2.1%", up: true, sub: "activity completion", icon: Activity, tone: "amber" },
   ];
   return (
-    <AppShell>
+    <AppShell contentClassName="page-performance">
       <PageHeading eyebrow="OPERATIONS ANALYTICS · PERFORMANCE" title="Performance" subtitle="Understand productivity, completion, and workforce output across the operation." />
       <FilterBar period={period} onPeriod={setPeriod} region={region} onRegion={setRegion} role={role} onRole={setRole} onReset={() => { setPeriod("Last 30 days"); setRegion("All regions"); setRole("All roles"); }} />
       <KpiGrid items={kpis} focus="" onFocus={() => undefined} />

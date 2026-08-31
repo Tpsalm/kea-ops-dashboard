@@ -57,7 +57,7 @@ export default function ClientPortalPage() {
   ];
   const openDetail = (title: string, text: string) => setDetail({ title, text });
 
-  return <AppShell>
+  return <AppShell contentClassName="page-client-portal">
     <PageHeading eyebrow="OPERATIONS ANALYTICS · PERFORMANCE" title="Performance" subtitle={`Understand productivity, completion, and workforce output for ${client.name}.`} actions={<><SelectBox label="DATE RANGE" value={dateRange} options={["Today", "Last 7 days", "Last 30 days", "This quarter"]} onChange={setDateRange} /><button className="primary" onClick={() => openDetail("Client report", `${client.name} has ${activities.length} activities across ${stores.length} stores.`)}><Download size={16} /> Export</button></>} />
     <FilterBar region={region} onRegion={value => { setRegion(value); setSelectedPin(0); }} role={role} onRole={value => { setRole(value); setSelectedPin(0); }} client={clientFilter} onClient={value => { setClientFilter(value); setSelectedPin(0); }} onReset={() => { setRegion("All regions"); setRole("All roles"); setClientFilter("All clients"); setDateRange("Last 30 days"); setSelectedPin(0); }} />
     <KpiGrid items={kpis} focus="" onFocus={label => openDetail(label, `${label}: ${kpis.find(item => item.label === label)?.value ?? "0"}.`)} />
