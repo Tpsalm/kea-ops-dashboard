@@ -6,8 +6,8 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, CheckCircle2, ChevronRight, Database, FileText, Gauge, LayoutDashboard, Map, Menu, Moon,
-  MoreHorizontal, Network, PackageCheck, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
+  Bell, CheckCircle2, ChevronRight, Database, FileText, LayoutDashboard, Map, Menu, Moon,
+  MoreHorizontal, Network, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
 } from "lucide-react";
 import { NAV } from "../app/data";
 import useAuth from "../lib/useAuth";
@@ -27,14 +27,12 @@ export function AppShell({
   const router = useRouter();
   const { user, loading } = useAuth();
   const superAdminNav = [
-    { label: "Global performance", path: "/admin", icon: LayoutDashboard },
-    { label: "Users & roles", path: "/hierarchy", icon: Users },
-    { label: "Territories & routes", path: "/live-map", icon: Map },
-    { label: "API integrations", path: "/reports", icon: Network },
-    { label: "Funding & deployment", path: "/vsr-operations", icon: Store },
-    { label: "Merchandising", path: "/merchandiser", icon: PackageCheck },
-    { label: "TSR dashboard", path: "/tsr", icon: Gauge },
-    { label: "System logs", path: "/system-logs", icon: Database },
+    { label: "Global Performance", path: "/admin", icon: LayoutDashboard },
+    { label: "Users & Roles", path: "/hierarchy", icon: Users },
+    { label: "Territories and Routes", path: "/live-map", icon: Map },
+    { label: "API Integrations", path: "/reports", icon: Network },
+    { label: "Funding & Deployment", path: "/vsr-operations", icon: Store },
+    { label: "System Logs", path: "/system-logs", icon: Database },
     { label: "Audit trail", path: "/audit-trail", icon: FileText },
   ];
   const shellNav = user?.role === "super-admin" ? superAdminNav : NAV;
@@ -72,6 +70,9 @@ export function AppShell({
               <Icon size={18} /><span>{label}</span>{label === "Live map" && <i>LIVE</i>}
             </Link>
           ))}
+          {user.role === "super-admin" && (
+            <button type="button" onClick={() => { setPanel("settings"); setMobileNav(false); }}><Settings size={18} /><span>Settings</span></button>
+          )}
         </nav>
         <nav className="manage">
           <p>MANAGE</p>
