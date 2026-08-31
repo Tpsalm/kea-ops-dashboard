@@ -401,3 +401,25 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
   .charts{grid-template-columns:1fr}
   .modal-two-col{grid-template-columns:1fr}
 }
+
+/* ========================================================================
+   Super Admin control centre — reliable filter controls
+   ======================================================================== */
+.reference-filters{flex-wrap:wrap;align-items:center}
+.admin-select{cursor:pointer;transition:border-color .15s}
+.admin-select:hover{border-color:#a7b5af}
+.admin-select span{pointer-events:none}
+.admin-select select{-webkit-appearance:none;-moz-appearance:none;appearance:none;cursor:pointer;height:100%}
+.admin-select svg{pointer-events:none;bottom:auto;top:50%;transform:translateY(-50%)}
+.reference-filters>button{cursor:pointer;transition:border-color .15s,background .15s}
+.reference-filters>button:hover{border-color:#a7b5af}
+.reference-filters>button.filter-toggle:hover{background:#09676e}
+@media(max-width:800px){
+  .reference-filters>button.filter-toggle{grid-column:1/-1;height:36px;font-size:11px}
+  .reference-filters>button{height:36px}
+  .admin-select{height:36px}
+  .admin-select select{font-size:14px!important}
+}
+@media(max-width:460px){
+  .reference-filters{grid-template-columns:1fr}
+}

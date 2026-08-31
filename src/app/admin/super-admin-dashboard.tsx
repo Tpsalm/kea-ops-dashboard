@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,7 +29,16 @@ const regions = ["All regions", "Lagos", "Ogun", "Oyo", "Delta", "South West", "
 const roles = ["All roles", "VSR", "TSR", "Supervisor", "Merchandiser"];
 
 function SelectControl({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
-  return <label className="admin-select"><span>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map((option) => <option key={option}>{option}</option>)}</select><ChevronDown size={13} /></label>;
+  const id = useId();
+  return (
+    <label className="admin-select" htmlFor={id}>
+      <span>{label}</span>
+      <select id={id} value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+      <ChevronDown size={13} />
+    </label>
+  );
 }
 
 function Panel({ title, subtitle, children, className = "" }: { title: string; subtitle?: string; children: ReactNode; className?: string }) {
