@@ -25,10 +25,10 @@ const vehicleItems = [
 ];
 
 const navItems: { key: PageKey; label: string; icon: typeof Route }[] = [
-  { key: "routes", label: "My routes", icon: Route },
-  { key: "sales", label: "Daily sales log", icon: ClipboardList },
-  { key: "vehicle", label: "Vehicle check", icon: Car },
-  { key: "performance", label: "Performance", icon: Target },
+  { key: "routes", label: "My Routes", icon: Route },
+  { key: "sales", label: "Daily Sales Log", icon: ClipboardList },
+  { key: "vehicle", label: "Vehicle Check", icon: Car },
+  { key: "performance", label: "Performance (My Target)", icon: Target },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -36,7 +36,7 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   routes: { title: "MY ROUTES", subtitle: "Assigned territories, route coverage and field completion." },
   sales: { title: "DAILY SALES LOG", subtitle: "Product movement and stock observations from your outlets." },
   vehicle: { title: "VEHICLE CHECK", subtitle: "Pre-trip vehicle inspection checklist and safety sign-off." },
-  performance: { title: "PERFORMANCE · MY TARGET", subtitle: "Your visit and completion progress against monthly targets." },
+  performance: { title: "PERFORMANCE (MY TARGET)", subtitle: "Your visit and completion progress against monthly targets." },
   settings: { title: "SETTINGS", subtitle: "Profile, preferences, theme and security for your workspace." },
 };
 
