@@ -537,3 +537,42 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
   .vsr-check-list{grid-template-columns:1fr}
   .vsr-target-row{flex-direction:column;align-items:stretch}
 }
+
+/* ========================================================================
+   Merchandiser Console — assigned stores, shelf, POSM, products, photos
+   ======================================================================== */
+.merch-reference{min-height:100vh;background:#faf6f1;color:#2a1a0e;display:flex;font-family:Arial,Helvetica,sans-serif}
+.merch-reference .reference-rail{background:linear-gradient(180deg,#7c2d12,#9a3412);color:#fde8d7}
+.merch-reference .reference-brand strong{color:#fff}
+.merch-reference .reference-brand small{color:#fcd9b8}
+.merch-reference .reference-logo b:first-child{color:#a6ce39}
+.merch-reference .reference-logo b:nth-child(2){color:#fbbf24}
+.merch-reference .reference-logo b:last-child{color:#f58220}
+.merch-reference .reference-rail nav button{color:#fde8d7}
+.merch-reference .reference-rail nav button:hover,.merch-reference .reference-rail nav button.active{background:#c2410c;color:#fff}
+.merch-reference .reference-settings{color:#fde8d7}
+.merch-reference .vsr-page-title{color:#9a3412}
+.merch-reference .admin-panel>header svg{color:#c2410c}
+.merch-reference .reference-kpis article b{color:#7c2d12}
+.merch-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;padding:12px 14px 16px}
+.merch-photo-grid figure{margin:0;background:#fff;border:1px solid #e6e0d8;border-radius:8px;overflow:hidden}
+.merch-photo-grid img{width:100%;height:130px;object-fit:cover;display:block}
+.merch-photo-grid figcaption{padding:9px 11px}
+.merch-photo-grid figcaption b{display:block;font-size:11px}
+.merch-photo-grid figcaption small{color:#8a8075;font-size:9px}
+.merch-reference.dark{background:#0b1220;color:#e2e8f0}
+.merch-reference.dark .reference-topbar{background:#111c30;border-color:#233247}
+.merch-reference.dark .reference-search{background:#16213a;color:#94a3b8;border:1px solid #233247}
+.merch-reference.dark .reference-search input{color:#e2e8f0}
+.merch-reference.dark .admin-panel,.merch-reference.dark .reference-kpis article{background:#16213a;border-color:#233247}
+.merch-reference.dark .admin-panel>header h2,.merch-reference.dark .reference-kpis article b,.merch-reference.dark .reference-kpis article span{color:#e2e8f0}
+.merch-reference.dark .admin-panel>header p,.merch-reference.dark .reference-kpis article small{color:#94a3b8}
+.merch-reference.dark th{background:#1e2b47;color:#94a3b8}
+.merch-reference.dark td{color:#cbd5e1;border-color:#233247}
+.merch-reference.dark tbody tr:hover{background:#1a2740}
+.merch-reference.dark .vsr-check-list button{background:#16213a;border-color:#233247;color:#e2e8f0}
+.merch-reference.dark .vsr-check-list button.checked{background:#3b1d0d;border-color:#f58220;color:#fdba74}
+.merch-reference.dark .vsr-settings-list span,.merch-reference.dark .vsr-target-row b{color:#e2e8f0}
+.merch-reference.dark .vsr-target-row{background:#16213a;border-color:#233247}
+.merch-reference.dark .merch-photo-grid figure{background:#16213a;border-color:#233247}
+@media(max-width:800px){.merch-photo-grid{grid-template-columns:1fr 1fr}}

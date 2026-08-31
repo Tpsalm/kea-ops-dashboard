@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell, CheckCircle2, ChevronRight, Database, FileText, LayoutDashboard, Map, Menu, Moon,
-  MoreHorizontal, Network, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
+  MoreHorizontal, Network, PackageCheck, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
 } from "lucide-react";
 import { NAV } from "../app/data";
 import useAuth from "../lib/useAuth";
@@ -32,6 +32,7 @@ export function AppShell({
     { label: "Territories & routes", path: "/live-map", icon: Map },
     { label: "API integrations", path: "/reports", icon: Network },
     { label: "Funding & deployment", path: "/vsr-operations", icon: Store },
+    { label: "Merchandising", path: "/merchandiser", icon: PackageCheck },
     { label: "System logs", path: "/system-logs", icon: Database },
     { label: "Audit trail", path: "/audit-trail", icon: FileText },
   ];
