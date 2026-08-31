@@ -2,10 +2,9 @@
 
 import { useId, useMemo, useState } from "react";
 import {
-  AlertTriangle, Bell, CheckCircle2, ChevronDown, Flag, Gauge, MapPinned, Menu,
+  AlertTriangle, Bell, ChevronDown, Flag, Gauge, MapPinned, Menu,
   MoreHorizontal, RefreshCw, Route, Search, Settings, ShieldCheck, Timer, Users, X,
 } from "lucide-react";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { staff, vsrTrackerRows } from "../data";
 
 const regionOptions = ["All regions", "Lagos", "Ogun", "Oyo", "Delta", "Enugu", "Ibadan", "Asaba", "Benin", "Osogbo", "Abuja"];
@@ -99,10 +98,6 @@ export default function VsrOperationsPage() {
   const riskCount = trackerRows.filter((row) => row.status === "Under Review - Risk & Compliance").length;
   const clearedCount = trackerRows.filter((row) => row.status === "Cleared by Risk & Compliance").length;
 
-  const statusBreakdown = statusOptions
-    .map((name) => ({ name, value: trackerRows.filter((row) => row.status === name).length, color: statusColors[name] }))
-    .filter((item) => item.value > 0);
-
   const totalPages = Math.max(1, Math.ceil(trackerRows.length / 10));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const visibleRows = trackerRows.slice((safePage - 1) * 10, safePage * 10);
@@ -123,8 +118,13 @@ export default function VsrOperationsPage() {
   function scrollToSection(id: string) {
     const el = document.getElementById(id);
     if (!el) return;
-    const top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 48;
-    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    const top = el.getBoundingClientRect().top + currentScroll - 48;
+    try {
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    } catch {
+      window.scrollTo(0, Math.max(0, top));
+    }
   }
 
   return (
@@ -137,10 +137,10 @@ export default function VsrOperationsPage() {
           <button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>
         <nav>
-          <a href="#vsr-overview" className="active" onClick={(event) => { event.preventDefault(); scrollToSection("vsr-overview"); }}><Gauge size={15} /> Overview</a>
-          <a href="#vsr-funding" onClick={(event) => { event.preventDefault(); scrollToSection("vsr-funding"); }}><Flag size={15} /> Funding tracker</a>
-          <a href="#vsr-routes" onClick={(event) => { event.preventDefault(); scrollToSection("vsr-routes"); }}><Route size={15} /> Route board</a>
-          <a href="#vsr-risk" onClick={(event) => { event.preventDefault(); scrollToSection("vsr-risk"); }}><ShieldCheck size={15} /> Risk & compliance</a>
+          <button type="button" className="active" onClick={() => scrollToSection("vsr-overview")}><Gauge size={15} /> Overview</button>
+          <button type="button" onClick={() => scrollToSection("vsr-funding")}><Flag size={15} /> Funding tracker</button>
+          <button type="button" onClick={() => scrollToSection("vsr-routes")}><Route size={15} /> Route board</button>
+          <button type="button" onClick={() => scrollToSection("vsr-risk")}><ShieldCheck size={15} /> Risk & compliance</button>
         </nav>
         <button className="reference-settings"><Settings size={15} /> Settings <MoreHorizontal size={15} /></button>
       </aside>
@@ -173,21 +173,22 @@ export default function VsrOperationsPage() {
           <div className="vsr-panel-grid">
             <section className="admin-panel" id="vsr-funding">
               <header><div><h2>Funding status breakdown</h2><p>VSR pipeline by funding state</p></div><button type="button" aria-label="Funding options"><MoreHorizontal size={16} /></button></header>
-              <div className="vsr-donut">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={statusBreakdown} dataKey="value" nameKey="name" innerRadius={55} outerRadius={78} paddingAngle={3} stroke="none">
-                      {statusBreakdown.map((item) => <Cell key={item.name} fill={item.color} />)}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="donut-total"><strong>{trackerRows.length}</strong><span>VSRS</span></div>
-              </div>
-              <div className="vsr-legend">
-                {statusBreakdown.map((item) => (
-                  <div key={item.name}><span><i style={{ background: item.color }} />{item.name}</span><b>{item.value}</b></div>
-                ))}
+              <div className="vsr-status-bars">
+                {statusOptions.map((name) => {
+                  const count = trackerRows.filter((row) => row.status === name).length;
+                  const pct = trackerRows.length ? Math.round((count / trackerRows.length) * 100) : 0;
+                  return (
+                    <div key={name}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                        <span style={{ fontSize: 10, color: "#52615b" }}>{name}</span>
+                        <b style={{ fontSize: 12, color: "#18231f" }}>{count}</b>
+                      </div>
+                      <div style={{ height: 10, background: "#eef1ef", borderRadius: 5, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, background: statusColors[name], borderRadius: 5 }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
