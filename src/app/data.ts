@@ -172,6 +172,75 @@ export const roleData = [
   { name: "Supervisors", value: 28, color: "#f59e0b" }, { name: "TSRs", value: 14, color: "#8b5cf6" },
 ];
 
+export type VsrFundingStatus = "Funded" | "Awaiting Funding" | "No Loan Required" | "Under Review - Risk & Compliance" | "Cleared by Risk & Compliance";
+
+export type VsrTrackerRow = {
+  id: number;
+  fullName: string;
+  vsrType: "New" | "Existing";
+  status: VsrFundingStatus;
+  notes: string;
+  dateFunded: string;
+  location: string;
+  email: string;
+  phone: string;
+  priority: number;
+  riskAlert: string;
+};
+
+export const vsrTrackerRows: VsrTrackerRow[] = [
+  { id: 1, fullName: "Shittu Akinsanya", vsrType: "New", status: "Funded", notes: "RISK ALERT: Flagged for unaccountability of funds", dateFunded: "18-Jun-2026", location: "Lagos", email: "akinsanyahit9@gmail.com", phone: "08068779850, 08063463006", priority: 3, riskAlert: "DANGER - Fund Accountability" },
+  { id: 2, fullName: "Abel Nduka", vsrType: "New", status: "Funded", notes: "", dateFunded: "15-Jun-2026", location: "Lagos", email: "abelnduka.thesalesmachine@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 3, fullName: "Maria Uchechukwu", vsrType: "New", status: "Funded", notes: "", dateFunded: "15-Jun-2026", location: "Lagos", email: "mariauchechukwu71@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 4, fullName: "Oluchukwu Onyeike", vsrType: "New", status: "Funded", notes: "", dateFunded: "15-Jun-2026", location: "Lagos", email: "oluchukwuonyeike@yahoo.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 5, fullName: "Oluwapelumi Oyeleke", vsrType: "New", status: "Funded", notes: "", dateFunded: "15-Jun-2026", location: "Lagos", email: "vickie_mccarter@yahoo.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 6, fullName: "Onifade Omoniyi Joseph", vsrType: "New", status: "Funded", notes: "", dateFunded: "15-Jun-2026", location: "Lagos", email: "onifade_omoniyi@yahoo.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 7, fullName: "Paul Olakonipekun", vsrType: "New", status: "Funded", notes: "", dateFunded: "15-Jun-2026", location: "Ogun (Abk)", email: "polakso1@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 8, fullName: "Matthew Olatunde Mobolaji", vsrType: "New", status: "Funded", notes: "", dateFunded: "22-Jun-2026", location: "Lagos", email: "matthewoladele2018@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 9, fullName: "Abubakar Hassan Olayiwola", vsrType: "Existing", status: "Funded", notes: "", dateFunded: "22-Jun-2026", location: "Lagos", email: "yomix002@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 10, fullName: "Ogunbona Kayode", vsrType: "New", status: "Funded", notes: "", dateFunded: "22-Jun-2026", location: "Lagos", email: "kayode.ogunbona@outlook.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 11, fullName: "Oke Semilogo Ayodeji", vsrType: "New", status: "Funded", notes: "", dateFunded: "22-Jun-2026", location: "Lagos", email: "okesemilog02@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 12, fullName: "Okoro Chibuzor", vsrType: "New", status: "Funded", notes: "", dateFunded: "22-Jun-2026", location: "Lagos", email: "ail4prosper@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 13, fullName: "Olanipekun Micheal", vsrType: "New", status: "Funded", notes: "", dateFunded: "22-Jun-2026", location: "Lagos", email: "olanipekunm9@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 14, fullName: "Ologbonori Toyosi", vsrType: "Existing", status: "Funded", notes: "", dateFunded: "23-Jun-2026", location: "Ogun (Ijebu)", email: "busolami14@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 15, fullName: "Adewale Friday", vsrType: "Existing", status: "Funded", notes: "", dateFunded: "25-Jun-2026", location: "Lagos", email: "adewalefrida05@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 16, fullName: "AKINSANMI OLUWAFEMI OLUWATADE", vsrType: "New", status: "Funded", notes: "", dateFunded: "26-Jul-2026", location: "Lagos", email: "tadepraise@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 17, fullName: "Babatunde Salami Ibrahim", vsrType: "New", status: "Funded", notes: "", dateFunded: "26-Jul-2026", location: "Lagos", email: "salamitunde3@gmail.com", phone: "080 2812 7295", priority: 3, riskAlert: "" },
+  { id: 18, fullName: "Balogun Oyekan", vsrType: "New", status: "Funded", notes: "", dateFunded: "26-Jul-2026", location: "Ogun (Ijebu)", email: "", phone: "", priority: 3, riskAlert: "" },
+  { id: 19, fullName: "Timothy Ogunmokun", vsrType: "New", status: "Funded", notes: "", dateFunded: "26-Jul-2026", location: "Abeokuta", email: "timothyogunmokun@yahoo.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 20, fullName: "Unuaro Francis", vsrType: "New", status: "Funded", notes: "", dateFunded: "26-Jul-2026", location: "Lagos", email: "francisunuaro@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 21, fullName: "Ezeoka Chima Emmanuel", vsrType: "New", status: "Funded", notes: "", dateFunded: "29-Jun-2026", location: "Lagos", email: "ezeokachi@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 22, fullName: "SODIQ AMINU SALE", vsrType: "New", status: "Funded", notes: "", dateFunded: "29-Jun-2026", location: "Lagos", email: "sadiqaminuhsm@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 23, fullName: "Jacob Izobo", vsrType: "New", status: "Funded", notes: "", dateFunded: "01-Jul-2026", location: "Lagos", email: "jacobizobo480@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 24, fullName: "Odion Nicolas Charles", vsrType: "New", status: "Funded", notes: "", dateFunded: "07-Jul-2026", location: "Lagos", email: "odionnicolasf82@gmail.com", phone: "08070748424", priority: 3, riskAlert: "" },
+  { id: 25, fullName: "Yusuf Abimbola Rasheed", vsrType: "New", status: "Funded", notes: "", dateFunded: "7/26/2026", location: "Ogun", email: "", phone: "081 073 43185", priority: 3, riskAlert: "" },
+  { id: 26, fullName: "Oyerogba Atoyebi", vsrType: "New", status: "Funded", notes: "", dateFunded: "31-Jul-2026", location: "Ibadan", email: "oyerogbaatoyebi@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 27, fullName: "Aragundade Sunday Adewale", vsrType: "New", status: "Funded", notes: "", dateFunded: "31-Jul-2026", location: "Ibadan", email: "adewaleg41@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 28, fullName: "Abegunde Francis", vsrType: "New", status: "Funded", notes: "", dateFunded: "31-Jul-2026", location: "Ibadan", email: "francistunde@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 29, fullName: "Jonathan Okena", vsrType: "New", status: "Funded", notes: "", dateFunded: "31-Jul-2026", location: "Ibadan", email: "jonathanokena@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 30, fullName: "Dugwu Ukamaka Chibuzor", vsrType: "New", status: "No Loan Required", notes: "", dateFunded: "", location: "Enugu", email: "dugwuukamachibuzo@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 31, fullName: "Ngwu Tochukwu Nathaniel", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Enugu", email: "tochukwunathngwu@yahoo.com", phone: "", priority: 2, riskAlert: "" },
+  { id: 32, fullName: "Nwoko Ikechi Obinna", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Benin", email: "iykoskin@gmail.com", phone: "", priority: 2, riskAlert: "" },
+  { id: 33, fullName: "Okoronkwo Joshua", vsrType: "New", status: "No Loan Required", notes: "", dateFunded: "", location: "Enugu", email: "jaskey4real@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 34, fullName: "Adediran Kehinde", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Ibadan", email: "kehindededi@gmail.com", phone: "", priority: 2, riskAlert: "" },
+  { id: 35, fullName: "Olorunsola Michael Adegboyega", vsrType: "New", status: "No Loan Required", notes: "", dateFunded: "", location: "Lagos", email: "olumike080@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 36, fullName: "Tiamiyu Peter Ayoade", vsrType: "New", status: "No Loan Required", notes: "Loan should not be provided to him", dateFunded: "", location: "Lagos", email: "peteriamiyu123@gmail.com", phone: "", priority: 3, riskAlert: "" },
+  { id: 37, fullName: "Ajibade Wasiu Abiodun", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Osogbo", email: "ajibadewasiu123@gmail.com", phone: "0703 004 4677 / 0806 247 7193", priority: 2, riskAlert: "" },
+  { id: 38, fullName: "Babatunde Faluji", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Ibadan", email: "", phone: "", priority: 2, riskAlert: "" },
+  { id: 39, fullName: "Ifeanyichukwu Adesioya", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Enugu", email: "rhymonchem@gmail.com", phone: "", priority: 2, riskAlert: "" },
+  { id: 40, fullName: "Bamidele Tayo", vsrType: "New", status: "Cleared by Risk & Compliance", notes: "Cleared by risk on Wednesday, August 12th, 2026. Awaiting to be send for code approval", dateFunded: "", location: "Ibadan", email: "tayobamidele001@gmail.com", phone: "", priority: 2, riskAlert: "" },
+  { id: 41, fullName: "Ubong Fabian Ukpakka", vsrType: "Existing", status: "No Loan Required", notes: "Fabian should provide his personal documents should provide a 2nd guarantor", dateFunded: "", location: "Lagos", email: "", phone: "09069927954", priority: 3, riskAlert: "" },
+  { id: 42, fullName: "Ikechukwu Maduora", vsrType: "New", status: "Under Review - Risk & Compliance", notes: "Sent to Risk on Monday 27th July, 2026. Sent A follow-up email on Saturday, August 8, 2026", dateFunded: "", location: "Asaba", email: "maduoraike@gmail.com", phone: "090 69696427", priority: 2, riskAlert: "" },
+  { id: 43, fullName: "Moses Akindiran Akinloye", vsrType: "New", status: "Cleared by Risk & Compliance", notes: "Cleared by risk on Wednesday, August 12th, 2026. Awaiting to be send for code approval", dateFunded: "", location: "Lagos", email: "mozez007@gmail.com", phone: "08035191890", priority: 2, riskAlert: "" },
+  { id: 44, fullName: "Edward Olamilekan", vsrType: "New", status: "Cleared by Risk & Compliance", notes: "Cleared by risk on Wednesday, August 12th, 2026. Awaiting to be send for code approval", dateFunded: "", location: "Lagos", email: "oadewale066@gmail.com", phone: "081 622 58096", priority: 2, riskAlert: "" },
+  { id: 45, fullName: "Matimotu Stephen Obasayo", vsrType: "New", status: "Awaiting Funding", notes: "Waiting for his document (one month field induction with an experiences vsr / tsr before creation of account.)", dateFunded: "", location: "Lagos", email: "stephenmattimzfolarin@gmail.com", phone: "08122305714", priority: 2, riskAlert: "" },
+  { id: 46, fullName: "ABDULIELI TIAMIYU", vsrType: "New", status: "Awaiting Funding", notes: "Territory Sales Representative (Yet to send Him Off Letter)", dateFunded: "", location: "Ibadan", email: "tiamiyuabduliejili13@gmail.com", phone: "08064910834", priority: 2, riskAlert: "" },
+  { id: 47, fullName: "Abiola Felicia Omowuni", vsrType: "New", status: "Funded", notes: "Felicia should provide her application form for review", dateFunded: "01-Aug-2026", location: "Lagos", email: "okunola_bila@yahoo.com", phone: "08060364542", priority: 3, riskAlert: "" },
+  { id: 48, fullName: "Michael Olayiwola Oluwaseun", vsrType: "New", status: "Funded", notes: "", dateFunded: "", location: "Lagos", email: "olaiyiwola120@gmail.com", phone: "080 66655555", priority: 3, riskAlert: "" },
+  { id: 49, fullName: "Kehinde Olasunkanmi", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Lagos", email: "", phone: "", priority: 2, riskAlert: "" },
+  { id: 50, fullName: "Samuel Adebayo", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Lagos", email: "", phone: "", priority: 2, riskAlert: "" }
+];
+
 export const ROLE_COLORS: Record<Role, string> = {
   VSR: "#2563eb",           // blue
   Merchandiser: "#14b8a6",  // teal
