@@ -96,6 +96,7 @@ export default function SuperAdminDashboard() {
       <div className="reference-content">
         <div className="reference-title"><h1>SUPER ADMIN DASHBOARD</h1><span>Aug 27, 2026</span></div>
         <section className="reference-filters"><button type="button" className="filter-toggle" onClick={() => setFiltersOpen((open) => !open)}><Layers3 size={13} /> {filtersOpen ? "Hide filters" : "Show filters"}</button>{filtersOpen && <><SelectControl label="REGION" value={region} options={regions} onChange={(value) => { setRegion(value); setSelectedPin(0); }} /><SelectControl label="ROLE" value={role} options={roles} onChange={setRole} /><SelectControl label="CLIENT" value={client} options={["All clients", "Nova Consumer", "Aria Foods"]} onChange={setClient} /><button type="button" onClick={resetFilters}>Reset filters</button></>}</section>
+        <div className="reference-filter-summary">Filtering <strong>{filteredStaff.length}</strong> of {staff.length} staff — Region: {region} · Role: {role} · Client: {client}</div>
         <section className="reference-kpis">
           <article><span>Total system users <MoreHorizontal size={14} /></span><b>{filteredStaff.length + 116}</b><small>↑ 137% system users only</small></article>
           <article><span>Total active staff <MoreHorizontal size={14} /></span><b>{filteredStaff.filter((person) => person.status !== "Inactive").length + 95}</b><small>Aggregates merchandisers, supervisors, VSRs & TSRs</small></article>
