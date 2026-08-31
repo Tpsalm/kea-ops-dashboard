@@ -87,7 +87,10 @@ export default function useAuth() {
 
   async function resetPassword(email: string) {
     if (!supabase) throw new Error("Password recovery requires a configured Supabase account.");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login` });
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: origin ? `${origin}/login` : "/login",
+    });
     if (error) throw error;
   }
 
