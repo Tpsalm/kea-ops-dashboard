@@ -1,21 +1,15 @@
 "use client";
 
-import { useId, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
-  Activity, AlertTriangle, BarChart3, Bell, Building2, ChevronDown,
-  Database, FileText, Flag, Gauge, KeyRound, Layers3, Map, Menu,
-  MoreHorizontal, Network, PieChart as PieIcon, Settings, ShieldCheck,
-  Store, Users, X,
-} from "lucide-react";
-import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Funnel,
-  FunnelChart, LabelList, Pie, PieChart, ResponsiveContainer, Tooltip,
-  XAxis, YAxis,
+  Area, AreaChart, CartesianGrid, Cell, Funnel, FunnelChart, LabelList,
+  Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
+import { Building2, Flag, PieChart as PieIcon, ShieldCheck, Users } from "lucide-react";
 import { staff, vsrTrackerRows, type Role } from "../data";
+import { AppShell } from "../../components/app-shell";
+import { FilterBar, KpiGrid, MapCard, PageHeading } from "../shared";
 
 const OperationsMap = dynamic(() => import("../operations-map"), {
   ssr: false,
@@ -28,32 +22,12 @@ const roleColors: Record<Role, string> = {
 const regions = ["All regions", "Lagos", "Ogun", "Oyo", "Delta", "South West", "South East", "South South", "North", "Port Harcourt", "Owerri"];
 const roles = ["All roles", "VSR", "TSR", "Supervisor", "Merchandiser"];
 
-function SelectControl({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
-  const id = useId();
-  return (
-    <label className="admin-select" htmlFor={id}>
-      <span>{label}</span>
-      <select id={id} value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => <option key={option} value={option}>{option}</option>)}
-      </select>
-      <ChevronDown size={13} />
-    </label>
-  );
-}
-
-function Panel({ title, subtitle, children, className = "" }: { title: string; subtitle?: string; children: ReactNode; className?: string }) {
-  return <section className={`admin-panel ${className}`}><header><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div><button type="button" aria-label={`${title} options`}><MoreHorizontal size={16} /></button></header>{children}</section>;
-}
-
 export default function SuperAdminDashboard() {
-  const router = useRouter();
   const [region, setRegion] = useState("All regions");
   const [role, setRole] = useState("All roles");
   const [client, setClient] = useState("All clients");
-  const [mobileNav, setMobileNav] = useState(false);
   const [selectedPin, setSelectedPin] = useState(0);
   const [search, setSearch] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const filteredStaff = useMemo(() => staff.filter((person) =>
     (region === "All regions" || person.region === region) &&
@@ -83,38 +57,165 @@ export default function SuperAdminDashboard() {
   const qualityRows = useMemo(() => regions.slice(1, 6).map((name, index) => ({ state: name, errors: Math.max(0, Math.round((filteredStaff.filter((person) => person.region === name).length || 1) * (index % 3 === 0 ? 1.4 : .3))), region: regions[index + 2] ?? "Lagos", error: index % 3 === 0 ? 1 : 0 })), [filteredStaff]);
 
   const resetFilters = () => { setRegion("All regions"); setRole("All roles"); setClient("All clients"); setSearch(""); setSelectedPin(0); };
-  const openAdminSection = (path: string) => router.push(`${path}?from=admin`);
 
-  return <div className="super-admin-reference">
-    <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
-      <div className="reference-brand"><div className="reference-logo"><b>k</b><b>e</b><b>a</b></div><strong>KEA GROUP</strong><small>Talent Management System</small><button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button></div>
-      <nav><Link href="/admin" className="active"><Gauge size={15} /> Global performance</Link><button type="button" onClick={() => openAdminSection("/hierarchy")}><Users size={15} /> Users & roles</button><button type="button" onClick={() => openAdminSection("/live-map")}><Map size={15} /> Territories & routes</button><button type="button" onClick={() => openAdminSection("/reports")}><Network size={15} /> API integrations</button><button type="button" onClick={() => openAdminSection("/vsr-operations")}><Store size={15} /> Funding & deployment</button><button type="button" onClick={() => openAdminSection("/system-logs")}><Database size={15} /> System logs</button><button type="button" onClick={() => openAdminSection("/audit-trail")}><FileText size={15} /> Audit trail</button></nav>
-      <button className="reference-settings"><Settings size={15} /> Settings <MoreHorizontal size={15} /></button>
-    </aside>
-    <main className="reference-main">
-      <header className="reference-topbar"><button className="reference-menu" type="button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu size={19} /></button><div className="reference-search"><KeyRound size={13} /><input placeholder="KEA Talent Management System" value={search} onChange={(event) => setSearch(event.target.value)} /></div><span className="reference-chip">x 1</span><div className="reference-actions"><button type="button" aria-label="Toggle theme"><Activity size={15} /></button><button type="button" aria-label="Notifications"><Bell size={15} /></button><span>KA</span></div></header>
-      <div className="reference-content">
-        <div className="reference-title"><h1>SUPER ADMIN DASHBOARD</h1><span>Aug 27, 2026</span></div>
-        <section className="reference-filters"><button type="button" className="filter-toggle" onClick={() => setFiltersOpen((open) => !open)}><Layers3 size={13} /> {filtersOpen ? "Hide filters" : "Show filters"}</button>{filtersOpen && <><SelectControl label="REGION" value={region} options={regions} onChange={(value) => { setRegion(value); setSelectedPin(0); }} /><SelectControl label="ROLE" value={role} options={roles} onChange={setRole} /><SelectControl label="CLIENT" value={client} options={["All clients", "Nova Consumer", "Aria Foods"]} onChange={setClient} /><button type="button" onClick={resetFilters}>Reset filters</button></>}</section>
-        <div className="reference-filter-summary">Filtering <strong>{filteredStaff.length}</strong> of {staff.length} staff — Region: {region} · Role: {role} · Client: {client}</div>
-        <section className="reference-kpis">
-          <article><span>Total system users <MoreHorizontal size={14} /></span><b>{filteredStaff.length + 116}</b><small>↑ 137% system users only</small></article>
-          <article><span>Total active staff <MoreHorizontal size={14} /></span><b>{filteredStaff.filter((person) => person.status !== "Inactive").length + 95}</b><small>Aggregates merchandisers, supervisors, VSRs & TSRs</small></article>
-          <article><span>Active projects (clients) <MoreHorizontal size={14} /></span><b>{client === "All clients" ? 12 : 1}</b><small>↑ 12 architecture only</small></article>
-          <article className="territory-kpi"><span>Territory coverage <MoreHorizontal size={14} /></span><div>{regions.slice(1, 10).map((item) => <i key={item}>{item}</i>)}</div></article>
-          <article><span>Funding deployed <MoreHorizontal size={14} /></span><b>${(vsrTrackerRows.filter((row) => row.status === "Funded").length * 24).toLocaleString()}K</b><small>Aggregated approved dollar</small></article>
-        </section>
-        <div className="reference-grid top-grid">
-          <Panel title="System health monitor" subtitle="Time-series: API request volume and error rates" className="health-panel"><div className="alert-tag"><AlertTriangle size={11} /> Alerts</div><ResponsiveContainer width="100%" height="100%"><AreaChart data={healthData} margin={{ top: 16, right: 18, left: -12, bottom: 0 }}><CartesianGrid stroke="#edf0ed" vertical={false} /><XAxis dataKey="day" tick={{ fontSize: 8, fill: "#68766f" }} axisLine={false} tickLine={false} /><YAxis yAxisId="left" tick={{ fontSize: 8, fill: "#68766f" }} axisLine={false} tickLine={false} /><YAxis yAxisId="right" orientation="right" tick={{ fontSize: 8, fill: "#68766f" }} axisLine={false} tickLine={false} /><Tooltip /><Area yAxisId="left" type="monotone" dataKey="requests" stroke="#158e88" fill="#d8f0ec" strokeWidth={2} /><Area yAxisId="right" type="monotone" dataKey="errors" stroke="#c99d47" fill="transparent" strokeWidth={1.5} /></AreaChart></ResponsiveContainer><div className="chart-legend"><span><i className="teal-dot" /> API Request Volume</span><span><i className="gold-dot" /> Error Rates</span></div></Panel>
-          <Panel title="Headcount by role & region" subtitle="Constraint & raw data" className="role-panel"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={roleBreakdown} dataKey="value" nameKey="name" innerRadius="42%" outerRadius="72%" paddingAngle={1}><>{roleBreakdown.map((item) => <Cell key={item.name} fill={item.color} />)}</></Pie><Tooltip /></PieChart></ResponsiveContainer><div className="ring-label">{filteredStaff.length}<small>STAFF</small></div></Panel>
-          <Panel title="Funding deployment funnel" subtitle="Proposed → Funded → Deployed" className="funnel-panel"><ResponsiveContainer width="100%" height="100%"><FunnelChart><Tooltip /><Funnel dataKey="value" data={funding} isAnimationActive><LabelList position="right" fill="#5e6a62" stroke="none" dataKey="name" />{funding.map((item, index) => <Cell key={item.name} fill={["#356bc2", "#85c83b", "#e89a26"][index]} />)}</Funnel></FunnelChart></ResponsiveContainer></Panel>
+  const kpis = [
+    { label: "Total system users", value: String(filteredStaff.length + 116), trend: "137%", up: true, sub: "system users only", icon: Users, tone: "blue" },
+    { label: "Total active staff", value: String(filteredStaff.filter((person) => person.status !== "Inactive").length + 95), trend: "", up: true, sub: "merchandisers, supervisors, VSRs & TSRs", icon: ShieldCheck, tone: "teal" },
+    { label: "Active projects", value: String(client === "All clients" ? 12 : 1), trend: "12", up: true, sub: "client architecture", icon: Building2, tone: "violet" },
+    { label: "Funding deployed", value: `$${(vsrTrackerRows.filter((row) => row.status === "Funded").length * 24).toLocaleString()}K`, trend: "", up: true, sub: "aggregated approved dollar", icon: Flag, tone: "amber" },
+  ];
+
+  return (
+    <AppShell searchValue={search} onSearch={setSearch}>
+      <PageHeading
+        eyebrow="SUPER ADMIN · GLOBAL PERFORMANCE"
+        title="Global performance"
+        subtitle="Cross-client operational overview across workforce, funding, data quality and territories."
+      />
+
+      <FilterBar
+        region={region}
+        onRegion={(value) => { setRegion(value); setSelectedPin(0); }}
+        role={role}
+        onRole={setRole}
+        client={client}
+        onClient={setClient}
+        onReset={resetFilters}
+      />
+
+      <KpiGrid items={kpis} focus="" onFocus={() => {}} />
+
+      <section className="row charts-row">
+        <article className="card">
+          <div className="card-head">
+            <div><h2>System health monitor</h2><p>API request volume and error rates</p></div>
+            <span className="status active"><i /> Live</span>
+          </div>
+          <div className="chart-wrap">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={healthData} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
+                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
+                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
+                <Tooltip />
+                <Area yAxisId="left" type="monotone" dataKey="requests" stroke="#158e88" strokeWidth={2} fill="transparent" />
+                <Area yAxisId="right" type="monotone" dataKey="errors" stroke="#c99d47" strokeWidth={1.5} fill="transparent" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="legend" style={{ padding: "0 17px 14px" }}>
+            <span><i className="teal" />API Request Volume</span>
+            <span><i className="amber" />Error Rates</span>
+          </div>
+        </article>
+
+        <article className="card">
+          <div className="card-head">
+            <div><h2>Headcount by role</h2><p>Active staff distribution</p></div>
+          </div>
+          <div className="donut-wrap">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={roleBreakdown} dataKey="value" nameKey="name" innerRadius={58} outerRadius={80} paddingAngle={3} stroke="none">
+                  {roleBreakdown.map((item) => <Cell key={item.name} fill={item.color} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="donut-total"><strong>{filteredStaff.length}</strong><span>STAFF</span></div>
+          </div>
+          <div className="role-legend">
+            {roleBreakdown.map((item) => (
+              <div key={item.name}><span><i style={{ background: item.color }} />{item.name}</span><b>{item.value}</b></div>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="card" style={{ marginBottom: 13 }}>
+        <div className="card-head">
+          <div><h2>Funding deployment funnel</h2><p>Proposed → Funded → Deployed</p></div>
         </div>
-        <div className="reference-grid bottom-grid">
-          <Panel title="Recent audit trail entries" subtitle="Constraint 20" className="audit-panel"><div className="audit-table"><div className="audit-head"><span>User</span><span>Action</span><span>Item</span><span>Timestamp</span></div>{["Action Log", "Action Log", "Bench mark", "API Request Volume", "Action Log"].map((item, index) => <div key={`${item}-${index}`}><span>KEA Administor</span><span>{item}</span><span>{index % 2 ? "Merchandisers supervisors" : "Merchandisers here"}</span><span>27 Jun 2026 3:2{index} PM</span></div>)}</div></Panel>
-          <Panel title="Data quality audit" subtitle="Overview in state-level error (as mentioned in meeting update)" className="quality-panel"><div className="quality-table"><div className="audit-head"><span>State</span><span>Error</span><span>Region</span><span>Error</span></div>{qualityRows.map((item) => <div key={item.state}><span>{item.state}</span><span>{item.errors}</span><span>{item.region}</span><span>{item.error}</span></div>)}</div></Panel>
+        <div className="chart-wrap" style={{ height: 280 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <FunnelChart margin={{ top: 12, right: 90, left: 32, bottom: 12 }}>
+              <Tooltip />
+              <Funnel dataKey="value" data={funding} isAnimationActive>
+                <LabelList position="right" offset={12} fill="var(--text)" stroke="none" dataKey="name" />
+                {funding.map((item, index) => <Cell key={item.name} fill={["#356bc2", "#85c83b", "#e89a26"][index]} />)}
+              </Funnel>
+            </FunnelChart>
+          </ResponsiveContainer>
         </div>
-        <div className="reference-map-row"><Panel title="Territories & routes" subtitle={`${filteredStaff.length} filtered field records · interactive map scope`} className="reference-map-panel"><OperationsMap staff={filteredStaff} selected={selectedPin} onSelect={setSelectedPin} region={region} role={role} /></Panel><div className="reference-map-summary"><h3>Data scope</h3><p><ShieldCheck size={14} /> Filters are applied to staff, charts, and map pins.</p><p><Flag size={14} /> {vsrTrackerRows.filter((row) => row.status === "Awaiting Funding").length} VSR records await funding.</p><p><PieIcon size={14} /> {roleBreakdown.filter((item) => item.value > 0).length} active role groups.</p></div></div>
-      </div>
-    </main>
-  </div>;
+      </section>
+
+      <section className="row ops-row">
+        <MapCard
+          staff={filteredStaff}
+          selected={selectedPin}
+          onSelect={setSelectedPin}
+          region={region}
+          role={role}
+          title="Territories & routes"
+          subtitle={`${filteredStaff.length} filtered field records · interactive map scope`}
+        />
+
+        <article className="card">
+          <div className="card-head">
+            <div><h2>Data scope</h2><p>Current filter coverage</p></div>
+          </div>
+          <div style={{ padding: "6px 17px 16px", display: "grid", gap: 10 }}>
+            <p style={{ margin: 0, display: "flex", gap: 8, alignItems: "flex-start", fontSize: 11, color: "var(--muted)" }}><ShieldCheck size={14} style={{ color: "#14b8a6", flex: "none" }} /> Filters are applied to staff, charts, and map pins.</p>
+            <p style={{ margin: 0, display: "flex", gap: 8, alignItems: "flex-start", fontSize: 11, color: "var(--muted)" }}><Flag size={14} style={{ color: "#f59e0b", flex: "none" }} /> {vsrTrackerRows.filter((row) => row.status === "Awaiting Funding").length} VSR records await funding.</p>
+            <p style={{ margin: 0, display: "flex", gap: 8, alignItems: "flex-start", fontSize: 11, color: "var(--muted)" }}><PieIcon size={14} style={{ color: "#2563eb", flex: "none" }} /> {roleBreakdown.filter((item) => item.value > 0).length} active role groups.</p>
+          </div>
+        </article>
+      </section>
+
+      <section className="row charts-row">
+        <article className="card table-card">
+          <div className="card-head table-head">
+            <div><h2>Recent audit trail entries</h2><p>Latest system actions</p></div>
+          </div>
+          <div className="table-scroll">
+            <table style={{ minWidth: 560 }}>
+              <thead><tr><th>User</th><th>Action</th><th>Item</th><th>Timestamp</th></tr></thead>
+              <tbody>
+                {["Action Log", "Action Log", "Bench mark", "API Request Volume", "Action Log"].map((item, index) => (
+                  <tr key={`${item}-${index}`}>
+                    <td data-label="User">KEA Administor</td>
+                    <td data-label="Action">{item}</td>
+                    <td data-label="Item">{index % 2 ? "Merchandisers supervisors" : "Merchandisers here"}</td>
+                    <td data-label="Timestamp">27 Jun 2026 3:2{index} PM</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article className="card table-card">
+          <div className="card-head table-head">
+            <div><h2>Data quality audit</h2><p>State-level error overview</p></div>
+          </div>
+          <div className="table-scroll">
+            <table style={{ minWidth: 560 }}>
+              <thead><tr><th>State</th><th>Errors</th><th>Region</th><th>Error</th></tr></thead>
+              <tbody>
+                {qualityRows.map((item) => (
+                  <tr key={item.state}>
+                    <td data-label="State">{item.state}</td>
+                    <td data-label="Errors">{item.errors}</td>
+                    <td data-label="Region">{item.region}</td>
+                    <td data-label="Error">{item.error}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </AppShell>
+  );
 }
