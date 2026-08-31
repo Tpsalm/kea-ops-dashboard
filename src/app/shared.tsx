@@ -73,7 +73,7 @@ export function FilterBar({
     <section className="filters">
       <div className="filter-title"><Filter size={16} /><b>Filters</b></div>
       {onPeriod && <SelectBox label="DATE RANGE" value={period!} options={["Today", "Last 7 days", "Last 30 days", "This quarter"]} onChange={onPeriod} />}
-      {onRegion && <SelectBox label="REGION" value={region!} options={["All regions", "Lagos", "Ogun", "Oyo", "Delta"]} onChange={onRegion} />}
+      {onRegion && <SelectBox label="REGION" value={region!} options={["All regions", "Lagos", "Ogun", "Oyo", "Delta", "South West", "South East", "South South", "North", "Port Harcourt", "Owerri"]} onChange={onRegion} />}
       {onRole && <SelectBox label="ROLE" value={role!} options={["All roles", "VSR", "TSR", "Supervisor", "Merchandiser"]} onChange={onRole} />}
       {onClient && <SelectBox label="CLIENT" value={client!} options={["All clients", "Nova Consumer", "Aria Foods"]} onChange={onClient} />}
       {onReset && <button className="reset" onClick={onReset}><RefreshCw size={14} /> Reset</button>}
