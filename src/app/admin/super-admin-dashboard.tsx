@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import {
   Activity, AlertTriangle, BarChart3, Bell, Building2, ChevronDown,
   Database, FileText, Flag, Gauge, KeyRound, Layers3, Map, Menu,
@@ -41,6 +42,7 @@ export default function SuperAdminDashboard() {
   const [mobileNav, setMobileNav] = useState(false);
   const [selectedPin, setSelectedPin] = useState(0);
   const [search, setSearch] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const filteredStaff = useMemo(() => staff.filter((person) =>
     (region === "All regions" || person.region === region) &&
@@ -50,15 +52,23 @@ export default function SuperAdminDashboard() {
   ), [client, region, role, search]);
 
   const roleBreakdown = useMemo(() => (roles.slice(1) as Role[]).map((item) => ({ name: item, value: filteredStaff.filter((person) => person.role === item).length, color: roleColors[item] })), [filteredStaff]);
+  const filteredVsrRows = useMemo(() => vsrTrackerRows.filter((row) => {
+    const normalizedRegion = region === "Oyo" ? "Ibadan" : region;
+    return region === "All regions" || row.location.toLowerCase().includes(normalizedRegion.toLowerCase());
+  }), [region]);
   const funding = useMemo(() => [
-    { name: "Lead", value: vsrTrackerRows.length },
-    { name: "Funded", value: vsrTrackerRows.filter((row) => row.status === "Funded").length },
+    { name: "Lead", value: role === "All roles" || role === "VSR" ? filteredVsrRows.length : 0 },
+    { name: "Funded", value: role === "All roles" || role === "VSR" ? filteredVsrRows.filter((row) => row.status === "Funded").length : 0 },
     { name: "Deployed", value: filteredStaff.filter((person) => person.role === "VSR" && person.status !== "Inactive").length },
-  ], [filteredStaff]);
-  const healthData = useMemo(() => [
-    { day: "7 Aug", requests: 74, errors: 3 }, { day: "11 Aug", requests: 91, errors: 4 }, { day: "16 Aug", requests: 83, errors: 2 },
-    { day: "20 Aug", requests: 118, errors: 5 }, { day: "23 Aug", requests: 108, errors: 3 }, { day: "26 Aug", requests: 152, errors: 11 }, { day: "27 Aug", requests: 138, errors: 4 },
-  ], []);
+  ], [filteredStaff, filteredVsrRows, role]);
+  const healthData = useMemo(() => {
+    const scope = Math.max(filteredStaff.length / Math.max(staff.length, 1), .08);
+    const errorScope = Math.max(1, Math.round((role === "All roles" ? 1 : .7) * scope * 8));
+    return [
+      { day: "7 Aug", requests: Math.round(74 * scope), errors: errorScope }, { day: "11 Aug", requests: Math.round(91 * scope), errors: errorScope + 1 }, { day: "16 Aug", requests: Math.round(83 * scope), errors: errorScope },
+      { day: "20 Aug", requests: Math.round(118 * scope), errors: errorScope + 2 }, { day: "23 Aug", requests: Math.round(108 * scope), errors: errorScope + 1 }, { day: "26 Aug", requests: Math.round(152 * scope), errors: errorScope + 4 }, { day: "27 Aug", requests: Math.round(138 * scope), errors: errorScope + 1 },
+    ];
+  }, [filteredStaff.length, role]);
   const qualityRows = useMemo(() => regions.slice(1, 6).map((name, index) => ({ state: name, errors: Math.max(0, Math.round((filteredStaff.filter((person) => person.region === name).length || 1) * (index % 3 === 0 ? 1.4 : .3))), region: regions[index + 2] ?? "Lagos", error: index % 3 === 0 ? 1 : 0 })), [filteredStaff]);
 
   const resetFilters = () => { setRegion("All regions"); setRole("All roles"); setClient("All clients"); setSearch(""); setSelectedPin(0); };
@@ -66,14 +76,14 @@ export default function SuperAdminDashboard() {
   return <div className="super-admin-reference">
     <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
       <div className="reference-brand"><div className="reference-logo"><b>k</b><b>e</b><b>a</b></div><strong>KEA GROUP</strong><small>Talent Management System</small><button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button></div>
-      <nav><a className="active"><Gauge size={15} /> Global performance</a><a><Users size={15} /> Users & roles</a><a><Map size={15} /> Territories & routes</a><a><Network size={15} /> API integrations</a><a><Store size={15} /> Funding & deployment</a><a><Database size={15} /> System logs</a><a><FileText size={15} /> Audit trail</a></nav>
+      <nav><Link href="/admin" className="active"><Gauge size={15} /> Global performance</Link><Link href="/hierarchy"><Users size={15} /> Users & roles</Link><Link href="/live-map"><Map size={15} /> Territories & routes</Link><Link href="/reports"><Network size={15} /> API integrations</Link><Link href="/vsr-operations"><Store size={15} /> Funding & deployment</Link><Link href="/audit-trail"><Database size={15} /> System logs</Link><Link href="/audit-trail"><FileText size={15} /> Audit trail</Link></nav>
       <button className="reference-settings"><Settings size={15} /> Settings <MoreHorizontal size={15} /></button>
     </aside>
     <main className="reference-main">
       <header className="reference-topbar"><button className="reference-menu" type="button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu size={19} /></button><div className="reference-search"><KeyRound size={13} /><input placeholder="KEA Talent Management System" value={search} onChange={(event) => setSearch(event.target.value)} /></div><span className="reference-chip">x 1</span><div className="reference-actions"><button type="button" aria-label="Toggle theme"><Activity size={15} /></button><button type="button" aria-label="Notifications"><Bell size={15} /></button><span>KA</span></div></header>
       <div className="reference-content">
         <div className="reference-title"><h1>SUPER ADMIN DASHBOARD</h1><span>Aug 27, 2026</span></div>
-        <section className="reference-filters"><SelectControl label="REGION" value={region} options={regions} onChange={(value) => { setRegion(value); setSelectedPin(0); }} /><SelectControl label="ROLE" value={role} options={roles} onChange={setRole} /><SelectControl label="CLIENT" value={client} options={["All clients", "Nova Consumer", "Aria Foods"]} onChange={setClient} /><button type="button" onClick={resetFilters}>Reset filters</button></section>
+        <section className="reference-filters"><button type="button" className="filter-toggle" onClick={() => setFiltersOpen((open) => !open)}><Layers3 size={13} /> {filtersOpen ? "Hide filters" : "Show filters"}</button>{filtersOpen && <><SelectControl label="REGION" value={region} options={regions} onChange={(value) => { setRegion(value); setSelectedPin(0); }} /><SelectControl label="ROLE" value={role} options={roles} onChange={setRole} /><SelectControl label="CLIENT" value={client} options={["All clients", "Nova Consumer", "Aria Foods"]} onChange={setClient} /><button type="button" onClick={resetFilters}>Reset filters</button></>}</section>
         <section className="reference-kpis">
           <article><span>Total system users <MoreHorizontal size={14} /></span><b>{filteredStaff.length + 116}</b><small>↑ 137% system users only</small></article>
           <article><span>Total active staff <MoreHorizontal size={14} /></span><b>{filteredStaff.filter((person) => person.status !== "Inactive").length + 95}</b><small>Aggregates merchandisers, supervisors, VSRs & TSRs</small></article>

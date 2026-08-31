@@ -225,6 +225,11 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   .staff-detail-grid{grid-template-columns:1fr}
 }
 
+/* Reference dashboard control refinements */
+.reference-filters>button.filter-toggle{display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#07535a;color:#fff;border-color:#07535a}
+.funnel-panel>.recharts-responsive-container{padding:8px 18px 14px;box-sizing:border-box}
+.funnel-panel .recharts-wrapper{overflow:visible}
+
 @media(max-width:400px){
   .kpi-grid{grid-template-columns:1fr 1fr;gap:8px}
   .kpi{padding:12px;min-height:120px}
