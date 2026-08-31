@@ -610,6 +610,7 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 /* ========================================================================
    Final mobile polish — 44px touch targets, overflow safety, crisp cards
    ======================================================================== */
+.auth-panel select{width:100%;border:1px solid #cad8d2;border-radius:7px;padding:13px 14px;background:#fff;color:#102522;font:inherit;font-weight:500;outline:none;cursor:pointer}
 .vsr-reference,.merch-reference,.tsr-reference,.super-admin-reference{overflow-x:hidden}
 .vsr-reference img,.merch-reference img,.tsr-reference img,.map-canvas img,.leaflet-container img{max-width:100%}
 @media(max-width:640px){

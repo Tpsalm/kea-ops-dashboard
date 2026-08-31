@@ -89,6 +89,24 @@ export default function useAuth() {
     }
   }, [user]);
 
+  async function signUp(name: string, email: string, password: string, role: AppRole): Promise<User> {
+    if (supabase) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name, role } },
+      });
+      if (!error && data.user) {
+        const newUser = mapSupabaseUser(data.user);
+        setUser(newUser);
+        return newUser;
+      }
+    }
+    const demoUser: User = { email, name, role, allowedClientIds: ["client-a"] };
+    setUser(demoUser);
+    return demoUser;
+  }
+
   async function signIn(email: string, password: string): Promise<User> {
     if (supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -127,5 +145,5 @@ export default function useAuth() {
     if (error) throw error;
   }
 
-  return { user, loading, setUser, signIn, signOut, resetPassword } as const;
+  return { user, loading, setUser, signUp, signIn, signOut, resetPassword } as const;
 }

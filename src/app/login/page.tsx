@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import useAuth, { roleHome } from "../../lib/useAuth";
@@ -58,7 +59,7 @@ export default function LoginPage() {
           {recoverySent && <p className="auth-success">Recovery email sent. Check your inbox.</p>}
           <button className="primary auth-submit" disabled={busy}>{busy ? "Signing in..." : "Continue"}<ArrowRight size={16} /></button>
         </form>
-        <p className="auth-policy">No self-service sign up. Contact your Super Admin if you need an account or password reset.</p>
+        <p className="auth-policy">No account yet? <Link href="/signup" style={{ fontWeight: 700, color: "#138a76" }}>Create an account</Link></p>
       </section>
     </main>
   );
