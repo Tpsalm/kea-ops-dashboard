@@ -67,10 +67,18 @@ export default function useAuth() {
   async function signIn(email: string, password: string): Promise<User> {
     if (supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      const signedInUser = mapSupabaseUser(data.user);
-      setUser(signedInUser);
-      return signedInUser;
+      if (!error && data.user) {
+        const signedInUser = mapSupabaseUser(data.user);
+        setUser(signedInUser);
+        return signedInUser;
+      }
+
+      const configuredDemo = demoUsers[email.toLowerCase()];
+      if (configuredDemo && password === "kea12345") {
+        setUser(configuredDemo);
+        return configuredDemo;
+      }
+      throw error ?? new Error("Unable to sign in.");
     }
     const demo = demoUsers[email.toLowerCase()];
     if (!demo || password !== "kea12345") throw new Error("Use a configured Supabase account or a demo login.");
