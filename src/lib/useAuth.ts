@@ -26,12 +26,12 @@ export function roleHome(role: AppRole): string {
 
 export const demoUsers: Record<string, User> = {
   "superadmin@kea.com": { email: "superadmin@kea.com", name: "Super Admin", role: "super-admin", allowedClientIds: ["client-a", "client-b"] },
-  "admin@kea.com": { email: "admin@kea.com", name: "KEA Administrator", role: "super-admin", allowedClientIds: ["client-a", "client-b"] },
-  "vsr@kea.com": { email: "vsr@kea.com", name: "VSR Demo", role: "vsr", allowedClientIds: ["client-a"] },
-  "supervisor@kea.com": { email: "supervisor@kea.com", name: "Supervisor Demo", role: "supervisor", allowedClientIds: ["client-a"] },
-  "merchandiser@kea.com": { email: "merchandiser@kea.com", name: "Merchandiser Demo", role: "merchandiser", allowedClientIds: ["client-a"] },
-  "tsr@kea.com": { email: "tsr@kea.com", name: "TSR Demo", role: "tsr", allowedClientIds: ["client-a"] },
-  "fieldteam@kea.com": { email: "fieldteam@kea.com", name: "Field Team Demo", role: "field-team", allowedClientIds: ["client-a"] },
+  "admin@kea.com": { email: "admin@kea.com", name: "KEA Administrator", role: "admin", allowedClientIds: ["client-a", "client-b"] },
+  "vsr@kea.com": { email: "vsr@kea.com", name: "VSR", role: "vsr", allowedClientIds: ["client-a"] },
+  "supervisor@kea.com": { email: "supervisor@kea.com", name: "Supervisor", role: "supervisor", allowedClientIds: ["client-a"] },
+  "merchandiser@kea.com": { email: "merchandiser@kea.com", name: "Merchandiser", role: "merchandiser", allowedClientIds: ["client-a"] },
+  "tsr@kea.com": { email: "tsr@kea.com", name: "TSR", role: "tsr", allowedClientIds: ["client-a"] },
+  "fieldteam@kea.com": { email: "fieldteam@kea.com", name: "Field Team", role: "field-team", allowedClientIds: ["client-a"] },
 };
 
 function mapSupabaseUser(authUser: { id: string; email?: string; user_metadata?: Record<string, unknown> }): User {
@@ -108,25 +108,34 @@ export default function useAuth() {
   }
 
   async function signIn(email: string, password: string): Promise<User> {
-    if (supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (!error && data.user) {
-        const signedInUser = mapSupabaseUser(data.user);
-        setUser(signedInUser);
-        return signedInUser;
-      }
+    const emailLower = email.toLowerCase();
+    const demoUser = demoUsers[emailLower];
 
-      const configuredDemo = demoUsers[email.toLowerCase()];
-      if (configuredDemo && password === "kea12345") {
-        setUser(configuredDemo);
-        return configuredDemo;
+    // Step 1: Try Supabase if configured
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: emailLower, password });
+        if (!error && data.user) {
+          const signedInUser = mapSupabaseUser(data.user);
+          setUser(signedInUser);
+          return signedInUser;
+        }
+      } catch (supabaseError) {
+        console.warn("Supabase auth failed, falling back to demo:", supabaseError);
       }
-      throw error ?? new Error("Unable to sign in.");
     }
-    const demo = demoUsers[email.toLowerCase()];
-    if (!demo || password !== "kea12345") throw new Error("Use a configured Supabase account or a demo login.");
-    setUser(demo);
-    return demo;
+
+    // Step 2: Fall back to demo login for configured demo users
+    if (demoUser && password === "kea12345") {
+      setUser(demoUser);
+      return demoUser;
+    }
+
+    // Step 3: No valid auth method worked
+    if (!demoUser) {
+      throw new Error(`Account ${emailLower} is not configured. Try one of the demo accounts.`);
+    }
+    throw new Error("Invalid password. The demo password is 'kea12345'.");
   }
 
   async function signOut() {
