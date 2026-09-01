@@ -68,13 +68,6 @@ const roleData = [
   { name: "Merchandisers", value: 182, color: "#2563eb" }, { name: "VSRs", value: 96, color: "#14b8a6" },
   { name: "Supervisors", value: 28, color: "#f59e0b" }, { name: "TSRs", value: 14, color: "#8b5cf6" }
 ];
-const nav = [
-  { label: "Overview", icon: LayoutDashboard, path: "/dashboard" }, { label: "Live map", icon: Map, path: "/live-map" },
-  { label: "Workforce", icon: Users, path: "/workforce" }, { label: "Stores & products", icon: Store, path: "/stores" },
-  { label: "Performance", icon: BarChart3, path: "/performance" },
-  { label: "Client portal", icon: Building2, path: "/client-portal" }
-];
-
 function Tip({ active, payload, label }: { active?: boolean; payload?: Array<{name:string; value:number; color:string}>; label?: string }) {
   if (!active || !payload?.length) return null;
   return <div className="chart-tip"><b>{label}</b>{payload.map((p) => <span key={p.name}><i style={{background:p.color}} />{p.name}: <strong>{p.value.toLocaleString()}</strong></span>)}</div>;
@@ -132,7 +125,7 @@ export default function DashboardPage() {
     { title: "Store coverage", value: "1,204", change: "↑ 8%", chart: <AreaChart data={activityData}><defs><linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.5}/><stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="0" stroke="rgba(255,255,255,.1)" /><XAxis dataKey="day" stroke="rgba(255,255,255,.5)" style={{fontSize:"11px"}} /><YAxis stroke="rgba(255,255,255,.5)" style={{fontSize:"11px"}} /><Area type="monotone" dataKey="visits" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorActivity)" /><Tooltip content={<Tip />} /></AreaChart> },
   ];
 
-  return <AppShell contentClassName="dashboard-container" navItems={nav}><main className={dark ? "dark" : ""}>
+  return <AppShell contentClassName="dashboard-container"><main className={dark ? "dark" : ""}>
     <section className="dashboard-top">
       <div style={{display:"flex", gap:"12px", alignItems:"center"}}>
         <h1>{kpiFocus}</h1>
@@ -165,7 +158,7 @@ export default function DashboardPage() {
       <article>
         <div className="card-header"><h3>Live operations map</h3></div>
         <div style={{height:"320px", borderRadius:"8px", overflow:"hidden"}}>
-          <OperationsMap initialLatitude={6.5244} initialLongitude={3.3792} initialZoom={6} staff={filtered.length ? filtered : staff} selectedPin={selectedPin} setSelectedPin={setSelectedPin} />
+          <OperationsMap staff={filtered.length ? filtered : staff} selected={selectedPin} onSelect={setSelectedPin} region={region} role={role} />
         </div>
       </article>
       <article>

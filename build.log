@@ -1,0 +1,31 @@
+
+> build
+> next build
+
+ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\Owoyemi Samuel Tobi\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\Owoyemi Samuel Tobi\OneDrive\Desktop\kea-field-operations-dashboard\package-lock.json
+
+Γû▓ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 36.2s
+  Running TypeScript ...
+Failed to type check.
+
+./src/app/dashboard/page.tsx:135:59
+Type error: Type '{ children: Element; contentClassName: string; navItems: { label: string; icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>; path: string; }[]; }' is not assignable to type 'IntrinsicAttributes & { children: ReactNode; contentClassName?: string | undefined; searchValue?: string | undefined; onSearch?: ((q: string) => void) | undefined; }'.
+  Property 'navItems' does not exist on type 'IntrinsicAttributes & { children: ReactNode; contentClassName?: string | undefined; searchValue?: string | undefined; onSearch?: ((q: string) => void) | undefined; }'.
+
+  133 | ...
+  134 | ...
+> 135 | ...ell contentClassName="dashboard-container" navItems={nav}><main className={dark ? "dar...
+      |                                               ^
+  136 | ...assName="dashboard-top">
+  137 | ...e={{display:"flex", gap:"12px", alignItems:"center"}}>
+  138 | ...iFocus}</h1>
+Next.js build worker exited with code: 1 and signal: null
