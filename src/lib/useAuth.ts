@@ -63,22 +63,27 @@ export default function useAuth() {
   const [loading, setLoading] = useState(Boolean(supabase));
 
   useEffect(() => {
-    try {
-      localStorage.getItem("kea_user");
-    } catch {
-      return;
-    }
-    if (supabase) {
-      supabase.auth.getUser().then(({ data }) => {
-        setUser(data.user ? mapSupabaseUser(data.user) : null);
-        setLoading(false);
-      });
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ? mapSupabaseUser(session.user) : null);
-        setLoading(false);
-      });
-      return () => listener.subscription.unsubscribe();
-    }
+    if (!supabase) return;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUser(mapSupabaseUser(data.user));
+      }
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        setUser(null);
+        localStorage.removeItem("kea_user");
+        document.cookie = "kea_auth=; Path=/; Max-Age=0; SameSite=Lax";
+      } else if (session?.user) {
+        setUser(mapSupabaseUser(session.user));
+      }
+      setLoading(false);
+    });
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
