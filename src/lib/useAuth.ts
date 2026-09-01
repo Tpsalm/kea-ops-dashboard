@@ -18,7 +18,7 @@ export function roleHome(role: AppRole): string {
     case "tsr":
       return "/tsr";
     case "supervisor":
-      return "/dashboard";
+      return "/supervisor";
     default:
       return "/portal/field-team";
   }

@@ -18,6 +18,7 @@ export const config = {
     "/vsr-operations/:path*",
     "/merchandiser/:path*",
     "/tsr/:path*",
+    "/supervisor/:path*",
     "/funding-deployment/:path*",
   ],
 };
