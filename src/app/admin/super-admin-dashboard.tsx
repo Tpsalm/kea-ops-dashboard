@@ -56,7 +56,7 @@ export default function SuperAdminDashboard() {
     { label: "Total system users", value: String(filteredStaff.length + 116), trend: "137%", up: true, sub: "system users only", icon: Users, tone: "blue" },
     { label: "Total active staff", value: String(filteredStaff.filter((person) => person.status !== "Inactive").length + 95), trend: "", up: true, sub: "merchandisers, supervisors, VSRs & TSRs", icon: ShieldCheck, tone: "teal" },
     { label: "Active projects", value: String(client === "All clients" ? 12 : 1), trend: "12", up: true, sub: "client architecture", icon: Building2, tone: "violet" },
-    { label: "Funding deployed", value: `$${(vsrTrackerRows.filter((row) => row.status === "Funded").length * 24).toLocaleString()}K`, trend: "", up: true, sub: "aggregated approved dollar", icon: Flag, tone: "amber" },
+    { label: "Funding deployed", value: `₦${(vsrTrackerRows.filter((row) => row.status === "Funded").length * 24).toLocaleString()}K`, trend: "", up: true, sub: "aggregated approved naira", icon: Flag, tone: "amber" },
   ];
 
   return (
