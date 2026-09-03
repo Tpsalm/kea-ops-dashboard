@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useId, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, Bell, CalendarDays, CheckCircle2, ChevronDown, ClipboardCheck,
+  AlertTriangle, Bell, CheckCircle2, ChevronDown, ClipboardCheck,
   Home, LogOut, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
   ShieldCheck, Store, Sun, TrendingDown, TrendingUp, Upload, Users, X, Target,
 } from "lucide-react";
@@ -21,7 +21,6 @@ type PageKey =
   | "vsr"
   | "visits"
   | "onboarding"
-  | "coaching"
   | "route-coverage"
   | "data-quality"
   | "settings";
@@ -33,7 +32,6 @@ const navItems: { key: PageKey; label: string; icon: typeof Users }[] = [
   { key: "vsr", label: "VSR Performance", icon: MapPin },
   { key: "visits", label: "Visit Reports & Uploads", icon: Upload },
   { key: "onboarding", label: "Outlet Onboarding", icon: Store },
-  { key: "coaching", label: "Coaching Schedule", icon: CalendarDays },
   { key: "route-coverage", label: "Route Coverage Reports", icon: ClipboardCheck },
   { key: "data-quality", label: "Data Quality Audits", icon: ShieldCheck },
   { key: "settings", label: "Settings", icon: Settings },
@@ -46,19 +44,10 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   vsr: { title: "VSR PERFORMANCE", subtitle: "Route coverage, visit count and field completion per VSR." },
   visits: { title: "VISIT REPORTS & UPLOADS", subtitle: "Upload and review visit evidence from your field team." },
   onboarding: { title: "OUTLET ONBOARDING", subtitle: "Approve or reject new outlets requested by your team." },
-  coaching: { title: "COACHING SCHEDULE", subtitle: "Planned coaching sessions, observations and follow-ups." },
   "route-coverage": { title: "ROUTE COVERAGE REPORTS", subtitle: "Territory coverage, store visits and route health." },
   "data-quality": { title: "DATA QUALITY AUDITS", subtitle: "Validate GPS data, staff records and activity logs." },
   settings: { title: "SETTINGS", subtitle: "Profile, preferences, theme and security." },
 };
-
-const coachingSessions = [
-  { id: "CS-001", merchandiser: "Maria Uchechukwu", date: "2026-09-01", time: "10:00 AM", topic: "Shelf execution improvement", status: "Scheduled", notes: "Focus on VI Retail shelf share targets." },
-  { id: "CS-002", merchandiser: "Jonathan Okena", date: "2026-09-02", time: "02:00 PM", topic: "Store visit efficiency", status: "Scheduled", notes: "Review route planning and time management." },
-  { id: "CS-003", merchandiser: "Maria Uchechukwu", date: "2026-08-28", time: "11:00 AM", topic: "POSM deployment review", status: "Completed", notes: "Discussed brand visibility at key outlets." },
-  { id: "CS-004", merchandiser: "Jonathan Okena", date: "2026-08-25", time: "09:30 AM", topic: "Weekly performance check-in", status: "Completed", notes: "Completion rate improved from 89% to 93%." },
-  { id: "CS-005", merchandiser: "Arorundade Adewale", date: "2026-09-03", time: "03:00 PM", topic: "New store onboarding", status: "Scheduled", notes: "Walk through Dugbe Retail onboarding checklist." },
-];
 
 export default function SupervisorDashboard() {
   const [activePage, setActivePage] = useState<PageKey>("home");
@@ -568,37 +557,6 @@ export default function SupervisorDashboard() {
                       {pendingOutlets.length === 0 && (
                         <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--muted)" }}>No outlets awaiting approval.</td></tr>
                       )}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </>
-          )}
-
-          {activePage === "coaching" && (
-            <>
-              <section className="reference-kpis">
-                <article><span>Total sessions <MoreHorizontal size={14} /></span><b>{coachingSessions.length}</b><small>all time</small></article>
-                <article><span>Scheduled <MoreHorizontal size={14} /></span><b>{coachingSessions.filter((s) => s.status === "Scheduled").length}</b><small>upcoming</small></article>
-                <article><span>Completed <MoreHorizontal size={14} /></span><b>{coachingSessions.filter((s) => s.status === "Completed").length}</b><small>done</small></article>
-                <article><span>Coverage <MoreHorizontal size={14} /></span><b>{myMerchandisers.length > 0 ? Math.round((new Set(coachingSessions.map((s) => s.merchandiser)).size / myMerchandisers.length) * 100) : 0}%</b><small>team coached</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Coaching schedule</h2><p>Planned and completed coaching sessions</p></div><CalendarDays size={16} /></header>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr><th>Merchandiser</th><th>Date</th><th>Time</th><th>Topic</th><th>Status</th><th>Notes</th></tr></thead>
-                    <tbody>
-                      {coachingSessions.map((session) => (
-                        <tr key={session.id}>
-                          <td data-label="Merchandiser"><b>{session.merchandiser}</b></td>
-                          <td data-label="Date">{session.date}</td>
-                          <td data-label="Time">{session.time}</td>
-                          <td data-label="Topic">{session.topic}</td>
-                          <td data-label="Status"><span className={`status ${session.status === "Completed" ? "active" : "on-route"}`}><i />{session.status}</span></td>
-                          <td data-label="Notes"><small>{session.notes}</small></td>
-                        </tr>
-                      ))}
                     </tbody>
                   </table>
                 </div>
