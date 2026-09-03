@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Standalone output creates a self-contained server bundle,
-  // ideal for one-click deployment on Vercel, Netlify, Railway, etc.
-  output: "standalone",
+  // Vercel runs Next in its own optimized runtime — no standalone bundle
+  // needed (standalone output caused failures in the Vercel build pipeline).
   poweredByHeader: false,
   compress: true,
 };
