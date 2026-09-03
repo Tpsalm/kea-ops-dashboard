@@ -15,6 +15,10 @@ import {
   getActivitiesByStaff, getVSRRoute,
 } from "../hierarchy-data";
 import { FadeIn, KpiGrid, SelectBox } from "../shared";
+import { FieldHero } from "../../components/field-hero";
+import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
+import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
+import { Badge } from "../../components/ui/badge";
 
 type PageKey =
   | "home"
@@ -234,6 +238,8 @@ export default function SupervisorDashboard() {
         </header>
 
         <div className="reference-content">
+          <ScrollProgress className="fixed top-0 left-0 right-0 z-[60]" />
+
           <div className="reference-title">
             <h1>{pageTitles[activePage].title}</h1>
             <span>Sep 1, 2026</span>
@@ -246,13 +252,24 @@ export default function SupervisorDashboard() {
           {activePage === "home" && (
             <>
               <div className="page-admin page-supervisor" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
-                <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
-                  <div>
-                    <span className="eyebrow"><i className="live-dot live" />SUPERVISOR OVERVIEW</span>
-                    <h2>Welcome back, {supervisor.name}</h2>
-                    <p>Supervisor · {supervisor.territory}, {supervisor.region} — your team, targets and field execution at a glance.</p>
-                  </div>
-                </div>
+                <FieldHero
+                  eyebrow="SUPERVISOR OVERVIEW"
+                  title={<>Welcome back, {supervisor.name}</>}
+                  subtitle={`Supervisor · ${supervisor.territory}, ${supervisor.region} — your team, targets and field execution at a glance.`}
+                  badge="Live"
+                  variant="waves"
+                  colors={["#0d9488", "#07535a", "#14b8a6", "#134e4a"]}
+                  stat={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <Badge variant="success">
+                        <AnimatedNumber value={myTeam.length} /> team members
+                      </Badge>
+                      <Badge variant={avgCompletion >= completionTarget ? "success" : "warning"}>
+                        {avgCompletion}% completion
+                      </Badge>
+                    </div>
+                  }
+                />
 
                 <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <SelectBox label="Period" value={period} onChange={setPeriod} options={["Last 7 days", "Last 30 days", "This quarter", "This year"]} />

@@ -2,16 +2,23 @@
 
 export const dynamic = "force-dynamic";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, Bell, Camera, CheckCircle2, ChevronDown, Home, Layers, LogOut, Menu,
   Moon, MoreHorizontal, PackageCheck, Presentation, Search, Settings, Store, Sun,
   Target, TrendingDown, TrendingUp, Users, X, Building2,
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
 import { staff } from "../data";
 import { activities, getProductsByMerchandiser, getStoresByMerchandiser, products } from "../hierarchy-data";
-import { FadeIn, KpiGrid, SelectBox } from "../shared";
+import { FadeIn, SelectBox } from "../shared";
+import { KpiCard, Magnetic, TiltCard, premiumEase } from "../motion-components";
+import { useGsapInView } from "../use-gsap";
+import { FieldHero } from "../../components/field-hero";
+import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
+import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
+import { Badge } from "../../components/ui/badge";
 
 type PageKey = "home" | "stores" | "shelf" | "posm" | "products" | "photos" | "settings";
 
@@ -106,6 +113,28 @@ export default function MerchandiserDashboard() {
     window.location.href = "/login";
   }
 
+  /* GSAP scroll-driven reveal for the dashboard home section */
+  const homeRef = useGsapInView<HTMLDivElement>(({ gsap }, scope) => {
+    if (typeof window === "undefined") return;
+    const ctx = gsap.context(() => {
+      const targets = gsap.utils.toArray<HTMLElement>("[data-kx-reveal]");
+      targets.forEach((el) => {
+        gsap.fromTo(
+          el,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.7,
+            ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse" },
+          }
+        );
+      });
+    }, scope);
+    return () => ctx.revert();
+  });
+
   function savePosm() {
     try {
       localStorage.setItem("kea_merch_posm", JSON.stringify(posm));
@@ -126,9 +155,16 @@ export default function MerchandiserDashboard() {
         </div>
         <nav>
           {navItems.map(({ key, label, icon: Icon }) => (
-            <button type="button" key={key} className={activePage === key ? "active" : ""} onClick={() => { setActivePage(key); setMobileNav(false); setSearch(""); }}>
+            <motion.button
+              type="button"
+              key={key}
+              className={activePage === key ? "active" : ""}
+              onClick={() => { setActivePage(key); setMobileNav(false); setSearch(""); }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.15 }}
+            >
               <Icon size={15} /> {label}
-            </button>
+            </motion.button>
           ))}
         </nav>
         <button className="reference-settings" type="button" onClick={signOut}><LogOut size={15} /> Sign out</button>
@@ -145,6 +181,8 @@ export default function MerchandiserDashboard() {
         </header>
 
         <div className="reference-content">
+          <ScrollProgress className="fixed top-0 left-0 right-0 z-[60]" />
+
           <div className="reference-title">
             <h1>{pageTitles[activePage].title}</h1>
             <span>Aug 31, 2026</span>
@@ -154,30 +192,52 @@ export default function MerchandiserDashboard() {
             <MerchandiserSelect value={merchandiserId} options={merchandisers} onChange={setMerchandiserId} />
           </div>
 
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activePage}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: premiumEase }}
+            >
           {activePage === "home" && (
             <>
-              <div className="page-admin page-merchandiser" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
-                <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
-                  <div>
-                    <span className="eyebrow"><i className="live-dot live" />MERCHANDISER OVERVIEW</span>
-                    <h2>Welcome back, {me?.name}</h2>
-                    <p>Merchandiser · {me?.territory}, {me?.region} — your stores, share of shelf and execution snapshot.</p>
-                  </div>
-                </div>
+              <div className="page-admin page-merchandiser" ref={homeRef} style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
+                <FieldHero
+                  eyebrow="MERCHANDISER OVERVIEW"
+                  title={<>Welcome back, {me?.name}</>}
+                  subtitle={`Merchandiser · ${me?.territory}, ${me?.region} — your stores, share of shelf and execution snapshot.`}
+                  badge="Live"
+                  variant="morph"
+                  colors={["#c2410c", "#ea580c", "#f58220", "#9a3412"]}
+                  stat={
+                    <Magnetic strength={0.12}>
+                      <Badge variant="success">
+                        <AnimatedNumber value={myStores.length} /> stores
+                      </Badge>
+                    </Magnetic>
+                  }
+                />
 
                 <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <SelectBox label="Period" value={period} onChange={setPeriod} options={["This week", "This month", "This quarter"]} />
                   <SelectBox label="Region" value={region} onChange={setRegion} options={["My region", me?.region, me?.territory]} />
                 </div>
 
-                <KpiGrid items={[
-                  { label: "Assigned stores", value: String(myStores.length), trend: `${healthyStores} healthy`, up: true, sub: "my outlets", icon: Store, tone: "teal" },
-                  { label: "Total SKUs", value: String(totalSkus), trend: "across stores", up: true, sub: "assigned", icon: PackageCheck, tone: "blue" },
-                  { label: "Avg completion", value: `${me?.completion ?? 0}%`, trend: "this period", up: (me?.completion ?? 0) >= 90, sub: "target 90%", icon: Target, tone: "violet" },
-                  { label: "Visits", value: String(me?.visits ?? 0), trend: "store visits", up: true, sub: "completed", icon: Building2, tone: "amber" },
-                  { label: "Low / out of stock", value: String(lowStockSkus), trend: "review", up: false, sub: "SKUs needing action", icon: AlertTriangle, tone: "amber" },
-                  { label: "POSM deployed", value: `${posmDone} / ${posmTarget}`, trend: `${posmPct}%`, up: posmPct >= 100, sub: "complete", icon: Presentation, tone: "teal" },
-                ]} />
+                <div className="kx-kpi-grid" data-kx-reveal>
+                  {[
+                    { label: "Assigned stores", value: String(myStores.length), trend: `${healthyStores} healthy`, up: true, sub: "my outlets", icon: Store, tone: "teal" },
+                    { label: "Total SKUs", value: String(totalSkus), trend: "across stores", up: true, sub: "assigned", icon: PackageCheck, tone: "blue" },
+                    { label: "Avg completion", value: `${me?.completion ?? 0}%`, trend: "this period", up: (me?.completion ?? 0) >= 90, sub: "target 90%", icon: Target, tone: "violet" },
+                    { label: "Visits", value: String(me?.visits ?? 0), trend: "store visits", up: true, sub: "completed", icon: Building2, tone: "amber" },
+                    { label: "Low / out of stock", value: String(lowStockSkus), trend: "review", up: false, sub: "SKUs needing action", icon: AlertTriangle, tone: "amber" },
+                    { label: "POSM deployed", value: `${posmDone} / ${posmTarget}`, trend: `${posmPct}%`, up: posmPct >= 100, sub: "complete", icon: Presentation, tone: "teal" },
+                  ].map((item, i) => (
+                    <TiltCard key={item.label} intensity={5} style={{ borderRadius: 18 }}>
+                      <KpiCard item={item} index={i} />
+                    </TiltCard>
+                  ))}
+                </div>
 
                 <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
                   <div className="card">
@@ -469,6 +529,8 @@ export default function MerchandiserDashboard() {
               </section>
             </>
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
     </div>

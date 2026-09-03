@@ -683,3 +683,247 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 /* enhanced card hover lift for chart cards */
 .charts-row .card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
 .charts-row .card:hover{transform:translateY(-4px);border-color:#87adf4;box-shadow:0 14px 34px rgba(37,99,235,.12)}
+
+/* --------------------- shadcn-style UI kit --------------------- */
+.cm-badge-default{background:#e9f0ff;color:#2563eb;border-color:#cfe0ff}
+.cm-badge-secondary{background:#eef1ef;color:#5f6b64;border-color:#e3e8e6}
+.cm-badge-success{background:#e5f8f1;color:#0c9b6b;border-color:#d0f0e3}
+.cm-badge-warning{background:#fff4df;color:#d8900b;border-color:#fbe6bd}
+.cm-badge-danger{background:#feecec;color:#d93a3a;border-color:#fbcccc}
+.cm-badge-outline{background:transparent;color:var(--text);border-color:var(--line)}
+.cm-badge-accent{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+
+.cm-btn{cursor:pointer;border:1px solid transparent;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.cm-btn-primary{background:#2563eb;color:#fff;border-color:#2563eb}
+.cm-btn-primary:hover{background:#1d4ed8}
+.cm-btn-secondary{background:var(--card);color:var(--text);border-color:var(--line)}
+.cm-btn-secondary:hover{background:var(--soft)}
+.cm-btn-ghost{background:transparent;color:var(--text)}
+.cm-btn-ghost:hover{background:var(--soft)}
+.cm-btn-outline{background:transparent;color:var(--text);border-color:var(--line)}
+.cm-btn-outline:hover{background:var(--soft)}
+.cm-btn-danger{background:#fef2f2;color:#b42318;border-color:#fecaca}
+.cm-btn-danger:hover{background:#fee2e2}
+.cm-btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cm-btn-accent:hover{filter:brightness(1.06)}
+
+.kea-haikei{z-index:0}
+
+/* ========================================================================
+   PREMIUM OVERHAUL — merchandiser console
+   A sophisticated neutral + warm terracotta accent system with refined
+   typography, layered shadows, organic radii and premium motion states.
+   Scoped to .merch-reference so the rest of the product is untouched.
+   ======================================================================== */
+.merch-reference{
+  --mx-bg:#f4f5f7;
+  --mx-surface:#ffffff;
+  --mx-surface-2:#f8f9fb;
+  --mx-text:#1a1d21;
+  --mx-muted:#6b7280;
+  --mx-line:#e7e9ee;
+  --mx-line-strong:#d7dbe3;
+  --mx-accent:#c2410c;
+  --mx-accent-strong:#9a3412;
+  --mx-accent-soft:rgba(194,65,12,.10);
+  --mx-shadow-sm:0 1px 2px rgba(20,25,33,.05);
+  --mx-shadow:0 1px 2px rgba(20,25,33,.04),0 12px 32px -12px rgba(20,25,33,.10);
+  --mx-shadow-lg:0 2px 4px rgba(20,25,33,.05),0 28px 60px -22px rgba(20,25,33,.22);
+  background:var(--mx-bg);
+  color:var(--mx-text);
+  font-family:Inter,"DM Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+.merch-reference.dark{
+  --mx-bg:#0e1116;
+  --mx-surface:#161a21;
+  --mx-surface-2:#1c212a;
+  --mx-text:#eceef2;
+  --mx-muted:#98a1ad;
+  --mx-line:#252b35;
+  --mx-line-strong:#313947;
+  --mx-accent:#f2703c;
+  --mx-accent-strong:#f58220;
+  --mx-accent-soft:rgba(242,112,60,.16);
+  --mx-shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --mx-shadow:0 1px 2px rgba(0,0,0,.3),0 14px 34px -14px rgba(0,0,0,.5);
+  --mx-shadow-lg:0 4px 10px rgba(0,0,0,.4),0 30px 70px -24px rgba(0,0,0,.7);
+}
+
+/* ---- Rail: deep charcoal with accent glow ---- */
+.merch-reference .reference-rail{
+  width:230px;
+  background:linear-gradient(180deg,#151a21 0%,#0f1216 100%);
+  border-right:1px solid rgba(255,255,255,.05);
+  padding:0 14px;
+}
+.merch-reference .reference-brand{height:64px;border-bottom:1px solid rgba(255,255,255,.07);padding:0 6px}
+.merch-reference .reference-brand strong{font-size:13px;letter-spacing:.06em;color:#fff}
+.merch-reference .reference-brand small{font-size:8px;color:#9aa3af}
+.merch-reference .reference-rail nav{padding-top:12px}
+.merch-reference .reference-rail nav button{
+  height:40px;
+  color:#b9c0ca;
+  font-size:10px;
+  letter-spacing:.045em;
+  border-radius:10px;
+  padding:0 11px;
+  margin:2px 0;
+  gap:11px;
+  font-weight:600;
+  transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+.merch-reference .reference-rail nav button svg{opacity:.85}
+.merch-reference .reference-rail nav button:hover{background:rgba(255,255,255,.06);color:#fff;transform:translateX(2px)}
+.merch-reference .reference-rail nav button.active{
+  background:linear-gradient(90deg,var(--mx-accent-strong),var(--mx-accent));
+  color:#fff;
+  box-shadow:0 6px 20px -6px rgba(194,65,12,.6);
+}
+.merch-reference .reference-rail nav button.active:before{left:-14px;width:3px;height:22px;background:#f58220;border-radius:0 3px 3px 0}
+.merch-reference .reference-settings{color:#9aa3af;font-size:10px}
+.merch-reference .reference-settings:hover{color:#fff}
+
+/* ---- Topbar ---- */
+.merch-reference .reference-topbar{
+  height:56px;
+  background:rgba(255,255,255,.82);
+  border-bottom:1px solid var(--mx-line);
+  padding:0 22px;
+  backdrop-filter:saturate(1.4) blur(10px);
+}
+.merch-reference.dark .reference-topbar{background:rgba(14,17,22,.82);border-color:var(--mx-line)}
+.merch-reference .vsr-page-title{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--mx-accent-strong)}
+.merch-reference .reference-actions{color:var(--mx-muted)}
+.merch-reference .reference-actions button{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;transition:background .18s}
+.merch-reference .reference-actions button:hover{background:var(--mx-surface-2)}
+.merch-reference .reference-actions>span{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--mx-accent),var(--mx-accent-strong));color:#fff;font-weight:800;display:grid;place-items:center;font-size:11px;box-shadow:0 4px 14px -4px rgba(194,65,12,.6)}
+
+/* ---- Content / title ---- */
+.merch-reference .reference-content{max-width:1440px;padding:26px 30px 44px}
+.merch-reference .reference-title{margin:0 0 18px}
+.merch-reference .reference-title h1{font-size:22px;letter-spacing:-.035em;color:var(--mx-text)}
+.merch-reference .reference-title span{font-size:11px;color:var(--mx-muted)}
+
+/* ---- Merchant select ---- */
+.merch-reference .admin-select{
+  height:40px;min-width:200px;background:var(--mx-surface);border:1px solid var(--mx-line);
+  border-radius:12px;transition:border-color .18s,box-shadow .18s;
+}
+.merch-reference .admin-select:hover{border-color:var(--mx-line-strong)}
+.merch-reference .admin-select:focus-within{border-color:var(--mx-accent);box-shadow:0 0 0 3px var(--mx-accent-soft)}
+.merch-reference .admin-select span{top:6px;left:12px;font-size:8px;color:var(--mx-muted)}
+.merch-reference .admin-select select{padding:17px 30px 4px 12px;color:var(--mx-text);font-size:12px}
+.merch-reference .admin-select svg{color:var(--mx-muted)}
+
+/* ---- Page admin wrapper ---- */
+.merch-reference .page-admin.page-merchandiser{padding:0}
+
+/* ---- Filters ---- */
+.merch-reference .filters{background:transparent;border:0;box-shadow:none;padding:0;margin:0 0 18px;min-height:0}
+.merch-reference .select-box{
+  height:44px;min-width:170px;background:var(--mx-surface);border:1px solid var(--mx-line);
+  border-radius:12px;box-shadow:var(--mx-shadow-sm);transition:border-color .18s,box-shadow .18s;
+}
+.merch-reference .select-box:hover{border-color:var(--mx-line-strong)}
+.merch-reference .select-box span{top:6px;left:11px;font-size:8px;color:var(--mx-muted)}
+.merch-reference .select-box select{padding-top:19px;color:var(--mx-text);font-size:11px}
+
+/* ---- Hero ---- */
+.merch-reference .kea-hero{
+  border-radius:20px;
+  background:linear-gradient(120deg,var(--mx-surface) 0%,var(--mx-surface-2) 60%,var(--mx-accent-soft) 120%) !important;
+  border:1px solid var(--mx-line) !important;
+  box-shadow:var(--mx-shadow) !important;
+}
+.merch-reference .kea-hero h2{font-size:28px;letter-spacing:-.035em}
+.merch-reference .kea-hero .eyebrow{color:var(--mx-muted)}
+
+/* ---- KPI grid: premium cards ---- */
+.merch-reference .kx-kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin:0 0 22px}
+.kx-kpi{
+  position:relative;text-align:left;border:1px solid var(--mx-line);background:var(--mx-surface);
+  color:var(--mx-text);border-radius:18px;padding:18px;min-height:138px;
+  box-shadow:var(--mx-shadow);overflow:hidden;cursor:pointer;
+  transition:border-color .22s ease,box-shadow .22s ease,background .22s ease;
+}
+.kx-kpi:hover,.kx-kpi.is-selected{border-color:rgba(194,65,12,.45);box-shadow:var(--mx-shadow-lg)}
+.kx-kpi.is-selected:after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:linear-gradient(90deg,var(--mx-accent),var(--mx-accent-strong))}
+.kx-kpi-sheen{position:absolute;inset:0;background:radial-gradient(360px circle at 30% 0%,var(--mx-accent-soft),transparent 55%);opacity:0;transition:opacity .3s ease;pointer-events:none}
+.kx-kpi:hover .kx-kpi-sheen{opacity:1}
+.kx-kpi-iconwrap{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;margin-bottom:14px}
+.kx-kpi-iconwrap.tone-teal{background:rgba(20,184,166,.12);color:#0d9488}
+.kx-kpi-iconwrap.tone-blue{background:rgba(37,99,235,.12);color:#2563eb}
+.kx-kpi-iconwrap.tone-violet{background:rgba(124,58,237,.12);color:#7c3aed}
+.kx-kpi-iconwrap.tone-amber{background:rgba(245,158,11,.14);color:#d97706}
+.kx-kpi-label{display:block;font-size:11px;color:var(--mx-muted);font-weight:600;letter-spacing:.01em}
+.kx-kpi-value{display:block;font-size:28px;letter-spacing:-.035em;line-height:1.1;margin:7px 0 10px;font-variant-numeric:tabular-nums}
+.kx-kpi-trend{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600}
+.kx-kpi-trend.up{color:#0c9b6b}
+.kx-kpi-trend.down{color:#dc4c41}
+.kx-kpi-trend b{font-size:11px}
+.kx-kpi-trend small{color:var(--mx-muted);font-weight:500;margin-left:3px}
+.kx-kpi-more{position:absolute;right:14px;top:14px;color:var(--mx-muted)}
+.dark .kx-kpi-iconwrap{color:#fff}
+.dark .kx-kpi-iconwrap.tone-teal{background:rgba(20,184,166,.22);color:#5eead4}
+.dark .kx-kpi-iconwrap.tone-blue{background:rgba(59,130,246,.22);color:#93c5fd}
+.dark .kx-kpi-iconwrap.tone-violet{background:rgba(139,92,246,.22);color:#c4b5fd}
+.dark .kx-kpi-iconwrap.tone-amber{background:rgba(251,191,36,.2);color:#fcd34d}
+
+/* ---- Cards & charts ---- */
+.merch-reference .card{
+  background:var(--mx-surface);border:1px solid var(--mx-line);border-radius:18px;
+  box-shadow:var(--mx-shadow);
+}
+.merch-reference .card-head{padding:20px 22px 8px}
+.merch-reference .card-head h2,.merch-reference .card-head h3{font-size:14px;letter-spacing:-.02em}
+.merch-reference .card-head p{font-size:11px;color:var(--mx-muted)}
+.merch-reference .legend{color:var(--mx-muted);font-size:10px}
+
+/* ---- Tables / panels ---- */
+.merch-reference .admin-panel{background:var(--mx-surface);border:1px solid var(--mx-line);border-radius:18px;box-shadow:var(--mx-shadow)}
+.merch-reference .admin-panel>header{padding:18px 20px 10px;border-bottom:1px solid var(--mx-line)}
+.merch-reference .admin-panel>header h2{font-size:13px;color:var(--mx-text)}
+.merch-reference .admin-panel>header p{font-size:11px;color:var(--mx-muted)}
+.merch-reference .admin-panel>header svg{color:var(--mx-accent);width:18px;height:18px}
+.merch-reference th{background:var(--mx-surface-2);font-size:9px;color:var(--mx-muted)}
+.merch-reference td{color:var(--mx-muted);font-size:11px}
+.merch-reference td b,.merch-reference .cell-main{color:var(--mx-text)}
+.merch-reference tbody tr:hover{background:var(--mx-surface-2)}
+
+/* ---- Photo grid ---- */
+.merch-reference .merch-photo-grid figure{background:var(--mx-surface);border:1px solid var(--mx-line);border-radius:14px;box-shadow:var(--mx-shadow-sm)}
+.merch-reference .merch-photo-grid figcaption small{color:var(--mx-muted)}
+
+/* ---- Check list / toggles ---- */
+.merch-reference .vsr-check-list button{border:1px solid var(--mx-line);background:var(--mx-surface);border-radius:12px;color:var(--mx-text);transition:all .18s ease}
+.merch-reference .vsr-check-list button:hover{border-color:var(--mx-accent)}
+.merch-reference .vsr-check-list button.checked{border-color:var(--mx-accent);background:var(--mx-accent-soft);color:var(--mx-accent-strong)}
+.merch-reference .vsr-target-row{border:1px solid var(--mx-line);border-radius:12px;background:var(--mx-surface);transition:border-color .18s}
+.merch-reference .vsr-target-row:hover{border-color:var(--mx-line-strong)}
+.merch-reference .vsr-settings-list span{color:var(--mx-text)}
+.merch-reference .vsr-toggle{background:var(--mx-line-strong)}
+.merch-reference .vsr-toggle.on{background:var(--mx-accent)}
+
+/* ---- Reference KPIs (tab pages) ---- */
+.merch-reference .reference-kpis{grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.merch-reference .reference-kpis article{background:var(--mx-surface);border:1px solid var(--mx-line);border-radius:16px;min-height:88px;padding:16px;box-shadow:var(--mx-shadow-sm);transition:transform .2s,box-shadow .2s}
+.merch-reference .reference-kpis article:hover{transform:translateY(-3px);box-shadow:var(--mx-shadow)}
+.merch-reference .reference-kpis article span{color:var(--mx-muted);font-size:10px}
+.merch-reference .reference-kpis article b{color:var(--mx-text);font-size:26px;letter-spacing:-.03em}
+.merch-reference .reference-kpis article small{color:var(--mx-accent-strong);font-size:9px;font-weight:700}
+
+/* ---- Responsive ---- */
+@media(max-width:1200px){
+  .merch-reference .kx-kpi-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .merch-reference .reference-rail{width:270px}
+  .merch-reference .reference-content{padding:18px 16px 32px}
+  .merch-reference .kx-kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .merch-reference .reference-kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:560px){
+  .merch-reference .kx-kpi-grid{grid-template-columns:1fr 1fr}
+}

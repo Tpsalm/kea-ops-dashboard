@@ -15,6 +15,10 @@ import {
 import { outletData, staff, vsrTrackerRows } from "../data";
 import { clients, getChildren, getStoresByTSR, tsrs } from "../hierarchy-data";
 import { FadeIn, KpiGrid, MapCard, SelectBox, Tip } from "../shared";
+import { FieldHero } from "../../components/field-hero";
+import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
+import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
+import { Badge } from "../../components/ui/badge";
 
 type PageKey = "home" | "territory" | "pipeline" | "accounts" | "outlets" | "map" | "supervisors" | "settings";
 
@@ -153,6 +157,8 @@ export default function TsrDashboard() {
         </header>
 
         <div className="reference-content">
+          <ScrollProgress className="fixed top-0 left-0 right-0 z-[60]" />
+
           <div className="reference-title">
             <h1>{pageTitles[activePage].title}</h1>
             <span>Aug 31, 2026</span>
@@ -165,13 +171,24 @@ export default function TsrDashboard() {
           {activePage === "home" && (
             <>
               <div className="page-admin page-tsr" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
-                <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
-                  <div>
-                    <span className="eyebrow"><i className="live-dot live" />TERRITORY OVERVIEW</span>
-                    <h2>Welcome back, {tsr?.name}</h2>
-                    <p>TSR · {tsr?.region} region — know your territory at a glance with live field analytics.</p>
-                  </div>
-                </div>
+                <FieldHero
+                  eyebrow="TERRITORY OVERVIEW"
+                  title={<>Welcome back, {tsr?.name}</>}
+                  subtitle={`TSR · ${tsr?.region} region — know your territory at a glance with live field analytics.`}
+                  badge="Live"
+                  variant="blobs"
+                  colors={["#0d9488", "#07535a", "#14b8a6", "#134e4a"]}
+                  stat={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <Badge variant="success">
+                        <AnimatedNumber value={regionScope.length} /> stores
+                      </Badge>
+                      <Badge variant="secondary">
+                        {regionScope.filter((s) => s.status === "Healthy").length} healthy
+                      </Badge>
+                    </div>
+                  }
+                />
 
                 <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <SelectBox label="Period" value={period} onChange={setPeriod} options={["Last 7 days", "Last 30 days", "This quarter", "This year"]} />

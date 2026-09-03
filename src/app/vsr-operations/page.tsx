@@ -12,6 +12,10 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Res
 import { dailySales, dailyTarget, staff } from "../data";
 import { vsrRoutes } from "../hierarchy-data";
 import { FadeIn, KpiGrid, SelectBox } from "../shared";
+import { FieldHero } from "../../components/field-hero";
+import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
+import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
+import { Badge } from "../../components/ui/badge";
 
 type PageKey = "home" | "routes" | "sales" | "performance" | "settings";
 
@@ -123,6 +127,8 @@ export default function VsrOperationsPage() {
         </header>
 
         <div className="reference-content">
+          <ScrollProgress className="fixed top-0 left-0 right-0 z-[60]" />
+
           <div className="reference-title">
             <h1>{pageTitles[activePage].title}</h1>
             <span>Aug 31, 2026</span>
@@ -131,16 +137,24 @@ export default function VsrOperationsPage() {
           {activePage === "home" && (
             <>
               <div className="page-admin page-vsr" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
-                <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
-                  <div>
-                    <span className="eyebrow"><i className="live-dot live" />FIELD SNAPSHOT</span>
-                    <h2>Good morning, Shittu Akinsanya</h2>
-                    <p>VSR · Lagos Central · Ikeja North — here is today&apos;s snapshot.</p>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)" }}>
-                    <Route size={15} /> <b>Route:</b> <span>Ikeja North · 6 stops</span>
-                  </div>
-                </div>
+                <FieldHero
+                  eyebrow="FIELD SNAPSHOT"
+                  title="Good morning, Shittu Akinsanya"
+                  subtitle="VSR · Lagos Central · Ikeja North — here is today&apos;s snapshot."
+                  badge="Live"
+                  variant="waves"
+                  colors={["#07535a", "#0d9488", "#14b8a6", "#134e4a"]}
+                  stat={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <Badge variant="accent">
+                        <Route size={12} /> Ikeja North · 6 stops
+                      </Badge>
+                      <Badge variant="success">
+                        ₦<AnimatedNumber value={Math.round(totalValue / 100000)} />0K today
+                      </Badge>
+                    </div>
+                  }
+                />
 
                 <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <SelectBox label="Period" value={period} onChange={setPeriod} options={["Today", "This week", "This month"]} />
