@@ -6,7 +6,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, CheckCircle2, ChevronRight, Database, FileText, LayoutDashboard, Map, Menu, Moon,
+  Bell, CheckCircle2, ChevronRight, Database, FileText, LayoutDashboard, LogOut, Map, Menu, Moon,
   MoreHorizontal, Network, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
 } from "lucide-react";
 import { NAV } from "../app/data";
@@ -25,7 +25,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const superAdminNav = [
     { label: "Global Performance", path: "/admin", icon: LayoutDashboard },
     { label: "Users & Roles", path: "/hierarchy", icon: Users },
@@ -80,6 +80,7 @@ export function AppShell({
           <button type="button" onClick={() => { setPanel("settings"); setMobileNav(false); }}><Settings size={18} /><span>Settings</span></button>
         </nav>
         <div className="sidebar-foot"><div className="user-avatar">KA</div><div><b>KEA Administrator</b><span>Operations · Full access</span></div><MoreHorizontal size={18} /></div>
+        <button type="button" className="sidebar-signout" onClick={() => void signOut()}><LogOut size={16} /><span>Sign out</span></button>
       </aside>
 
       <main className="main">
@@ -145,6 +146,7 @@ export function AppShell({
               <div className="profile-summary"><div className="user-avatar">KA</div><div><b>KEA Administrator</b><span>Operations · Full access</span></div></div>
               <button type="button" className="modal-row" onClick={() => setPanel("settings")}><Settings size={17} /><span><b>Display preferences</b><small>Theme and dashboard appearance</small></span><ChevronRight size={16} /></button>
               <button type="button" className="modal-row" onClick={() => { setPanel(null); flash("Profile is up to date"); }}><UserRound size={17} /><span><b>Review profile</b><small>Account details and access role</small></span><ChevronRight size={16} /></button>
+              <button type="button" className="modal-row danger" onClick={() => void signOut()}><LogOut size={17} /><span><b>Sign out</b><small>End this session and return to login</small></span><ChevronRight size={16} /></button>
             </div>
           </section>
         </div>

@@ -243,6 +243,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .super-admin-shell .sidebar nav a.active:before{left:-9px;background:#b6d335}
 .super-admin-shell .sidebar .manage{display:none}
 .super-admin-shell .sidebar-foot{display:none}
+.super-admin-shell .sidebar-signout{margin-top:auto;margin-bottom:10px}
 .super-admin-shell .content{max-width:1500px;padding:20px 24px}
 @media(max-width:900px){.super-admin-shell .sidebar{width:230px}.super-admin-shell .main{margin-left:0}.super-admin-shell .sidebar.open{transform:translateX(0)}}
 
@@ -634,3 +635,9 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
   .merch-photo-grid{grid-template-columns:1fr 1fr;gap:10px}
   .vsr-check-list{grid-template-columns:1fr}
 }
+
+.sidebar-signout{width:100%;display:flex;align-items:center;gap:10px;border:0;background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border-radius:7px;padding:10px 11px;font-size:12px;cursor:pointer;text-align:left}
+.sidebar-signout:hover{background:rgba(255,255,255,.12);color:#fff}
+.sidebar-signout span{flex:1}
+.modal-row.danger{border-color:#fecaca;background:#fef2f2;color:#991b1b}
+.modal-row.danger:hover{border-color:#f87171;background:#fee2e2}
