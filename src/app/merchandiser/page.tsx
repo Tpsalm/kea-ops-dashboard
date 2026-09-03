@@ -6,10 +6,12 @@ import { useId, useMemo, useState } from "react";
 import {
   AlertTriangle, Bell, Camera, CheckCircle2, ChevronDown, Home, Layers, LogOut, Menu,
   Moon, MoreHorizontal, PackageCheck, Presentation, Search, Settings, Store, Sun,
-  Target, TrendingDown, TrendingUp, Users, X,
+  Target, TrendingDown, TrendingUp, Users, X, Building2,
 } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { staff } from "../data";
 import { activities, getProductsByMerchandiser, getStoresByMerchandiser, products } from "../hierarchy-data";
+import { KpiGrid, SelectBox } from "../shared";
 
 type PageKey = "home" | "stores" | "shelf" | "posm" | "products" | "photos" | "settings";
 
@@ -44,6 +46,14 @@ export default function MerchandiserDashboard() {
   const [category, setCategory] = useState("All categories");
   const [posm, setPosm] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
+  const [period, setPeriod] = useState("This month");
+  const [region, setRegion] = useState("My region");
+
+  const shelfTrend = [
+    { label: "Wk 24", share: 78 }, { label: "Wk 25", share: 82 },
+    { label: "Wk 26", share: 80 }, { label: "Wk 27", share: 86 },
+    { label: "Wk 28", share: 85 }, { label: "Wk 29", share: 90 },
+  ];
 
   const merchandisers = useMemo(() => staff.filter((person) => person.role === "Merchandiser"), []);
   const myStores = useMemo(() => getStoresByMerchandiser(merchandiserId), [merchandiserId]);
@@ -146,37 +156,123 @@ export default function MerchandiserDashboard() {
 
           {activePage === "home" && (
             <>
-              <div className="vsr-welcome">
-                <div>
-                  <span>Welcome back,</span>
-                  <h2>{me?.name}</h2>
-                  <p>Merchandiser · {me?.territory}, {me?.region} — here is your execution snapshot.</p>
+              <div className="page-admin page-merchandiser" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
+                <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+                  <div>
+                    <span className="eyebrow">MERCHANDISER OVERVIEW</span>
+                    <h2>Welcome back, {me?.name}</h2>
+                    <p>Merchandiser · {me?.territory}, {me?.region} — your stores, share of shelf and execution snapshot.</p>
+                  </div>
+                </div>
+
+                <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <SelectBox label="Period" value={period} onChange={setPeriod} options={["This week", "This month", "This quarter"]} />
+                  <SelectBox label="Region" value={region} onChange={setRegion} options={["My region", me?.region, me?.territory]} />
+                </div>
+
+                <KpiGrid items={[
+                  { label: "Assigned stores", value: String(myStores.length), trend: `${healthyStores} healthy`, up: true, sub: "my outlets", icon: Store, tone: "teal" },
+                  { label: "Total SKUs", value: String(totalSkus), trend: "across stores", up: true, sub: "assigned", icon: PackageCheck, tone: "blue" },
+                  { label: "Avg completion", value: `${me?.completion ?? 0}%`, trend: "this period", up: (me?.completion ?? 0) >= 90, sub: "target 90%", icon: Target, tone: "violet" },
+                  { label: "Visits", value: String(me?.visits ?? 0), trend: "store visits", up: true, sub: "completed", icon: Building2, tone: "amber" },
+                  { label: "Low / out of stock", value: String(lowStockSkus), trend: "review", up: false, sub: "SKUs needing action", icon: AlertTriangle, tone: "amber" },
+                  { label: "POSM deployed", value: `${posmDone} / ${posmTarget}`, trend: `${posmPct}%`, up: posmPct >= 100, sub: "complete", icon: Presentation, tone: "teal" },
+                ]} />
+
+                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Share of shelf trend</h3><p>Average in-stock visibility across your stores over time</p></div></div>
+                    <div style={{ height: 240, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={shelfTrend}>
+                          <defs>
+                            <linearGradient id="gShare" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#9a3412" stopOpacity={0.35} /><stop offset="95%" stopColor="#9a3412" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Area type="monotone" dataKey="share" name="Shelf share %" stroke="#9a3412" strokeWidth={2.5} fill="url(#gShare)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Stock availability</h3><p>Product availability mix across your stores</p></div></div>
+                    <div style={{ height: 240, marginTop: 8, position: "relative" }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={[
+                            { name: "In stock", value: myProducts.filter((p) => p.availability === "In stock").length, color: "#16a34a" },
+                            { name: "Low / out", value: lowStockSkus, color: "#f59e0b" },
+                          ]} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={62} outerRadius={88} paddingAngle={3} strokeWidth={0}>
+                            {[{ name: "In stock", value: myProducts.filter((p) => p.availability === "In stock").length, color: "#16a34a" }, { name: "Low / out", value: lowStockSkus, color: "#f59e0b" }].map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                        <b style={{ fontSize: 26 }}>{totalSkus}</b><span style={{ fontSize: 11, color: "var(--muted)" }}>total SKUs</span>
+                      </div>
+                    </div>
+                    <div className="legend" style={{ display: "flex", gap: 16, justifyContent: "center", fontSize: 11 }}>
+                      <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#16a34a", display: "inline-block" }} />In stock · {myProducts.filter((p) => p.availability === "In stock").length}</span>
+                      <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#f59e0b", display: "inline-block" }} />Low / out · {lowStockSkus}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Shelf share by store</h3><p>In-stock visibility across your outlets</p></div></div>
+                    <div style={{ height: 220, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={shelfLog.map((item) => ({ name: item.store.name.split(" ")[0], share: item.share }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Bar dataKey="share" name="Shelf share %" radius={[6, 6, 0, 0]} fill="#9a3412" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Task status</h3><p>POSM and store execution health</p></div></div>
+                    <div style={{ height: 220, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={[
+                          { name: "Store health", value: Math.round((healthyStores / Math.max(1, myStores.length)) * 100) },
+                          { name: "POSM done", value: posmPct },
+                          { name: "Completion", value: me?.completion ?? 0 },
+                          { name: "Shelf share", value: shelfLog.length ? Math.round(shelfLog.reduce((s, i) => s + i.share, 0) / shelfLog.length) : 0 },
+                        ]}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} domain={[0, 100]} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Bar dataKey="value" name="%" radius={[6, 6, 0, 0]} fill="#0d9488" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-head"><div><h3>Target progress</h3><p>Completion against the 90% execution target</p></div><Target size={16} /></div>
+                  <div style={{ padding: 16 }}>
+                    <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${Math.min(100, me?.completion ?? 0)}%`, background: (me?.completion ?? 0) >= 90 ? "#16a34a" : "#f59e0b", borderRadius: 6 }} />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
+                      <span>{me?.completion ?? 0}% completion</span>
+                      <span>{((me?.completion ?? 0) >= 90) ? "On track" : "Below target"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <section className="reference-kpis">
-                <article onClick={() => setActivePage("stores")} style={{ cursor: "pointer" }}><span>Assigned stores <MoreHorizontal size={14} /></span><b>{myStores.length}</b><small>my outlets</small></article>
-                <article><span>Healthy stores <MoreHorizontal size={14} /></span><b>{healthyStores}</b><small>execution health</small></article>
-                <article><span>Total SKUs <MoreHorizontal size={14} /></span><b>{totalSkus}</b><small>across stores</small></article>
-                <article onClick={() => setActivePage("photos")} style={{ cursor: "pointer" }}><span>Photo evidence <MoreHorizontal size={14} /></span><b>{photosCount}</b><small>captured</small></article>
-              </section>
-              <section className="reference-kpis">
-                <article><span>Low / out of stock <MoreHorizontal size={14} /></span><b>{lowStockSkus}</b><small>SKUs to review</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{me?.completion ?? 0}%</b><small>this period</small></article>
-                <article><span>Visits <MoreHorizontal size={14} /></span><b>{me?.visits ?? 0}</b><small>store visits</small></article>
-                <article onClick={() => setActivePage("posm")} style={{ cursor: "pointer" }}><span>POSM deployed <MoreHorizontal size={14} /></span><b>{posmDone} / {posmTarget}</b><small>{posmPct}% complete</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Target progress</h2><p>Completion against the 90% execution target</p></div><Target size={16} /></header>
-                <div style={{ padding: 16 }}>
-                  <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${Math.min(100, me?.completion ?? 0)}%`, background: (me?.completion ?? 0) >= 90 ? "#16a34a" : "#f59e0b", borderRadius: 6 }} />
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
-                    <span>{me?.completion ?? 0}% completion</span>
-                    <span>{((me?.completion ?? 0) >= 90) ? "On track" : "Below target"}</span>
-                  </div>
-                </div>
-              </section>
             </>
           )}
 

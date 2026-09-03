@@ -6,10 +6,12 @@ import { useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, Bell, ClipboardList, CreditCard, Home, LogOut, MapPin, Menu, Moon,
   MoreHorizontal, Phone, Route, Search, Settings, Sun, Target,
-  TrendingDown, TrendingUp, Users, Wallet, X,
+  TrendingDown, TrendingUp, Users, Wallet, X, Building2, CheckCircle2,
 } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { dailySales, dailyTarget, staff } from "../data";
 import { vsrRoutes } from "../hierarchy-data";
+import { KpiGrid, SelectBox } from "../shared";
 
 type PageKey = "home" | "routes" | "sales" | "performance" | "settings";
 
@@ -36,6 +38,12 @@ export default function VsrOperationsPage() {
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
   const [search, setSearch] = useState("");
   const [salesLog, setSalesLog] = useState(dailySales);
+  const [period, setPeriod] = useState("Today");
+
+  const salesTrend = [
+    { label: "Mon", value: 1.2 }, { label: "Tue", value: 1.6 }, { label: "Wed", value: 1.4 },
+    { label: "Thu", value: 1.9 }, { label: "Fri", value: 2.1 }, { label: "Sat", value: 1.7 }, { label: "Sun", value: 1.5 },
+  ];
 
   const vsrStaff = useMemo(() => staff.filter((person) => person.role === "VSR"), []);
   const routeStops = (vsrId: string) => vsrRoutes.find((route) => route.vsrId === vsrId)?.coordinates.length ?? 0;
@@ -122,40 +130,120 @@ export default function VsrOperationsPage() {
 
           {activePage === "home" && (
             <>
-              <div className="vsr-welcome">
-                <div>
-                  <span>Good morning,</span>
-                  <h2>Shittu Akinsanya</h2>
-                  <p>VSR · Lagos Central · Ikeja North — here is today&apos;s snapshot.</p>
+              <div className="page-admin page-vsr" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
+                <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+                  <div>
+                    <span className="eyebrow">FIELD SNAPSHOT</span>
+                    <h2>Good morning, Shittu Akinsanya</h2>
+                    <p>VSR · Lagos Central · Ikeja North — here is today&apos;s snapshot.</p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)" }}>
+                    <Route size={15} /> <b>Route:</b> <span>Ikeja North · 6 stops</span>
+                  </div>
                 </div>
-                <div className="company-welcome" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-                  <Route size={15} /> <b>Route:</b> <span>Ikeja North · 6 stops</span>
+
+                <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <SelectBox label="Period" value={period} onChange={setPeriod} options={["Today", "This week", "This month"]} />
+                </div>
+
+                <KpiGrid items={[
+                  { label: "Today's sales", value: `₦${(totalValue / 1000000).toFixed(1)}M`, trend: `${targetPct}%`, up: targetPct >= 100, sub: `of ₦${dailyTarget / 1000000}M target`, icon: Wallet, tone: "teal" },
+                  { label: "Collected (paid)", value: `₦${(paidValue / 1000000).toFixed(1)}M`, trend: "cash & transfer", up: true, sub: "this window", icon: CreditCard, tone: "blue" },
+                  { label: "Pending credit", value: `₦${(creditValue / 1000000).toFixed(1)}M`, trend: `${salesLog.filter((s) => s.mode === "Credit").length} invoices`, up: false, sub: "to collect", icon: Building2, tone: "amber" },
+                  { label: "Visits completed", value: String(completedVisits), trend: "this window", up: true, sub: "store visits", icon: CheckCircle2, tone: "violet" },
+                  { label: "Active runs", value: String(activeRoutes), trend: "on the road", up: true, sub: "routes", icon: Route, tone: "teal" },
+                  { label: "Target progress", value: `${targetPct}%`, trend: "collected", up: targetPct >= 100, sub: "vs daily target", icon: Target, tone: "amber" },
+                ]} />
+
+                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Sales this week</h3><p>Daily collected value in ₦ millions</p></div></div>
+                    <div style={{ height: 240, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={salesTrend}>
+                          <defs>
+                            <linearGradient id="gSales" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#0d9488" stopOpacity={0.35} /><stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Area type="monotone" dataKey="value" name="₦M" stroke="#0d9488" strokeWidth={2.5} fill="url(#gSales)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Payment mix</h3><p>Paid vs credit this window</p></div></div>
+                    <div style={{ height: 240, marginTop: 8, position: "relative" }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={[
+                            { name: "Paid", value: paidValue, color: "#16a34a" },
+                            { name: "Credit", value: creditValue, color: "#f59e0b" },
+                          ]} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={62} outerRadius={88} paddingAngle={3} strokeWidth={0}>
+                            {[{ name: "Paid", value: paidValue, color: "#16a34a" }, { name: "Credit", value: creditValue, color: "#f59e0b" }].map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                        <b style={{ fontSize: 26 }}>₦{(totalValue / 1000000).toFixed(1)}M</b><span style={{ fontSize: 11, color: "var(--muted)" }}>total sales</span>
+                      </div>
+                    </div>
+                    <div className="legend" style={{ display: "flex", gap: 16, justifyContent: "center", fontSize: 11 }}>
+                      <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#16a34a", display: "inline-block" }} />Paid · ₦{(paidValue / 1000000).toFixed(1)}M</span>
+                      <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#f59e0b", display: "inline-block" }} />Credit · ₦{(creditValue / 1000000).toFixed(1)}M</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Completion by route</h3><p>Field completion across your routes</p></div></div>
+                    <div style={{ height: 220, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={vsrStaff.map((p) => ({ name: p.route.split(" ")[0], completion: p.completion }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Bar dataKey="completion" name="Completion %" radius={[6, 6, 0, 0]} fill="#0d9488" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Visits by route</h3><p>Store visits completed this window</p></div></div>
+                    <div style={{ height: 220, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={vsrStaff.map((p) => ({ name: p.route.split(" ")[0], visits: p.visits }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Bar dataKey="visits" name="Visits" radius={[6, 6, 0, 0]} fill="#2563eb" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-head"><div><h3>Target progress</h3><p>Collected value against today&apos;s target of ₦{(dailyTarget / 1000000).toFixed(0)}M</p></div><Target size={16} /></div>
+                  <div style={{ padding: 16 }}>
+                    <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${Math.min(100, targetPct)}%`, background: targetPct >= 100 ? "#12a472" : targetPct >= 70 ? "#f59e0b" : "#2563eb", borderRadius: 6 }} />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
+                      <span>₦{(collectedValue / 1000000).toFixed(1)}M collected</span>
+                      <span>{targetPct >= 100 ? "Target met" : targetPct >= 70 ? "Almost there" : "Keep going"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <section className="reference-kpis">
-                <article onClick={() => setActivePage("sales")} style={{ cursor: "pointer" }}><span>Today&apos;s sales <MoreHorizontal size={14} /></span><b>₦{(totalValue / 1000000).toFixed(1)}M</b><small>{targetPct}% of ₦{dailyTarget / 1000000}M target</small></article>
-                <article><span>Collected (paid) <MoreHorizontal size={14} /></span><b>₦{(paidValue / 1000000).toFixed(1)}M</b><small>cash & transfer</small></article>
-                <article><span>Pending credit <MoreHorizontal size={14} /></span><b>₦{(creditValue / 1000000).toFixed(1)}M</b><small>{salesLog.filter((s) => s.mode === "Credit").length} invoices</small></article>
-                <article><span>Visits completed <MoreHorizontal size={14} /></span><b>{completedVisits}</b><small>this window</small></article>
-              </section>
-              <section className="reference-kpis">
-                <article><span>Active runs <MoreHorizontal size={14} /></span><b>{activeRoutes}</b><small>on the road</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{avgCompletion}%</b><small>field performance</small></article>
-                <article><span>Credit to collect <MoreHorizontal size={14} /></span><b>{creditValue > 0 ? "Action" : "Clear"}</b><small>{creditValue > 0 ? "collect this week" : "no outstanding"}</small></article>
-                <article><span>Target progress <MoreHorizontal size={14} /></span><b>{targetPct}%</b><small>collected vs daily target</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Target progress</h2><p>Collected value against today&apos;s target of ₦{(dailyTarget / 1000000).toFixed(0)}M</p></div><Target size={16} /></header>
-                <div style={{ padding: 16 }}>
-                  <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${Math.min(100, targetPct)}%`, background: targetPct >= 100 ? "#12a472" : targetPct >= 70 ? "#f59e0b" : "#2563eb", borderRadius: 6 }} />
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
-                    <span>₦{(collectedValue / 1000000).toFixed(1)}M collected</span>
-                    <span>{targetPct >= 100 ? "Target met" : targetPct >= 70 ? "Almost there" : "Keep going"}</span>
-                  </div>
-                </div>
-              </section>
             </>
           )}
 

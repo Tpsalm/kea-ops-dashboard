@@ -6,13 +6,15 @@ import { useId, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, Bell, CheckCircle2, ChevronDown, ClipboardCheck,
   Home, LogOut, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
-  ShieldCheck, Store, Sun, TrendingDown, TrendingUp, Upload, Users, X, Target,
+  ShieldCheck, Store, Sun, TrendingDown, TrendingUp, Upload, Users, X, Target, Building2, Layers,
 } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { outletData, staff } from "../data";
 import {
   products, supervisors, getChildren, getStoresBySupervisor,
   getActivitiesByStaff, getVSRRoute,
 } from "../hierarchy-data";
+import { KpiGrid, SelectBox } from "../shared";
 
 type PageKey =
   | "home"
@@ -65,6 +67,14 @@ export default function SupervisorDashboard() {
   const [submittedReports, setSubmittedReports] = useState<{ id: string; member: string; type: string; date: string; files: number }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [period, setPeriod] = useState("Last 30 days");
+  const [region, setRegion] = useState("My region");
+
+  const completionTrend = [
+    { label: "Wk 24", completion: 78 }, { label: "Wk 25", completion: 82 },
+    { label: "Wk 26", completion: 81 }, { label: "Wk 27", completion: 85 },
+    { label: "Wk 28", completion: 84 }, { label: "Wk 29", completion: 88 },
+  ];
 
   const supervisor = useMemo(
     () => supervisors.find((s) => s.id === supervisorId) ?? supervisors[0],
@@ -235,70 +245,153 @@ export default function SupervisorDashboard() {
 
           {activePage === "home" && (
             <>
-              <div className="vsr-welcome">
-                <div>
-                  <span>Welcome back,</span>
-                  <h2>{supervisor.name}</h2>
-                  <p>Supervisor · {supervisor.territory}, {supervisor.region} — here is your team at a glance.</p>
+              <div className="page-admin page-supervisor" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
+                <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+                  <div>
+                    <span className="eyebrow">SUPERVISOR OVERVIEW</span>
+                    <h2>Welcome back, {supervisor.name}</h2>
+                    <p>Supervisor · {supervisor.territory}, {supervisor.region} — your team, targets and field execution at a glance.</p>
+                  </div>
+                </div>
+
+                <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <SelectBox label="Period" value={period} onChange={setPeriod} options={["Last 7 days", "Last 30 days", "This quarter", "This year"]} />
+                  <SelectBox label="Region" value={region} onChange={setRegion} options={["My region", supervisor.region, supervisor.territory]} />
+                </div>
+
+                {expiryAlert && (
+                  <div style={{ padding: "13px 16px", borderRadius: 8, display: "flex", gap: 10, background: "#fef3f2", border: "1px solid #fecaca" }}>
+                    <AlertTriangle size={18} style={{ color: "#b42318", flexShrink: 0 }} />
+                    <div style={{ fontSize: 12, color: "#7a271a" }}>
+                      <b>Expiry alert:</b> {peopleWithExpiry} people under you have products expiring within 4 days (about {expiringProducts} SKUs). Review stock rotation and confirm reorders.
+                    </div>
+                  </div>
+                )}
+
+                <KpiGrid items={[
+                  { label: "Direct reports", value: String(myTeam.length), trend: myTeam.map((m) => m.role).filter((r) => r === "Merchandiser").length + " merch", up: true, sub: "team members", icon: Users, tone: "blue" },
+                  { label: "Avg completion", value: `${avgCompletion}%`, trend: `${completionTarget}%`, up: avgCompletion >= completionTarget, sub: "target", icon: Target, tone: "teal" },
+                  { label: "Pending outlets", value: String(pendingCount), trend: "action", up: false, sub: "awaiting approval", icon: Building2, tone: "amber" },
+                  { label: "Stores covered", value: String(myStores.length), trend: `${healthyStores} healthy`, up: true, sub: "execution health", icon: Store, tone: "violet" },
+                  { label: "Expiry risk", value: String(peopleWithExpiry), trend: `${expiringProducts} SKUs`, up: false, sub: "people at risk", icon: AlertTriangle, tone: "amber" },
+                  { label: "Below target", value: String(myTeam.filter((m) => m.completion < completionTarget).length), trend: "coaching", up: true, sub: "needs attention", icon: Layers, tone: "blue" },
+                ]} />
+
+                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Team completion trend</h3><p>Average execution against the {completionTarget}% minimum over time</p></div></div>
+                    <div style={{ height: 240, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={completionTrend}>
+                          <defs>
+                            <linearGradient id="gCompSup" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#0d9488" stopOpacity={0.35} /><stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Area type="monotone" dataKey="completion" name="Completion %" stroke="#0d9488" strokeWidth={2.5} fill="url(#gCompSup)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Team mix</h3><p>Direct reports by role</p></div></div>
+                    <div style={{ height: 240, marginTop: 8, position: "relative" }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={[
+                            { name: "Merchandisers", value: myMerchandisers.length, color: "#0d9488" },
+                            { name: "VSRs", value: myVSRs.length, color: "#2563eb" },
+                          ]} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={62} outerRadius={88} paddingAngle={3} strokeWidth={0}>
+                            {[{ name: "Merchandisers", value: myMerchandisers.length, color: "#0d9488" }, { name: "VSRs", value: myVSRs.length, color: "#2563eb" }].map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                        <b style={{ fontSize: 26 }}>{myTeam.length}</b><span style={{ fontSize: 11, color: "var(--muted)" }}>team members</span>
+                      </div>
+                    </div>
+                    <div className="legend" style={{ display: "flex", gap: 16, justifyContent: "center", fontSize: 11 }}>
+                      <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#0d9488", display: "inline-block" }} />Merchandisers · {myMerchandisers.length}</span>
+                      <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#2563eb", display: "inline-block" }} />VSRs · {myVSRs.length}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Completion by member</h3><p>Individual output against target</p></div></div>
+                    <div style={{ height: 220, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={myTeam.map((m) => ({ name: m.name.split(" ")[0], completion: m.completion }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Bar dataKey="completion" name="Completion %" radius={[6, 6, 0, 0]} fill="#0d9488" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Route coverage</h3><p>Store visits vs target per member</p></div></div>
+                    <div style={{ height: 220, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={myTeam.map((m) => ({ name: m.name.split(" ")[0], visits: m.visits }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Bar dataKey="visits" name="Visits" radius={[6, 6, 0, 0]} fill="#2563eb" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-head"><div><h3>Team overview</h3><p>Direct reports with completion and target status</p></div><Users size={16} /></div>
+                  <div className="vsr-target-list">
+                    {myTeam.map((member) => {
+                      const onTrack = member.completion >= completionTarget;
+                      return (
+                        <div key={member.id} className="vsr-target-row">
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <b style={{ fontSize: 12 }}>{member.name}</b>
+                              <span style={{ fontSize: 11, color: "var(--muted)" }}>{member.role} · {member.visits} visits · {member.completion}%</span>
+                            </div>
+                            <div style={{ height: 9, background: "#eef1ef", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
+                              <div style={{ height: "100%", width: `${Math.min(100, member.completion)}%`, background: onTrack ? "#16a34a" : "#f59e0b", borderRadius: 5 }} />
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: onTrack ? "#0c9b6b" : "#d8900b", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                            {onTrack ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                            {onTrack ? "On track" : "Below target"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-head"><div><h3>Avg completion vs target</h3><p>Overall team execution compared to {completionTarget}% minimum</p></div><Target size={16} /></div>
+                  <div style={{ padding: 16 }}>
+                    <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${Math.min(100, avgCompletion)}%`, background: avgCompletion >= completionTarget ? "#16a34a" : "#f59e0b", borderRadius: 6 }} />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
+                      <span>{avgCompletion}% team average</span>
+                      <span>{completionTarget}% target</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              {expiryAlert && (
-                <div style={{ margin: "14px 18px", padding: "14px 16px", borderRadius: 8, display: "flex", gap: 10, background: "#fef3f2", border: "1px solid #fecaca" }}>
-                  <AlertTriangle size={18} style={{ color: "#b42318", flexShrink: 0 }} />
-                  <div style={{ fontSize: 12, color: "#7a271a" }}>
-                    <b>Expiry alert:</b> {peopleWithExpiry} people under you have products expiring within 4 days (about {expiringProducts} SKUs). Review stock rotation and confirm reorders.
-                  </div>
-                </div>
-              )}
-              <section className="reference-kpis">
-                <article onClick={() => setActivePage("team")} style={{ cursor: "pointer" }}><span>Direct reports <MoreHorizontal size={14} /></span><b>{myTeam.length}</b><small>team members</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{avgCompletion}%</b><small>vs {completionTarget}% target</small></article>
-                <article onClick={() => setActivePage("onboarding")} style={{ cursor: "pointer" }}><span>Pending outlets <MoreHorizontal size={14} /></span><b>{pendingCount}</b><small>awaiting approval</small></article>
-                <article><span>Stores covered <MoreHorizontal size={14} /></span><b>{myStores.length}</b><small>execution health</small></article>
-              </section>
-              <section className="reference-kpis">
-                <article><span>Expiry risk <MoreHorizontal size={14} /></span><b>{peopleWithExpiry}</b><small>people with expiring stock</small></article>
-                <article><span>Healthy stores <MoreHorizontal size={14} /></span><b>{healthyStores}</b><small>all good</small></article>
-                <article onClick={() => setActivePage("visits")} style={{ cursor: "pointer" }}><span>Uploads <MoreHorizontal size={14} /></span><b>{uploaded}</b><small>reports submitted</small></article>
-                <article><span>Below target <MoreHorizontal size={14} /></span><b>{myTeam.filter((m) => m.completion < completionTarget).length}</b><small>needs coaching</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Team overview</h2><p>Direct reports with completion and target status</p></div><Users size={16} /></header>
-                <div className="vsr-target-list">
-                  {myTeam.map((member) => {
-                    const onTrack = member.completion >= completionTarget;
-                    return (
-                      <div key={member.id} className="vsr-target-row">
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <b style={{ fontSize: 12 }}>{member.name}</b>
-                            <span style={{ fontSize: 11, color: "var(--muted)" }}>{member.role} · {member.visits} visits · {member.completion}%</span>
-                          </div>
-                          <div style={{ height: 9, background: "#eef1ef", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
-                            <div style={{ height: "100%", width: `${Math.min(100, member.completion)}%`, background: onTrack ? "#16a34a" : "#f59e0b", borderRadius: 5 }} />
-                          </div>
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: onTrack ? "#0c9b6b" : "#d8900b", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                          {onTrack ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                          {onTrack ? "On track" : "Below target"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Avg completion vs target</h2><p>Overall team execution compared to {completionTarget}% minimum</p></div><Target size={16} /></header>
-                <div style={{ padding: 16 }}>
-                  <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${Math.min(100, avgCompletion)}%`, background: avgCompletion >= completionTarget ? "#16a34a" : "#f59e0b", borderRadius: 6 }} />
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
-                    <span>{avgCompletion}% team average</span>
-                    <span>{completionTarget}% target</span>
-                  </div>
-                </div>
-              </section>
             </>
           )}
 

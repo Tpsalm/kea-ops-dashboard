@@ -6,11 +6,15 @@ import { useId, useMemo, useState } from "react";
 import {
   AlertTriangle, Bell, Building2, CheckCircle2, ChevronDown, Gauge, Home, Layers,
   LogOut, Map, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
-  Store, Sun, TrendingDown, TrendingUp, Users, X,
+  Store, Sun, Target, TrendingDown, TrendingUp, Users, X,
 } from "lucide-react";
+import {
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
 import { outletData, staff, vsrTrackerRows } from "../data";
 import { clients, getChildren, getStoresByTSR, tsrs } from "../hierarchy-data";
-import { MapCard } from "../shared";
+import { KpiGrid, MapCard, SelectBox, Tip } from "../shared";
 
 type PageKey = "home" | "territory" | "pipeline" | "accounts" | "outlets" | "map" | "supervisors" | "settings";
 
@@ -47,6 +51,9 @@ export default function TsrDashboard() {
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState("Convenience");
   const [newTerritory, setNewTerritory] = useState("Lagos Central");
+  const [period, setPeriod] = useState("Last 30 days");
+  const [region, setRegion] = useState("All regions");
+  const [status, setStatus] = useState("All statuses");
 
   const tsr = useMemo(() => tsrs.find((item) => item.id === tsrId) ?? tsrs[0], [tsrId]);
   const myStores = useMemo(() => getStoresByTSR(tsrId), [tsrId]);
@@ -57,6 +64,19 @@ export default function TsrDashboard() {
 
   const healthyStores = myStores.filter((store) => store.status === "Healthy").length;
   const completionTarget = 90;
+
+  const regionScope = myStores.filter((s) => region === "All regions" || s.region === region || s.territory === region);
+
+  const storeTrend = useMemo(() => [
+    { label: "Wk 24", stores: 34, health: 82 }, { label: "Wk 25", stores: 41, health: 85 },
+    { label: "Wk 26", stores: 45, health: 84 }, { label: "Wk 27", stores: 52, health: 88 },
+    { label: "Wk 28", stores: 58, health: 90 }, { label: "Wk 29", stores: 66, health: 91 },
+  ], []);
+
+  const healthMix = useMemo(() => [
+    { name: "Healthy", value: healthyStores, color: "#16a34a" },
+    { name: "Needs review", value: Math.max(0, myStores.length - healthyStores), color: "#f59e0b" },
+  ], [healthyStores, myStores.length]);
 
   const pipeline = useMemo(() => [
     { name: "Lead", value: vsrTrackerRows.length },
@@ -144,65 +164,149 @@ export default function TsrDashboard() {
 
           {activePage === "home" && (
             <>
-              <div className="vsr-welcome">
-                <div>
-                  <span>Welcome back,</span>
-                  <h2>{tsr?.name}</h2>
-                  <p>TSR · {tsr?.region} region — here is your territory at a glance.</p>
+              <div className="page-admin page-tsr" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
+                <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+                  <div>
+                    <span className="eyebrow">TERRITORY OVERVIEW</span>
+                    <h2>Welcome back, {tsr?.name}</h2>
+                    <p>TSR · {tsr?.region} region — know your territory at a glance with live field analytics.</p>
+                  </div>
+                </div>
+
+                <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <SelectBox label="Period" value={period} onChange={setPeriod} options={["Last 7 days", "Last 30 days", "This quarter", "This year"]} />
+                  <SelectBox label="Region" value={region} onChange={setRegion} options={["All regions", tsr?.region, ...myStores.map((s) => s.territory).filter((v, i, a) => v && a.indexOf(v) === i)]} />
+                  <SelectBox label="Status" value={status} onChange={setStatus} options={["All statuses", "Healthy", "Needs review"]} />
+                </div>
+
+                <KpiGrid items={[
+                  { label: "Assigned stores", value: String(regionScope.length), trend: `+${Math.max(0, storeTrend.length ? storeTrend[storeTrend.length - 1].stores - storeTrend[0].stores : 0)}`, up: true, sub: "this period", icon: Store, tone: "teal" },
+                  { label: "Healthy stores", value: String(regionScope.filter((s) => s.status === "Healthy").length), trend: `${regionScope.length ? Math.round((regionScope.filter((s) => s.status === "Healthy").length / regionScope.length) * 100) : 0}%`, up: true, sub: "health score", icon: CheckCircle2, tone: "teal" },
+                  { label: "Pipeline leads", value: String(pipeline[0].value), trend: `${pipeline[1].value}`, up: false, sub: "funded", icon: Layers, tone: "violet" },
+                  { label: "Pending outlets", value: String(requests.length), trend: "action", up: false, sub: "awaiting approval", icon: Building2, tone: "amber" },
+                  { label: "Supervisors", value: String(supervisors.length), trend: "direct", up: true, sub: "reporting to me", icon: Users, tone: "blue" },
+                  { label: "Avg completion", value: `${myChildren.length ? Math.round(myChildren.reduce((s, c) => s + c.completion, 0) / myChildren.length) : 0}%`, trend: `${completionTarget}%`, up: myChildren.length ? Math.round(myChildren.reduce((s, c) => s + c.completion, 0) / myChildren.length) >= completionTarget : true, sub: "target", icon: Target, tone: "teal" },
+                ]} />
+
+                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Store growth &amp; health</h3><p>Acquisitions and execution health over time</p></div></div>
+                    <div style={{ height: 240, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={storeTrend}>
+                          <defs>
+                            <linearGradient id="gStores" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#07535a" stopOpacity={0.35} /><stop offset="95%" stopColor="#07535a" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Area type="monotone" dataKey="stores" name="Stores" stroke="#07535a" strokeWidth={2.5} fill="url(#gStores)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Store health mix</h3><p>Execution status distribution</p></div></div>
+                    <div style={{ height: 240, marginTop: 8, position: "relative" }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={healthMix} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={62} outerRadius={88} paddingAngle={3} strokeWidth={0}>
+                            {healthMix.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                        <b style={{ fontSize: 26 }}>{myStores.length}</b><span style={{ fontSize: 11, color: "var(--muted)" }}>total stores</span>
+                      </div>
+                    </div>
+                    <div className="legend" style={{ display: "flex", gap: 16, justifyContent: "center", fontSize: 11 }}>
+                      {healthMix.map((entry) => (
+                        <span key={entry.name} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><i style={{ width: 9, height: 9, borderRadius: 3, background: entry.color, display: "inline-block" }} />{entry.name} · {entry.value}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                  <div className="card">
+                    <div className="card-head"><div><h3>Team completion</h3><p>Supervisor &amp; VSR output against target</p></div></div>
+                    <div style={{ height: 220, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={myChildren.map((c) => ({ name: c.name.split(" ")[0], completion: c.completion }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Bar dataKey="completion" name="Completion %" radius={[6, 6, 0, 0]} fill="#0c9b6b" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-head"><div><h3>VSR route coverage</h3><p>Field staff by region</p></div><Target size={16} /></div>
+                    <div style={{ height: 220, marginTop: 8 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={territoryStaff.reduce((acc, p) => {
+                          const found = acc.find((a) => a.name === p.region);
+                          if (found) found.value += 1; else acc.push({ name: p.region, value: 1 });
+                          return acc;
+                        }, [] as { name: string; value: number }[])}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
+                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
+                          <Bar dataKey="value" name="Staff" radius={[6, 6, 0, 0]} fill="#0d9488" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-head"><div><h3>New outlet requests</h3><p>Outlets you&apos;ve requested — they stay Pending until approved by your supervisor.</p></div><Store size={16} /></div>
+                  <div className="table-scroll">
+                    <table>
+                      <thead><tr><th>Outlet</th><th>Territory</th><th>Type</th><th>Status</th></tr></thead>
+                      <tbody>
+                        {requests.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--muted)" }}>No pending outlet requests.</td></tr>}
+                        {requests.map((outlet) => (
+                          <tr key={outlet.id}>
+                            <td data-label="Outlet"><b>{outlet.name}</b></td>
+                            <td data-label="Territory">{outlet.territory}</td>
+                            <td data-label="Type">{outlet.type}</td>
+                            <td data-label="Status"><span className="status on-route"><i />{outlet.status}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ padding: "0 16px 16px", display: "grid", gap: 10 }}>
+                    <div>
+                      <span style={{ fontSize: 11, fontWeight: 700 }}>Request a new outlet</span>
+                      <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Outlet name" style={{ width: "100%", marginTop: 4, border: "1px solid #dfe4e2", borderRadius: 6, padding: 9, fontSize: 12 }} />
+                    </div>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <label className="admin-select" style={{ flex: 1, minWidth: 140 }}>
+                        <span>TYPE</span>
+                        <select value={newType} onChange={(e) => setNewType(e.target.value)}>
+                          <option>Convenience</option><option>Supermarket</option><option>Wholesale</option><option>Kiosk</option>
+                        </select>
+                        <ChevronDown size={13} />
+                      </label>
+                      <input value={newTerritory} onChange={(e) => setNewTerritory(e.target.value)} placeholder="Territory" style={{ flex: 1, minWidth: 140, border: "1px solid #dfe4e2", borderRadius: 6, padding: 9, fontSize: 12 }} />
+                    </div>
+                    <div>
+                      <button type="button" onClick={requestOutlet} style={{ background: "#07535a", color: "#fff", border: "none", borderRadius: 6, padding: "10px 16px", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                        <CheckCircle2 size={14} style={{ verticalAlign: "middle", marginRight: 6 }} /> Request outlet (Pending)
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <section className="reference-kpis">
-                <article onClick={() => setActivePage("territory")} style={{ cursor: "pointer" }}><span>Assigned stores <MoreHorizontal size={14} /></span><b>{myStores.length}</b><small>my territory</small></article>
-                <article onClick={() => setActivePage("pipeline")} style={{ cursor: "pointer" }}><span>Pipeline leads <MoreHorizontal size={14} /></span><b>{pipeline[0].value}</b><small>vsr onboarding</small></article>
-                <article onClick={() => setActivePage("outlets")} style={{ cursor: "pointer" }}><span>Pending outlets <MoreHorizontal size={14} /></span><b>{requests.length}</b><small>awaiting approval</small></article>
-                <article><span>Supervisors <MoreHorizontal size={14} /></span><b>{supervisors.length}</b><small>reporting to me</small></article>
-              </section>
-              <section className="reference-kpis">
-                <article><span>Healthy stores <MoreHorizontal size={14} /></span><b>{healthyStores}</b><small>execution health</small></article>
-                <article><span>VSRs <MoreHorizontal size={14} /></span><b>{vsrs.length}</b><small>route coverage</small></article>
-                <article><span>Funded pipeline <MoreHorizontal size={14} /></span><b>{pipeline[1].value}</b><small>of {pipeline[0].value} leads</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{myChildren.length ? Math.round(myChildren.reduce((s, c) => s + c.completion, 0) / myChildren.length) : 0}%</b><small>field performance</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>New outlet requests</h2><p>Outlets you&apos;ve requested — they stay Pending until approved by your supervisor.</p></div><Store size={16} /></header>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr><th>Outlet</th><th>Territory</th><th>Type</th><th>Status</th></tr></thead>
-                    <tbody>
-                      {requests.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--muted)" }}>No pending outlet requests.</td></tr>}
-                      {requests.map((outlet) => (
-                        <tr key={outlet.id}>
-                          <td data-label="Outlet"><b>{outlet.name}</b></td>
-                          <td data-label="Territory">{outlet.territory}</td>
-                          <td data-label="Type">{outlet.type}</td>
-                          <td data-label="Status"><span className="status on-route"><i />{outlet.status}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div style={{ padding: "0 16px 16px", display: "grid", gap: 10 }}>
-                  <div>
-                    <span style={{ fontSize: 11, fontWeight: 700 }}>Request a new outlet</span>
-                    <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Outlet name" style={{ width: "100%", marginTop: 4, border: "1px solid #dfe4e2", borderRadius: 6, padding: 9, fontSize: 12 }} />
-                  </div>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <label className="admin-select" style={{ flex: 1, minWidth: 140 }}>
-                      <span>TYPE</span>
-                      <select value={newType} onChange={(e) => setNewType(e.target.value)}>
-                        <option>Convenience</option><option>Supermarket</option><option>Wholesale</option><option>Kiosk</option>
-                      </select>
-                      <ChevronDown size={13} />
-                    </label>
-                    <input value={newTerritory} onChange={(e) => setNewTerritory(e.target.value)} placeholder="Territory" style={{ flex: 1, minWidth: 140, border: "1px solid #dfe4e2", borderRadius: 6, padding: 9, fontSize: 12 }} />
-                  </div>
-                  <div>
-                    <button type="button" onClick={requestOutlet} style={{ background: "#07535a", color: "#fff", border: "none", borderRadius: 6, padding: "10px 16px", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
-                      <CheckCircle2 size={14} style={{ verticalAlign: "middle", marginRight: 6 }} /> Request outlet (Pending)
-                    </button>
-                  </div>
-                </div>
-              </section>
             </>
           )}
 

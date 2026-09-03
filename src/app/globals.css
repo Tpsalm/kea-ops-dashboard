@@ -484,6 +484,10 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 .page-client-portal{--accent:#0891b2;--accent-soft:#cffafe;--accent-ink:#155e75}
 .page-reports{--accent:#9333ea;--accent-soft:#f3e8ff;--accent-ink:#6b21a8}
 .page-system-logs{--accent:#06b6d4;--accent-soft:#cffafe;--accent-ink:#0e7490}
+.page-tsr{--accent:#166534;--accent-soft:#dcfce7;--accent-ink:#14532d}
+.page-supervisor{--accent:#0d9488;--accent-soft:#ccfbf1;--accent-ink:#115e59}
+.page-merchandiser{--accent:#9a3412;--accent-soft:#ffedd5;--accent-ink:#7c2d12}
+.page-vsr{--accent:#07535a;--accent-soft:#ccfbf1;--accent-ink:#134e4a}
 
 .content[class*="page-"] .heading{border-left:4px solid var(--accent);padding-left:16px;border-radius:4px}
 .content[class*="page-"] .eyebrow{color:var(--accent)}
