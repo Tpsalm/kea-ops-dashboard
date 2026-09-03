@@ -4,16 +4,17 @@ export const dynamic = "force-dynamic";
 
 import { useId, useMemo, useState } from "react";
 import {
-  AlertTriangle, Bell, Camera, CheckCircle2, ChevronDown, Layers, LogOut, Menu,
+  AlertTriangle, Bell, Camera, CheckCircle2, ChevronDown, Home, Layers, LogOut, Menu,
   Moon, MoreHorizontal, PackageCheck, Presentation, Search, Settings, Store, Sun,
-  Users, X,
+  Target, TrendingDown, TrendingUp, Users, X,
 } from "lucide-react";
 import { staff } from "../data";
 import { activities, getProductsByMerchandiser, getStoresByMerchandiser, products } from "../hierarchy-data";
 
-type PageKey = "stores" | "shelf" | "posm" | "products" | "photos" | "settings";
+type PageKey = "home" | "stores" | "shelf" | "posm" | "products" | "photos" | "settings";
 
 const navItems: { key: PageKey; label: string; icon: typeof Store }[] = [
+  { key: "home", label: "Dashboard", icon: Home },
   { key: "stores", label: "Assigned stores", icon: Store },
   { key: "shelf", label: "Share of shelf log", icon: Layers },
   { key: "posm", label: "POSM deployment", icon: Presentation },
@@ -23,6 +24,7 @@ const navItems: { key: PageKey; label: string; icon: typeof Store }[] = [
 ];
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
+  home: { title: "DASHBOARD", subtitle: "Your stores, share of shelf, tasks and target progress at a glance." },
   stores: { title: "ASSIGNED STORES", subtitle: "Your retail outlets, coverage and execution health." },
   shelf: { title: "SHARE OF SHELF LOG", subtitle: "Shelf visibility and product availability share per store." },
   posm: { title: "POSM DEPLOYMENT", subtitle: "Point-of-sale material placement across your stores." },
@@ -34,7 +36,7 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
 const posmItems = ["Shelf talkers", "Brand posters", "Wobblers", "Standees", "Price cards", "Gondola branding"];
 
 export default function MerchandiserDashboard() {
-  const [activePage, setActivePage] = useState<PageKey>("stores");
+  const [activePage, setActivePage] = useState<PageKey>("home");
   const [merchandiserId, setMerchandiserId] = useState("KEA-MER-001");
   const [mobileNav, setMobileNav] = useState(false);
   const [dark, setDark] = useState(false);
@@ -52,6 +54,8 @@ export default function MerchandiserDashboard() {
   const totalSkus = myProducts.length;
   const lowStockSkus = myProducts.filter((product) => product.availability === "Low stock" || product.availability === "Out of stock").length;
   const photosCount = myActivities.reduce((sum, activity) => sum + (activity.photos?.length ?? 0), 0);
+  const me = useMemo(() => merchandisers.find((person) => person.id === merchandiserId) ?? merchandisers[0], [merchandisers, merchandiserId]);
+  const posmTarget = posmItems.length;
 
   const shelfLog = useMemo(() => myStores.map((store) => {
     const storeProducts = products.filter((product) => product.storeId === store.id);
@@ -139,6 +143,42 @@ export default function MerchandiserDashboard() {
           <div style={{ marginBottom: 10, maxWidth: 240 }}>
             <MerchandiserSelect value={merchandiserId} options={merchandisers} onChange={setMerchandiserId} />
           </div>
+
+          {activePage === "home" && (
+            <>
+              <div className="vsr-welcome">
+                <div>
+                  <span>Welcome back,</span>
+                  <h2>{me?.name}</h2>
+                  <p>Merchandiser · {me?.territory}, {me?.region} — here is your execution snapshot.</p>
+                </div>
+              </div>
+              <section className="reference-kpis">
+                <article onClick={() => setActivePage("stores")} style={{ cursor: "pointer" }}><span>Assigned stores <MoreHorizontal size={14} /></span><b>{myStores.length}</b><small>my outlets</small></article>
+                <article><span>Healthy stores <MoreHorizontal size={14} /></span><b>{healthyStores}</b><small>execution health</small></article>
+                <article><span>Total SKUs <MoreHorizontal size={14} /></span><b>{totalSkus}</b><small>across stores</small></article>
+                <article onClick={() => setActivePage("photos")} style={{ cursor: "pointer" }}><span>Photo evidence <MoreHorizontal size={14} /></span><b>{photosCount}</b><small>captured</small></article>
+              </section>
+              <section className="reference-kpis">
+                <article><span>Low / out of stock <MoreHorizontal size={14} /></span><b>{lowStockSkus}</b><small>SKUs to review</small></article>
+                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{me?.completion ?? 0}%</b><small>this period</small></article>
+                <article><span>Visits <MoreHorizontal size={14} /></span><b>{me?.visits ?? 0}</b><small>store visits</small></article>
+                <article onClick={() => setActivePage("posm")} style={{ cursor: "pointer" }}><span>POSM deployed <MoreHorizontal size={14} /></span><b>{posmDone} / {posmTarget}</b><small>{posmPct}% complete</small></article>
+              </section>
+              <section className="admin-panel">
+                <header><div><h2>Target progress</h2><p>Completion against the 90% execution target</p></div><Target size={16} /></header>
+                <div style={{ padding: 16 }}>
+                  <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min(100, me?.completion ?? 0)}%`, background: (me?.completion ?? 0) >= 90 ? "#16a34a" : "#f59e0b", borderRadius: 6 }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
+                    <span>{me?.completion ?? 0}% completion</span>
+                    <span>{((me?.completion ?? 0) >= 90) ? "On track" : "Below target"}</span>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
 
           {activePage === "stores" && (
             <>

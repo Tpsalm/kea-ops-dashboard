@@ -2,32 +2,37 @@
 
 export const dynamic = "force-dynamic";
 
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, Bell, CheckCircle2, ChevronDown, ClipboardCheck,
-  LogOut, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
-  ShieldCheck, Sun, TrendingDown, TrendingUp, Users, X, Target,
-  CalendarDays,
+  AlertTriangle, Bell, CalendarDays, CheckCircle2, ChevronDown, ClipboardCheck,
+  Home, LogOut, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
+  ShieldCheck, Store, Sun, TrendingDown, TrendingUp, Upload, Users, X, Target,
 } from "lucide-react";
-import { staff } from "../data";
+import { outletData, staff } from "../data";
 import {
-  supervisors, getChildren, getStoresBySupervisor,
+  products, supervisors, getChildren, getStoresBySupervisor,
   getActivitiesByStaff, getVSRRoute,
 } from "../hierarchy-data";
 
 type PageKey =
+  | "home"
   | "team"
   | "merchandiser"
   | "vsr"
+  | "visits"
+  | "onboarding"
   | "coaching"
   | "route-coverage"
   | "data-quality"
   | "settings";
 
 const navItems: { key: PageKey; label: string; icon: typeof Users }[] = [
+  { key: "home", label: "Dashboard", icon: Home },
   { key: "team", label: "Team Overview", icon: Users },
   { key: "merchandiser", label: "Merchandiser Performance", icon: Target },
   { key: "vsr", label: "VSR Performance", icon: MapPin },
+  { key: "visits", label: "Visit Reports & Uploads", icon: Upload },
+  { key: "onboarding", label: "Outlet Onboarding", icon: Store },
   { key: "coaching", label: "Coaching Schedule", icon: CalendarDays },
   { key: "route-coverage", label: "Route Coverage Reports", icon: ClipboardCheck },
   { key: "data-quality", label: "Data Quality Audits", icon: ShieldCheck },
@@ -35,9 +40,12 @@ const navItems: { key: PageKey; label: string; icon: typeof Users }[] = [
 ];
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
+  home: { title: "DASHBOARD", subtitle: "Your team, targets, expiry alerts and field execution at a glance." },
   team: { title: "TEAM OVERVIEW", subtitle: "Your direct reports, completion rates and field status." },
   merchandiser: { title: "MERCHANDISER PERFORMANCE", subtitle: "Store execution, visits and completion per merchandiser." },
   vsr: { title: "VSR PERFORMANCE", subtitle: "Route coverage, visit count and field completion per VSR." },
+  visits: { title: "VISIT REPORTS & UPLOADS", subtitle: "Upload and review visit evidence from your field team." },
+  onboarding: { title: "OUTLET ONBOARDING", subtitle: "Approve or reject new outlets requested by your team." },
   coaching: { title: "COACHING SCHEDULE", subtitle: "Planned coaching sessions, observations and follow-ups." },
   "route-coverage": { title: "ROUTE COVERAGE REPORTS", subtitle: "Territory coverage, store visits and route health." },
   "data-quality": { title: "DATA QUALITY AUDITS", subtitle: "Validate GPS data, staff records and activity logs." },
@@ -53,12 +61,14 @@ const coachingSessions = [
 ];
 
 export default function SupervisorDashboard() {
-  const [activePage, setActivePage] = useState<PageKey>("team");
+  const [activePage, setActivePage] = useState<PageKey>("home");
   const [supervisorId, setSupervisorId] = useState("KEA-SUP-001");
   const [mobileNav, setMobileNav] = useState(false);
   const [dark, setDark] = useState(false);
   const [search, setSearch] = useState("");
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
+  const [pendingOutlets, setPendingOutlets] = useState(outletData.filter((o) => o.status === "Pending"));
+  const [uploaded, setUploaded] = useState(0);
 
   const supervisor = useMemo(
     () => supervisors.find((s) => s.id === supervisorId) ?? supervisors[0],
@@ -90,6 +100,24 @@ export default function SupervisorDashboard() {
     ? Math.round(myTeam.reduce((sum, m) => sum + m.completion, 0) / myTeam.length)
     : 0;
 
+  // Expiry monitoring — products within a 4-day window. Supervisors are alerted
+  // when 3 or more people under them have expiring products.
+  const teamIds = new Set(myTeam.map((m) => m.id));
+  const teamProducts = products.filter((p) => teamIds.has(p.merchandiserId));
+  const expiringRisk: Record<string, boolean> = {};
+  teamProducts.forEach((p, index) => {
+    if (index % 4 === 0) expiringRisk[p.merchandiserId] = true;
+  });
+  const peopleWithExpiry = Object.keys(expiringRisk).length;
+  const expiryAlert = peopleWithExpiry >= 3;
+  const expiringProducts = teamProducts.filter((_, index) => index % 4 === 0).length;
+
+  const pendingCount = pendingOutlets.length;
+
+  const today = new Date();
+  const isoToday = today.toISOString().slice(0, 10);
+  const approvalsToday = pendingOutlets.filter((o) => o.status === "Pending").length;
+
   const dataQualityScore = useMemo(() => {
     const withGPS = myTeam.filter((m) => m.lat && m.lng).length;
     const activeCount = myTeam.filter((m) => m.status !== "Inactive").length;
@@ -120,6 +148,19 @@ export default function SupervisorDashboard() {
     try { localStorage.removeItem("kea_user"); } catch { /* ignore */ }
     document.cookie = "kea_auth=; Path=/; Max-Age=0; SameSite=Lax";
     window.location.href = "/login";
+  }
+
+  function approveOutlet(id: string) {
+    setPendingOutlets((prev) => prev.map((o) => (o.id === id ? { ...o, status: "Active" } : o)));
+  }
+
+  function rejectOutlet(id: string) {
+    setPendingOutlets((prev) => prev.filter((o) => o.id !== id));
+  }
+
+  function handleUpload() {
+    setUploaded((n) => n + 1);
+    alert("Visit report uploaded successfully.");
   }
 
   return (
@@ -160,6 +201,75 @@ export default function SupervisorDashboard() {
           <div style={{ marginBottom: 10, maxWidth: 280 }}>
             <SupervisorSelect value={supervisorId} options={supervisors} onChange={setSupervisorId} />
           </div>
+
+          {activePage === "home" && (
+            <>
+              <div className="vsr-welcome">
+                <div>
+                  <span>Welcome back,</span>
+                  <h2>{supervisor.name}</h2>
+                  <p>Supervisor · {supervisor.territory}, {supervisor.region} — here is your team at a glance.</p>
+                </div>
+              </div>
+              {expiryAlert && (
+                <div style={{ margin: "14px 18px", padding: "14px 16px", borderRadius: 8, display: "flex", gap: 10, background: "#fef3f2", border: "1px solid #fecaca" }}>
+                  <AlertTriangle size={18} style={{ color: "#b42318", flexShrink: 0 }} />
+                  <div style={{ fontSize: 12, color: "#7a271a" }}>
+                    <b>Expiry alert:</b> {peopleWithExpiry} people under you have products expiring within 4 days (about {expiringProducts} SKUs). Review stock rotation and confirm reorders.
+                  </div>
+                </div>
+              )}
+              <section className="reference-kpis">
+                <article onClick={() => setActivePage("team")} style={{ cursor: "pointer" }}><span>Direct reports <MoreHorizontal size={14} /></span><b>{myTeam.length}</b><small>team members</small></article>
+                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{avgCompletion}%</b><small>vs {completionTarget}% target</small></article>
+                <article onClick={() => setActivePage("onboarding")} style={{ cursor: "pointer" }}><span>Pending outlets <MoreHorizontal size={14} /></span><b>{pendingCount}</b><small>awaiting approval</small></article>
+                <article><span>Stores covered <MoreHorizontal size={14} /></span><b>{myStores.length}</b><small>execution health</small></article>
+              </section>
+              <section className="reference-kpis">
+                <article><span>Expiry risk <MoreHorizontal size={14} /></span><b>{peopleWithExpiry}</b><small>people with expiring stock</small></article>
+                <article><span>Healthy stores <MoreHorizontal size={14} /></span><b>{healthyStores}</b><small>all good</small></article>
+                <article onClick={() => setActivePage("visits")} style={{ cursor: "pointer" }}><span>Uploads <MoreHorizontal size={14} /></span><b>{uploaded}</b><small>reports submitted</small></article>
+                <article><span>Below target <MoreHorizontal size={14} /></span><b>{myTeam.filter((m) => m.completion < completionTarget).length}</b><small>needs coaching</small></article>
+              </section>
+              <section className="admin-panel">
+                <header><div><h2>Team overview</h2><p>Direct reports with completion and target status</p></div><Users size={16} /></header>
+                <div className="vsr-target-list">
+                  {myTeam.map((member) => {
+                    const onTrack = member.completion >= completionTarget;
+                    return (
+                      <div key={member.id} className="vsr-target-row">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <b style={{ fontSize: 12 }}>{member.name}</b>
+                            <span style={{ fontSize: 11, color: "var(--muted)" }}>{member.role} · {member.visits} visits · {member.completion}%</span>
+                          </div>
+                          <div style={{ height: 9, background: "#eef1ef", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
+                            <div style={{ height: "100%", width: `${Math.min(100, member.completion)}%`, background: onTrack ? "#16a34a" : "#f59e0b", borderRadius: 5 }} />
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: onTrack ? "#0c9b6b" : "#d8900b", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          {onTrack ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                          {onTrack ? "On track" : "Below target"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+              <section className="admin-panel">
+                <header><div><h2>Avg completion vs target</h2><p>Overall team execution compared to {completionTarget}% minimum</p></div><Target size={16} /></header>
+                <div style={{ padding: 16 }}>
+                  <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min(100, avgCompletion)}%`, background: avgCompletion >= completionTarget ? "#16a34a" : "#f59e0b", borderRadius: 6 }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
+                    <span>{avgCompletion}% team average</span>
+                    <span>{completionTarget}% target</span>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
 
           {activePage === "team" && (
             <>
@@ -360,6 +470,111 @@ export default function SupervisorDashboard() {
             </>
           )}
 
+          {activePage === "visits" && (
+            <>
+              <section className="reference-kpis">
+                <article><span>Reports uploaded <MoreHorizontal size={14} /></span><b>{uploaded}</b><small>this session</small></article>
+                <article><span>Team reports <MoreHorizontal size={14} /></span><b>{myActivities.length}</b><small>aggregate activity</small></article>
+                <article><span>With photos <MoreHorizontal size={14} /></span><b>{myTeam.filter((m) => m.photos && m.photos.length > 0).length}</b><small>evidence captured</small></article>
+                <article><span>Pending outlets <MoreHorizontal size={14} /></span><b>{pendingCount}</b><small>awaiting onboarding</small></article>
+              </section>
+              <section className="admin-panel">
+                <header><div><h2>Upload a visit report</h2><p>Attach visit evidence (photos, notes, stock observations) for your team.</p></div><Upload size={16} /></header>
+                <div style={{ padding: 16, display: "grid", gap: 12 }}>
+                  <label className="admin-select" style={{ width: "100%" }}>
+                    <span>TEAM MEMBER</span>
+                    <select>
+                      {myTeam.map((m) => <option key={m.id}>{m.name}</option>)}
+                    </select>
+                    <ChevronDown size={13} />
+                  </label>
+                  <label className="admin-select" style={{ width: "100%" }}>
+                    <span>REPORT TYPE</span>
+                    <select>
+                      <option>Store visit report</option>
+                      <option>Stock observation</option>
+                      <option>Credit collection</option>
+                      <option>New account evidence</option>
+                    </select>
+                    <ChevronDown size={13} />
+                  </label>
+                  <div style={{ border: "1.5px dashed #c2ccc7", borderRadius: 8, padding: 20, textAlign: "center", fontSize: 12, color: "var(--muted)" }}>
+                    Drag & drop photos here or <span style={{ color: "#07535a", fontWeight: 700 }}>browse</span> to attach evidence (max 10 files)
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 11, fontWeight: 700 }}>Notes</span>
+                    <textarea rows={3} placeholder="Add observations from the visit..." style={{ width: "100%", marginTop: 6, border: "1px solid #dfe4e2", borderRadius: 6, padding: 10, fontSize: 12, fontFamily: "inherit", resize: "vertical" }} />
+                  </div>
+                  <div>
+                    <button type="button" onClick={handleUpload} style={{ background: "#07535a", color: "#fff", border: "none", borderRadius: 6, padding: "11px 16px", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                      <Upload size={14} style={{ verticalAlign: "middle", marginRight: 6 }} /> Submit visit report
+                    </button>
+                  </div>
+                </div>
+              </section>
+              <section className="admin-panel">
+                <header><div><h2>Recent field activity</h2><p>Evidence uploads and store visits from your team</p></div><ClipboardCheck size={16} /></header>
+                <div className="table-scroll">
+                  <table>
+                    <thead><tr><th>Staff</th><th>Type</th><th>Store</th><th>Date</th><th>Completion</th></tr></thead>
+                    <tbody>
+                      {myActivities.slice(0, 10).map((act) => (
+                        <tr key={act.id}>
+                          <td data-label="Staff"><b>{act.staffName}</b></td>
+                          <td data-label="Type">{act.type}</td>
+                          <td data-label="Store">{act.storeName || "\u2014"}</td>
+                          <td data-label="Date">{act.date} {act.time}</td>
+                          <td data-label="Completion"><span className={`status ${act.completion >= 90 ? "active" : act.completion >= 70 ? "on-route" : "needs-review"}`}><i />{act.completion}%</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </>
+          )}
+
+          {activePage === "onboarding" && (
+            <>
+              <section className="reference-kpis">
+                <article><span>Pending approvals <MoreHorizontal size={14} /></span><b>{pendingCount}</b><small>new outlets</small></article>
+                <article><span>Approved <MoreHorizontal size={14} /></span><b>{pendingOutlets.filter((o) => o.status === "Active").length}</b><small>activated</small></article>
+                <article><span>Rejected <MoreHorizontal size={14} /></span><b>{pendingOutlets.length - pendingCount}</b><small>declined</small></article>
+                <article><span>Total queue <MoreHorizontal size={14} /></span><b>{pendingOutlets.length}</b><small>all new outlets</small></article>
+              </section>
+              <section className="admin-panel">
+                <header><div><h2>Outlet onboarding queue</h2><p>New outlets created by your team. Approve to activate, or reject to decline.</p></div><Store size={16} /></header>
+                <div className="table-scroll">
+                  <table>
+                    <thead><tr><th>Outlet</th><th>Territory</th><th>Type</th><th>Requested by</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                      {pendingOutlets.map((outlet) => (
+                        <tr key={outlet.id}>
+                          <td data-label="Outlet"><b>{outlet.name}</b><br /><small>{outlet.id}</small></td>
+                          <td data-label="Territory">{outlet.territory}, {outlet.region}</td>
+                          <td data-label="Type">{outlet.type}</td>
+                          <td data-label="Requested by">{outlet.merchandiser}</td>
+                          <td data-label="Status"><span className={`status ${outlet.status === "Active" ? "active" : "on-route"}`}><i />{outlet.status}</span></td>
+                          <td data-label="">
+                            {outlet.status === "Pending" && (
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <button type="button" className="mark-paid" onClick={() => approveOutlet(outlet.id)}><CheckCircle2 size={12} /> Approve</button>
+                                <button type="button" onClick={() => rejectOutlet(outlet.id)} style={{ border: "1px solid #fecaca", color: "#b42318", background: "#fff", borderRadius: 5, padding: "6px 12px", fontWeight: 700, fontSize: 10, cursor: "pointer" }}>Reject</button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {pendingOutlets.length === 0 && (
+                        <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--muted)" }}>No outlets awaiting approval.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </>
+          )}
+
           {activePage === "coaching" && (
             <>
               <section className="reference-kpis">
@@ -503,9 +718,8 @@ export default function SupervisorDashboard() {
             <>
               <section className="admin-panel">
                 <header><div><h2>Profile</h2><p>Your account details</p></div><Users size={16} /></header>
-                <div style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-                  <div className="user-avatar" style={{ width: 44, height: 44, fontSize: 14 }}>SV</div>
-                  <div><b style={{ fontSize: 14 }}>{supervisor.name}</b><br /><small style={{ color: "var(--muted)" }}>Supervisor · {supervisor.territory}, {supervisor.region}</small></div>
+                <div style={{ padding: 16 }}>
+                  <ProfileImageUpload name={supervisor.name} role={`Supervisor · ${supervisor.territory}, ${supervisor.region}`} />
                 </div>
               </section>
               <section className="admin-panel">
@@ -551,5 +765,36 @@ function SupervisorSelect({ value, options, onChange }: { value: string; options
       </select>
       <ChevronDown size={13} />
     </label>
+  );
+}
+
+function ProfileImageUpload({ name, role }: { name: string; role: string }) {
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function onFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <button type="button" onClick={() => inputRef.current?.click()} aria-label="Change profile picture"
+        style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2px solid #07535a", background: "#07535a", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16, padding: 0 }}>
+        {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
+      </button>
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onFile} />
+      <div>
+        <b style={{ fontSize: 14 }}>{name}</b>
+        <br />
+        <small style={{ color: "var(--muted)" }}>{role}</small>
+        <div>
+          <button type="button" onClick={() => inputRef.current?.click()} style={{ marginTop: 6, border: "1px solid #c2ccc7", background: "#fff", borderRadius: 5, padding: "5px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Change photo</button>
+        </div>
+      </div>
+    </div>
   );
 }

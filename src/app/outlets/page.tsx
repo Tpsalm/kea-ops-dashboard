@@ -12,6 +12,7 @@ const statusClass: Record<OutletStatus, string> = {
   Dormant: "inactive",
   New: "on-route",
   Suspended: "needs-review",
+  Pending: "on-route",
 };
 
 export default function OutletsPage() {
@@ -82,7 +83,7 @@ export default function OutletsPage() {
         <label className="select-box">
           <span>STATUS</span>
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            {["All statuses", "Active", "Dormant", "New", "Suspended"].map((o) => <option key={o}>{o}</option>)}
+            {["All statuses", "Active", "Dormant", "New", "Pending", "Suspended"].map((o) => <option key={o}>{o}</option>)}
           </select>
         </label>
         <label className="select-box">

@@ -517,6 +517,12 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 .vsr-check-list button span{display:flex;align-items:center;gap:8px}
 .vsr-check-list button span>i{font-style:normal;color:#12a472}
 .vsr-check-list button span>i i.dot{width:15px;height:15px;border:1.5px solid #c2ccc7;border-radius:50%;display:inline-block}
+.vsr-welcome{padding:18px 18px 6px}
+.vsr-welcome span{font-size:12px;color:var(--muted)}
+.vsr-welcome h2{font-size:20px;margin:2px 0 2px}
+.vsr-welcome p{font-size:12px;color:var(--muted);margin:0}
+.mark-paid{border:0;background:#12a472;color:#fff;border-radius:5px;padding:6px 12px;font-weight:700;font-size:10px;cursor:pointer}
+.mark-paid:hover{background:#0c9b6b}
 .vsr-check-actions{padding:0 14px 16px;display:flex;justify-content:flex-end}
 .vsr-target-list{display:grid;gap:12px;padding:12px 14px 16px}
 .vsr-target-row{display:flex;align-items:center;gap:14px;border:1px solid #e6eae8;border-radius:6px;padding:12px}

@@ -4,17 +4,18 @@ export const dynamic = "force-dynamic";
 
 import { useId, useMemo, useState } from "react";
 import {
-  AlertTriangle, Bell, Building2, ChevronDown, Gauge, Layers,
+  AlertTriangle, Bell, Building2, CheckCircle2, ChevronDown, Gauge, Home, Layers,
   LogOut, Map, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
   Store, Sun, TrendingDown, TrendingUp, Users, X,
 } from "lucide-react";
-import { staff, vsrTrackerRows } from "../data";
+import { outletData, staff, vsrTrackerRows } from "../data";
 import { clients, getChildren, getStoresByTSR, tsrs } from "../hierarchy-data";
 import { MapCard } from "../shared";
 
-type PageKey = "territory" | "pipeline" | "accounts" | "outlets" | "map" | "supervisors" | "settings";
+type PageKey = "home" | "territory" | "pipeline" | "accounts" | "outlets" | "map" | "supervisors" | "settings";
 
 const navItems: { key: PageKey; label: string; icon: typeof Gauge }[] = [
+  { key: "home", label: "Dashboard", icon: Home },
   { key: "territory", label: "Territory performance", icon: Gauge },
   { key: "pipeline", label: "Pipeline funnel", icon: Layers },
   { key: "accounts", label: "Key account growth", icon: Building2 },
@@ -25,6 +26,7 @@ const navItems: { key: PageKey; label: string; icon: typeof Gauge }[] = [
 ];
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
+  home: { title: "DASHBOARD", subtitle: "Your territory, pipeline, outlet requests and targets at a glance." },
   territory: { title: "TERRITORY PERFORMANCE", subtitle: "Store coverage, execution health and field completion." },
   pipeline: { title: "PIPELINE FUNNEL", subtitle: "VSR onboarding and funding pipeline across your territory." },
   accounts: { title: "KEY ACCOUNT GROWTH", subtitle: "Client accounts, stores and completion trajectory." },
@@ -35,12 +37,16 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
 };
 
 export default function TsrDashboard() {
-  const [activePage, setActivePage] = useState<PageKey>("territory");
+  const [activePage, setActivePage] = useState<PageKey>("home");
   const [tsrId, setTsrId] = useState("KEA-TSR-001");
   const [mobileNav, setMobileNav] = useState(false);
   const [dark, setDark] = useState(false);
   const [search, setSearch] = useState("");
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
+  const [requests, setRequests] = useState(outletData.filter((o) => o.status === "Pending"));
+  const [newName, setNewName] = useState("");
+  const [newType, setNewType] = useState("Convenience");
+  const [newTerritory, setNewTerritory] = useState("Lagos Central");
 
   const tsr = useMemo(() => tsrs.find((item) => item.id === tsrId) ?? tsrs[0], [tsrId]);
   const myStores = useMemo(() => getStoresByTSR(tsrId), [tsrId]);
@@ -72,6 +78,29 @@ export default function TsrDashboard() {
     }
     document.cookie = "kea_auth=; Path=/; Max-Age=0; SameSite=Lax";
     window.location.href = "/login";
+  }
+
+  function requestOutlet() {
+    if (!newName.trim()) {
+      alert("Enter an outlet name.");
+      return;
+    }
+    const req = {
+      id: `OL-${4030 + requests.length}`,
+      name: newName.trim(),
+      region: tsr?.region ?? "Lagos",
+      territory: newTerritory,
+      chain: "Indie",
+      type: newType as "Convenience" | "Supermarket" | "Wholesale" | "Kiosk",
+      status: "Pending" as const,
+      weeklyVisits: 0,
+      lastVisit: "—",
+      merchandiser: tsr?.name ?? "Unassigned",
+      tier: "C" as const,
+    };
+    setRequests((prev) => [...prev, req]);
+    setNewName("");
+    alert("Outlet request submitted — it is now Pending and will be activated once your supervisor approves it.");
   }
 
   return (
@@ -112,6 +141,70 @@ export default function TsrDashboard() {
           <div style={{ marginBottom: 10, maxWidth: 240 }}>
             <TsrSelect value={tsrId} options={tsrs} onChange={setTsrId} />
           </div>
+
+          {activePage === "home" && (
+            <>
+              <div className="vsr-welcome">
+                <div>
+                  <span>Welcome back,</span>
+                  <h2>{tsr?.name}</h2>
+                  <p>TSR · {tsr?.region} region — here is your territory at a glance.</p>
+                </div>
+              </div>
+              <section className="reference-kpis">
+                <article onClick={() => setActivePage("territory")} style={{ cursor: "pointer" }}><span>Assigned stores <MoreHorizontal size={14} /></span><b>{myStores.length}</b><small>my territory</small></article>
+                <article onClick={() => setActivePage("pipeline")} style={{ cursor: "pointer" }}><span>Pipeline leads <MoreHorizontal size={14} /></span><b>{pipeline[0].value}</b><small>vsr onboarding</small></article>
+                <article onClick={() => setActivePage("outlets")} style={{ cursor: "pointer" }}><span>Pending outlets <MoreHorizontal size={14} /></span><b>{requests.length}</b><small>awaiting approval</small></article>
+                <article><span>Supervisors <MoreHorizontal size={14} /></span><b>{supervisors.length}</b><small>reporting to me</small></article>
+              </section>
+              <section className="reference-kpis">
+                <article><span>Healthy stores <MoreHorizontal size={14} /></span><b>{healthyStores}</b><small>execution health</small></article>
+                <article><span>VSRs <MoreHorizontal size={14} /></span><b>{vsrs.length}</b><small>route coverage</small></article>
+                <article><span>Funded pipeline <MoreHorizontal size={14} /></span><b>{pipeline[1].value}</b><small>of {pipeline[0].value} leads</small></article>
+                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{myChildren.length ? Math.round(myChildren.reduce((s, c) => s + c.completion, 0) / myChildren.length) : 0}%</b><small>field performance</small></article>
+              </section>
+              <section className="admin-panel">
+                <header><div><h2>New outlet requests</h2><p>Outlets you&apos;ve requested — they stay Pending until approved by your supervisor.</p></div><Store size={16} /></header>
+                <div className="table-scroll">
+                  <table>
+                    <thead><tr><th>Outlet</th><th>Territory</th><th>Type</th><th>Status</th></tr></thead>
+                    <tbody>
+                      {requests.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--muted)" }}>No pending outlet requests.</td></tr>}
+                      {requests.map((outlet) => (
+                        <tr key={outlet.id}>
+                          <td data-label="Outlet"><b>{outlet.name}</b></td>
+                          <td data-label="Territory">{outlet.territory}</td>
+                          <td data-label="Type">{outlet.type}</td>
+                          <td data-label="Status"><span className="status on-route"><i />{outlet.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div style={{ padding: "0 16px 16px", display: "grid", gap: 10 }}>
+                  <div>
+                    <span style={{ fontSize: 11, fontWeight: 700 }}>Request a new outlet</span>
+                    <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Outlet name" style={{ width: "100%", marginTop: 4, border: "1px solid #dfe4e2", borderRadius: 6, padding: 9, fontSize: 12 }} />
+                  </div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <label className="admin-select" style={{ flex: 1, minWidth: 140 }}>
+                      <span>TYPE</span>
+                      <select value={newType} onChange={(e) => setNewType(e.target.value)}>
+                        <option>Convenience</option><option>Supermarket</option><option>Wholesale</option><option>Kiosk</option>
+                      </select>
+                      <ChevronDown size={13} />
+                    </label>
+                    <input value={newTerritory} onChange={(e) => setNewTerritory(e.target.value)} placeholder="Territory" style={{ flex: 1, minWidth: 140, border: "1px solid #dfe4e2", borderRadius: 6, padding: 9, fontSize: 12 }} />
+                  </div>
+                  <div>
+                    <button type="button" onClick={requestOutlet} style={{ background: "#07535a", color: "#fff", border: "none", borderRadius: 6, padding: "10px 16px", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                      <CheckCircle2 size={14} style={{ verticalAlign: "middle", marginRight: 6 }} /> Request outlet (Pending)
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
 
           {activePage === "territory" && (
             <>

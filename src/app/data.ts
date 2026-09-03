@@ -308,6 +308,38 @@ export const salesTrend = [
   { week: "Wk 28", sales: 212, target: 192 }, { week: "Wk 29", sales: 221, target: 196 },
 ];
 
+/* ---------------------------- Daily Sales Log (field) ---------------------------- */
+
+export type PaymentMode = "Paid" | "Credit";
+
+export type DailySale = {
+  id: string;
+  outlet: string;
+  region: string;
+  territory: string;
+  staff: string;
+  date: string;
+  productLine: string;
+  quantity: number;
+  value: number;
+  mode: PaymentMode;
+  phone?: string;
+  collected: number;
+};
+
+export const dailySales: DailySale[] = [
+  { id: "DS-6001", outlet: "Royal Prince Ikosi", region: "Lagos", territory: "Lagos Central", staff: "Shittu Akinsanya", date: "2026-08-28", productLine: "Household", quantity: 120, value: 1860000, mode: "Paid", collected: 1860000 },
+  { id: "DS-6002", outlet: "Jendel Surulere", region: "Lagos", territory: "Lagos West", staff: "Abel Nduka", date: "2026-08-28", productLine: "Household", quantity: 90, value: 1350000, mode: "Credit", phone: "08012345678", collected: 0 },
+  { id: "DS-6003", outlet: "Ojota Corner Supermarket", region: "Lagos", territory: "Lagos East", staff: "Toluwaleni Adio", date: "2026-08-28", productLine: "Household", quantity: 60, value: 920000, mode: "Credit", phone: "08123456789", collected: 0 },
+  { id: "DS-6004", outlet: "Spar Lekki", region: "Lagos", territory: "Lagos Island", staff: "Ajisun Favour", date: "2026-08-28", productLine: "Packaged foods", quantity: 150, value: 2100000, mode: "Paid", collected: 2100000 },
+  { id: "DS-6005", outlet: "Ring Road Superstore", region: "Oyo", territory: "Ibadan", staff: "Yusuf Abimbola", date: "2026-08-28", productLine: "Household", quantity: 130, value: 1980000, mode: "Paid", collected: 1980000 },
+  { id: "DS-6006", outlet: "Hypericity Isubu", region: "Port Harcourt", territory: "Port Harcourt", staff: "Beauty D. Jackson", date: "2026-08-28", productLine: "Household", quantity: 110, value: 1620000, mode: "Paid", collected: 1620000 },
+  { id: "DS-6007", outlet: "Market Square Rumuigbo", region: "Owerri", territory: "Owerri", staff: "Maryan Queen", date: "2026-08-28", productLine: "Personal care", quantity: 80, value: 1150000, mode: "Credit", phone: "09011223344", collected: 0 },
+  { id: "DS-6008", outlet: "Kiosk Lekki Phase 1", region: "Lagos", territory: "Lagos Island", staff: "Shittu Akinsanya", date: "2026-08-27", productLine: "Household", quantity: 40, value: 540000, mode: "Paid", collected: 540000 },
+];
+
+export const dailyTarget = 10000000;
+
 /* ---------------------------- Credits ---------------------------- */
 
 export type CreditStatus = "Outstanding" | "Partially Paid" | "Settled" | "Overdue";
@@ -372,7 +404,7 @@ export const targetData: TargetRecord[] = [
 /* ---------------------------- Outlets ---------------------------- */
 
 export type OutletType = "Supermarket" | "Convenience" | "Wholesale" | "Pharmacy" | "Horeca" | "Kiosk";
-export type OutletStatus = "Active" | "Dormant" | "New" | "Suspended";
+export type OutletStatus = "Active" | "Dormant" | "New" | "Suspended" | "Pending";
 
 export type OutletRecord = {
   id: string;
@@ -411,6 +443,9 @@ export const outletData: OutletRecord[] = [
   { id: "OL-4020", name: "Market Square Rumuigbo", region: "Owerri", territory: "Owerri", chain: "Market Square", type: "Supermarket", status: "New", weeklyVisits: 2, lastVisit: "2026-08-21", merchandiser: "Maryan Queen", tier: "B" },
   { id: "OL-4021", name: "Spar Ikoyi", region: "Lagos", territory: "Lagos Island", chain: "Spar", type: "Horeca", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-26", merchandiser: "Deseshe Deborah", tier: "C" },
   { id: "OL-4022", name: "Justrite Bariga", region: "Lagos", territory: "Lagos East", chain: "Justrite", type: "Kiosk", status: "Suspended", weeklyVisits: 0, lastVisit: "2026-07-28", merchandiser: "Grace Peter", tier: "C" },
+  { id: "OL-4023", name: "Kiosk Lekki Phase 1", region: "Lagos", territory: "Lagos Island", chain: "Indie", type: "Kiosk", status: "Pending", weeklyVisits: 0, lastVisit: "—", merchandiser: "Shittu Akinsanya", tier: "C" },
+  { id: "OL-4024", name: "Ojota Corner Supermarket", region: "Lagos", territory: "Lagos East", chain: "Indie", type: "Supermarket", status: "Pending", weeklyVisits: 0, lastVisit: "—", merchandiser: "Toluwaleni Adio", tier: "B" },
+  { id: "OL-4025", name: "Ibadan New Trade Store", region: "Oyo", territory: "Ibadan", chain: "Indie", type: "Wholesale", status: "Pending", weeklyVisits: 0, lastVisit: "—", merchandiser: "Abubakar Hassan", tier: "B" },
 ];
 
 /* ---------------------------- Visits ---------------------------- */

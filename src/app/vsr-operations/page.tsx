@@ -2,51 +2,40 @@
 
 export const dynamic = "force-dynamic";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, Bell, Car, CheckCircle2, ClipboardList, LogOut, MapPin, Menu, Moon,
-  MoreHorizontal, PackageCheck, Route, Search, Settings, ShieldCheck, Sun, Target,
-  TrendingDown, TrendingUp, Users, X,
+  AlertTriangle, Bell, ClipboardList, CreditCard, Home, LogOut, MapPin, Menu, Moon,
+  MoreHorizontal, Phone, Route, Search, Settings, Sun, Target,
+  TrendingDown, TrendingUp, Users, Wallet, X,
 } from "lucide-react";
-import { staff } from "../data";
-import { products, vsrRoutes } from "../hierarchy-data";
+import { dailySales, dailyTarget, staff } from "../data";
+import { vsrRoutes } from "../hierarchy-data";
 
-type PageKey = "routes" | "sales" | "vehicle" | "performance" | "settings";
-
-const vehicleItems = [
-  { id: "oil", label: "Engine oil level" },
-  { id: "tyres", label: "Tyre pressure & tread depth" },
-  { id: "brakes", label: "Brake function & handbrake" },
-  { id: "lights", label: "Headlights, indicators & horn" },
-  { id: "fuel", label: "Fuel / battery level" },
-  { id: "coolant", label: "Coolant & fluids" },
-  { id: "wipers", label: "Wipers & washer fluid" },
-  { id: "safety", label: "Seatbelt, mirrors & warning triangle" },
-];
+type PageKey = "home" | "routes" | "sales" | "performance" | "settings";
 
 const navItems: { key: PageKey; label: string; icon: typeof Route }[] = [
+  { key: "home", label: "Dashboard", icon: Home },
   { key: "routes", label: "My Routes", icon: Route },
   { key: "sales", label: "Daily Sales Log", icon: ClipboardList },
-  { key: "vehicle", label: "Vehicle Check", icon: Car },
   { key: "performance", label: "Performance (My Target)", icon: Target },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
+  home: { title: "DASHBOARD", subtitle: "Your daily field snapshot, targets and alerts." },
   routes: { title: "MY ROUTES", subtitle: "Assigned territories, route coverage and field completion." },
-  sales: { title: "DAILY SALES LOG", subtitle: "Product movement and stock observations from your outlets." },
-  vehicle: { title: "VEHICLE CHECK", subtitle: "Pre-trip vehicle inspection checklist and safety sign-off." },
-  performance: { title: "PERFORMANCE (MY TARGET)", subtitle: "Your visit and completion progress against monthly targets." },
+  sales: { title: "DAILY SALES LOG", subtitle: "Record paid and credit sales against your daily target." },
+  performance: { title: "PERFORMANCE (MY TARGET)", subtitle: "Your visit and completion progress against targets." },
   settings: { title: "SETTINGS", subtitle: "Profile, preferences, theme and security for your workspace." },
 };
 
 export default function VsrOperationsPage() {
-  const [activePage, setActivePage] = useState<PageKey>("routes");
+  const [activePage, setActivePage] = useState<PageKey>("home");
   const [mobileNav, setMobileNav] = useState(false);
   const [dark, setDark] = useState(false);
-  const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
   const [search, setSearch] = useState("");
+  const [salesLog, setSalesLog] = useState(dailySales);
 
   const vsrStaff = useMemo(() => staff.filter((person) => person.role === "VSR"), []);
   const routeStops = (vsrId: string) => vsrRoutes.find((route) => route.vsrId === vsrId)?.coordinates.length ?? 0;
@@ -55,34 +44,24 @@ export default function VsrOperationsPage() {
   const completedVisits = vsrStaff.reduce((sum, person) => sum + person.visits, 0);
   const avgCompletion = vsrStaff.length ? Math.round(vsrStaff.reduce((sum, person) => sum + person.completion, 0) / vsrStaff.length) : 0;
 
-  const totalProducts = products.length;
-  const inStock = products.filter((product) => product.availability === "In stock").length;
-  const lowStock = products.filter((product) => product.availability === "Low stock").length;
-  const outStock = products.filter((product) => product.availability === "Out of stock").length;
+  const totalValue = salesLog.reduce((sum, sale) => sum + sale.value, 0);
+  const paidValue = salesLog.filter((sale) => sale.mode === "Paid").reduce((sum, sale) => sum + sale.value, 0);
+  const creditValue = salesLog.filter((sale) => sale.mode === "Credit").reduce((sum, sale) => sum + sale.value, 0);
+  const collectedValue = salesLog.reduce((sum, sale) => sum + sale.collected, 0);
+  const targetPct = Math.round((collectedValue / dailyTarget) * 100);
 
   const visitTarget = 30;
   const completionTarget = 90;
 
-  const checkedCount = Object.values(checks).filter(Boolean).length;
-  const vehiclePct = Math.round((checkedCount / vehicleItems.length) * 100);
-
-  function toggleCheck(id: string) {
-    setChecks((prev) => ({ ...prev, [id]: !prev[id] }));
-  }
-
-  function submitVehicleCheck() {
-    try {
-      localStorage.setItem("kea_vehicle_check", JSON.stringify(checks));
-    } catch {
-      // storage unavailable
-    }
-    alert(`Vehicle check submitted — ${checkedCount} of ${vehicleItems.length} items cleared.`);
+  function markCollected(id: string) {
+    setSalesLog((prev) =>
+      prev.map((sale) => (sale.id === id ? { ...sale, collected: sale.value, mode: "Paid" } : sale)),
+    );
   }
 
   function signOut() {
     try {
       localStorage.removeItem("kea_user");
-      localStorage.removeItem("kea_vehicle_check");
     } catch {
       // storage unavailable
     }
@@ -90,13 +69,13 @@ export default function VsrOperationsPage() {
     window.location.href = "/login";
   }
 
-  const filteredProducts = useMemo(() => {
+  const filteredSales = useMemo(() => {
     const query = search.toLowerCase();
-    if (!query) return products;
-    return products.filter((product) =>
-      `${product.name} ${product.sku} ${product.category} ${product.availability}`.toLowerCase().includes(query),
+    if (!query) return salesLog;
+    return salesLog.filter((sale) =>
+      `${sale.outlet} ${sale.productLine} ${sale.staff} ${sale.mode}`.toLowerCase().includes(query),
     );
-  }, [search]);
+  }, [search, salesLog]);
 
   const filteredRoutes = useMemo(() => {
     const query = search.toLowerCase();
@@ -141,6 +120,45 @@ export default function VsrOperationsPage() {
             <span>Aug 31, 2026</span>
           </div>
 
+          {activePage === "home" && (
+            <>
+              <div className="vsr-welcome">
+                <div>
+                  <span>Good morning,</span>
+                  <h2>Shittu Akinsanya</h2>
+                  <p>VSR · Lagos Central · Ikeja North — here is today&apos;s snapshot.</p>
+                </div>
+                <div className="company-welcome" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                  <Route size={15} /> <b>Route:</b> <span>Ikeja North · 6 stops</span>
+                </div>
+              </div>
+              <section className="reference-kpis">
+                <article onClick={() => setActivePage("sales")} style={{ cursor: "pointer" }}><span>Today&apos;s sales <MoreHorizontal size={14} /></span><b>₦{(totalValue / 1000000).toFixed(1)}M</b><small>{targetPct}% of ₦{dailyTarget / 1000000}M target</small></article>
+                <article><span>Collected (paid) <MoreHorizontal size={14} /></span><b>₦{(paidValue / 1000000).toFixed(1)}M</b><small>cash & transfer</small></article>
+                <article><span>Pending credit <MoreHorizontal size={14} /></span><b>₦{(creditValue / 1000000).toFixed(1)}M</b><small>{salesLog.filter((s) => s.mode === "Credit").length} invoices</small></article>
+                <article><span>Visits completed <MoreHorizontal size={14} /></span><b>{completedVisits}</b><small>this window</small></article>
+              </section>
+              <section className="reference-kpis">
+                <article><span>Active runs <MoreHorizontal size={14} /></span><b>{activeRoutes}</b><small>on the road</small></article>
+                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{avgCompletion}%</b><small>field performance</small></article>
+                <article><span>Credit to collect <MoreHorizontal size={14} /></span><b>{creditValue > 0 ? "Action" : "Clear"}</b><small>{creditValue > 0 ? "collect this week" : "no outstanding"}</small></article>
+                <article><span>Target progress <MoreHorizontal size={14} /></span><b>{targetPct}%</b><small>collected vs daily target</small></article>
+              </section>
+              <section className="admin-panel">
+                <header><div><h2>Target progress</h2><p>Collected value against today&apos;s target of ₦{(dailyTarget / 1000000).toFixed(0)}M</p></div><Target size={16} /></header>
+                <div style={{ padding: 16 }}>
+                  <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min(100, targetPct)}%`, background: targetPct >= 100 ? "#12a472" : targetPct >= 70 ? "#f59e0b" : "#2563eb", borderRadius: 6 }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
+                    <span>₦{(collectedValue / 1000000).toFixed(1)}M collected</span>
+                    <span>{targetPct >= 100 ? "Target met" : targetPct >= 70 ? "Almost there" : "Keep going"}</span>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
           {activePage === "routes" && (
             <>
               <div className="reference-search" style={{ marginBottom: 10 }}>
@@ -181,70 +199,55 @@ export default function VsrOperationsPage() {
           {activePage === "sales" && (
             <>
               <div className="reference-search" style={{ marginBottom: 10 }}>
-                <Search size={13} /><input placeholder="Search products, SKU, category..." value={search} onChange={(event) => setSearch(event.target.value)} />
+                <Search size={13} /><input placeholder="Search outlets, products, mode..." value={search} onChange={(event) => setSearch(event.target.value)} />
               </div>
               <section className="reference-kpis">
-                <article><span>Products tracked <MoreHorizontal size={14} /></span><b>{totalProducts}</b><small>total SKUs</small></article>
-                <article><span>In stock <MoreHorizontal size={14} /></span><b>{inStock}</b><small>healthy</small></article>
-                <article><span>Low stock <MoreHorizontal size={14} /></span><b>{lowStock}</b><small>needs reorder</small></article>
-                <article><span>Out of stock <MoreHorizontal size={14} /></span><b>{outStock}</b><small>urgent</small></article>
+                <article><span>Today&apos;s sales <MoreHorizontal size={14} /></span><b>₦{(totalValue / 1000000).toFixed(1)}M</b><small>paid + credit</small></article>
+                <article><span>Paid / collected <MoreHorizontal size={14} /></span><b>₦{(paidValue / 1000000).toFixed(1)}M</b><small>cash & transfer</small></article>
+                <article><span>On credit <MoreHorizontal size={14} /></span><b>₦{(creditValue / 1000000).toFixed(1)}M</b><small>{salesLog.filter((s) => s.mode === "Credit").length} invoices</small></article>
+                <article><span>Vs target <MoreHorizontal size={14} /></span><b>{targetPct}%</b><small>of ₦{(dailyTarget / 1000000).toFixed(0)}M</small></article>
               </section>
               <section className="admin-panel">
-                <header><div><h2>Daily sales & stock log</h2><p>Latest product movement and availability across outlets</p></div><PackageCheck size={16} /></header>
+                <header><div><h2>Daily sales log</h2><p>Record and track paid and credit sales against your target. Phone number is required for credit.</p></div><ClipboardList size={16} /></header>
                 <div className="table-scroll">
                   <table>
-                    <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Units</th><th>Availability</th><th>Last updated</th></tr></thead>
+                    <thead><tr><th>Outlet</th><th>Product line</th><th>Qty</th><th>Value</th><th>Mode</th><th>Phone (credit)</th><th>Collected</th><th></th></tr></thead>
                     <tbody>
-                      {filteredProducts.map((product) => (
-                        <tr key={product.id}>
-                          <td data-label="SKU"><code>{product.sku}</code></td>
-                          <td data-label="Product"><b>{product.name}</b></td>
-                          <td data-label="Category">{product.category}</td>
-                          <td data-label="Units">{product.quantity ?? 0}</td>
-                          <td data-label="Availability">
-                            <span
-                              style={{
-                                display: "inline-flex", alignItems: "center", gap: 5, borderRadius: 5, padding: "3px 9px",
-                                fontWeight: 700, fontSize: 10, whiteSpace: "nowrap",
-                                color: product.availability === "In stock" ? "#0b3b2c" : product.availability === "Low stock" ? "#7a4a00" : "#991b1b",
-                                background: product.availability === "In stock" ? "#c8f3d1" : product.availability === "Low stock" ? "#f6d7a5" : "#fbdcdc",
-                              }}
-                            >
-                              {product.availability}
+                      {filteredSales.map((sale) => (
+                        <tr key={sale.id}>
+                          <td data-label="Outlet"><b>{sale.outlet}</b></td>
+                          <td data-label="Product line">{sale.productLine}</td>
+                          <td data-label="Qty">{sale.quantity}</td>
+                          <td data-label="Value">₦{(sale.value / 1000000).toFixed(2)}M</td>
+                          <td data-label="Mode">
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, borderRadius: 5, padding: "3px 9px", fontWeight: 700, fontSize: 10, color: sale.mode === "Paid" ? "#0b3b2c" : "#7a4a00", background: sale.mode === "Paid" ? "#c8f3d1" : "#f6d7a5" }}>
+                              {sale.mode === "Paid" ? <Wallet size={12} /> : <CreditCard size={12} />}
+                              {sale.mode}
                             </span>
                           </td>
-                          <td data-label="Last updated">{product.lastUpdated}</td>
+                          <td data-label="Phone">{sale.mode === "Credit" ? <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Phone size={12} />{sale.phone ?? "—"}</span> : "—"}</td>
+                          <td data-label="Collected">{sale.collected > 0 ? <b>₦{(sale.collected / 1000000).toFixed(2)}M</b> : "—"}</td>
+                          <td data-label="">
+                            {sale.mode === "Credit" && sale.collected === 0 && (
+                              <button type="button" className="mark-paid" onClick={() => markCollected(sale.id)}>Mark paid</button>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </section>
-            </>
-          )}
-
-          {activePage === "vehicle" && (
-            <>
-              <section className="reference-kpis">
-                <article><span>Checks cleared <MoreHorizontal size={14} /></span><b>{checkedCount} / {vehicleItems.length}</b><small>{vehiclePct}% complete</small></article>
-                <article><span>Vehicle status <MoreHorizontal size={14} /></span><b>{vehiclePct === 100 ? "Ready" : "Pending"}</b><small>pre-trip readiness</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Pre-trip vehicle inspection</h2><p>Tick each item once verified before starting your route</p></div><ShieldCheck size={16} /></header>
-                <div className="vsr-check-list">
-                  {vehicleItems.map((item) => (
-                    <button type="button" key={item.id} className={checks[item.id] ? "checked" : ""} onClick={() => toggleCheck(item.id)}>
-                      <span><i>{checks[item.id] ? <CheckCircle2 size={15} /> : <i className="dot" />}</i>{item.label}</span>
-                      {checks[item.id] ? "Cleared" : "Check"}
-                    </button>
-                  ))}
-                </div>
-                <div className="vsr-check-actions">
-                  <button className="reference-filters>button" type="button" onClick={submitVehicleCheck} style={{ background: "#07535a", color: "#fff", border: "none", borderRadius: 6, padding: "10px 16px", fontWeight: 700, fontSize: 11 }}>
-                    <CheckCircle2 size={14} /> Submit vehicle check
-                  </button>
-                </div>
-              </section>
+              {creditValue > 0 && (
+                <section className="admin-panel">
+                  <header><div><h2>Credit collection</h2><p>Outstanding credit invoices to be collected and reflected in your target.</p></div><CreditCard size={16} /></header>
+                  <div style={{ padding: 16, display: "flex", alignItems: "center", gap: 10, background: "#fff8e6", borderRadius: 8 }}>
+                    <span style={{ fontSize: 12 }}>
+                      You have <b>₦{(creditValue / 1000000).toFixed(1)}M</b> outstanding credit. Use <b>Mark paid</b> above when a customer settles; collected value feeds your daily target automatically.
+                    </span>
+                  </div>
+                </section>
+              )}
             </>
           )}
 
@@ -289,9 +292,8 @@ export default function VsrOperationsPage() {
             <>
               <section className="admin-panel">
                 <header><div><h2>Profile</h2><p>Your account details</p></div><Users size={16} /></header>
-                <div style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-                  <div className="user-avatar" style={{ width: 44, height: 44, fontSize: 14 }}>VS</div>
-                  <div><b style={{ fontSize: 14 }}>Shittu Akinsanya</b><br /><small style={{ color: "var(--muted)" }}>VSR · Lagos Central · Ikeja North</small></div>
+                <div style={{ padding: 16 }}>
+                  <ProfileImageUploadVsr />
                 </div>
               </section>
               <section className="admin-panel">
@@ -323,6 +325,37 @@ export default function VsrOperationsPage() {
           )}
         </div>
       </main>
+    </div>
+  );
+}
+
+function ProfileImageUploadVsr() {
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function onFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <button type="button" onClick={() => inputRef.current?.click()} aria-label="Change profile picture"
+        style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2px solid #07535a", background: "#07535a", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16, padding: 0 }}>
+        {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "SA"}
+      </button>
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onFile} />
+      <div>
+        <b style={{ fontSize: 14 }}>Shittu Akinsanya</b>
+        <br />
+        <small style={{ color: "var(--muted)" }}>VSR · Lagos Central · Ikeja North</small>
+        <div>
+          <button type="button" onClick={() => inputRef.current?.click()} style={{ marginTop: 6, border: "1px solid #c2ccc7", background: "#fff", borderRadius: 5, padding: "5px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Change photo</button>
+        </div>
+      </div>
     </div>
   );
 }
