@@ -11,7 +11,7 @@ import {
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { staff } from "../data";
 import { activities, getProductsByMerchandiser, getStoresByMerchandiser, products } from "../hierarchy-data";
-import { KpiGrid, SelectBox } from "../shared";
+import { FadeIn, KpiGrid, SelectBox } from "../shared";
 
 type PageKey = "home" | "stores" | "shelf" | "posm" | "products" | "photos" | "settings";
 
@@ -159,7 +159,7 @@ export default function MerchandiserDashboard() {
               <div className="page-admin page-merchandiser" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
                 <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
                   <div>
-                    <span className="eyebrow">MERCHANDISER OVERVIEW</span>
+                    <span className="eyebrow"><i className="live-dot live" />MERCHANDISER OVERVIEW</span>
                     <h2>Welcome back, {me?.name}</h2>
                     <p>Merchandiser · {me?.territory}, {me?.region} — your stores, share of shelf and execution snapshot.</p>
                   </div>
@@ -179,7 +179,7 @@ export default function MerchandiserDashboard() {
                   { label: "POSM deployed", value: `${posmDone} / ${posmTarget}`, trend: `${posmPct}%`, up: posmPct >= 100, sub: "complete", icon: Presentation, tone: "teal" },
                 ]} />
 
-                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
                   <div className="card">
                     <div className="card-head"><div><h3>Share of shelf trend</h3><p>Average in-stock visibility across your stores over time</p></div></div>
                     <div style={{ height: 240, marginTop: 8 }}>
@@ -222,9 +222,9 @@ export default function MerchandiserDashboard() {
                       <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#f59e0b", display: "inline-block" }} />Low / out · {lowStockSkus}</span>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <FadeIn delay={0.1} className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
                   <div className="card">
                     <div className="card-head"><div><h3>Shelf share by store</h3><p>In-stock visibility across your outlets</p></div></div>
                     <div style={{ height: 220, marginTop: 8 }}>
@@ -258,9 +258,9 @@ export default function MerchandiserDashboard() {
                       </ResponsiveContainer>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="card">
+                <FadeIn delay={0.15} className="card">
                   <div className="card-head"><div><h3>Target progress</h3><p>Completion against the 90% execution target</p></div><Target size={16} /></div>
                   <div style={{ padding: 16 }}>
                     <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
@@ -271,7 +271,7 @@ export default function MerchandiserDashboard() {
                       <span>{((me?.completion ?? 0) >= 90) ? "On track" : "Below target"}</span>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
               </div>
             </>
           )}

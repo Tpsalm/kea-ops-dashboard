@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import { outletData, staff, vsrTrackerRows } from "../data";
 import { clients, getChildren, getStoresByTSR, tsrs } from "../hierarchy-data";
-import { KpiGrid, MapCard, SelectBox, Tip } from "../shared";
+import { FadeIn, KpiGrid, MapCard, SelectBox, Tip } from "../shared";
 
 type PageKey = "home" | "territory" | "pipeline" | "accounts" | "outlets" | "map" | "supervisors" | "settings";
 
@@ -167,7 +167,7 @@ export default function TsrDashboard() {
               <div className="page-admin page-tsr" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
                 <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
                   <div>
-                    <span className="eyebrow">TERRITORY OVERVIEW</span>
+                    <span className="eyebrow"><i className="live-dot live" />TERRITORY OVERVIEW</span>
                     <h2>Welcome back, {tsr?.name}</h2>
                     <p>TSR · {tsr?.region} region — know your territory at a glance with live field analytics.</p>
                   </div>
@@ -188,7 +188,7 @@ export default function TsrDashboard() {
                   { label: "Avg completion", value: `${myChildren.length ? Math.round(myChildren.reduce((s, c) => s + c.completion, 0) / myChildren.length) : 0}%`, trend: `${completionTarget}%`, up: myChildren.length ? Math.round(myChildren.reduce((s, c) => s + c.completion, 0) / myChildren.length) >= completionTarget : true, sub: "target", icon: Target, tone: "teal" },
                 ]} />
 
-                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
                   <div className="card">
                     <div className="card-head"><div><h3>Store growth &amp; health</h3><p>Acquisitions and execution health over time</p></div></div>
                     <div style={{ height: 240, marginTop: 8 }}>
@@ -229,9 +229,9 @@ export default function TsrDashboard() {
                       ))}
                     </div>
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <FadeIn delay={0.1} className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
                   <div className="card">
                     <div className="card-head"><div><h3>Team completion</h3><p>Supervisor &amp; VSR output against target</p></div></div>
                     <div style={{ height: 220, marginTop: 8 }}>
@@ -264,9 +264,9 @@ export default function TsrDashboard() {
                       </ResponsiveContainer>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="card">
+                <FadeIn delay={0.15} className="card">
                   <div className="card-head"><div><h3>New outlet requests</h3><p>Outlets you&apos;ve requested — they stay Pending until approved by your supervisor.</p></div><Store size={16} /></div>
                   <div className="table-scroll">
                     <table>
@@ -305,7 +305,7 @@ export default function TsrDashboard() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
               </div>
             </>
           )}

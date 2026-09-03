@@ -11,7 +11,7 @@ import {
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { dailySales, dailyTarget, staff } from "../data";
 import { vsrRoutes } from "../hierarchy-data";
-import { KpiGrid, SelectBox } from "../shared";
+import { FadeIn, KpiGrid, SelectBox } from "../shared";
 
 type PageKey = "home" | "routes" | "sales" | "performance" | "settings";
 
@@ -133,7 +133,7 @@ export default function VsrOperationsPage() {
               <div className="page-admin page-vsr" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
                 <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
                   <div>
-                    <span className="eyebrow">FIELD SNAPSHOT</span>
+                    <span className="eyebrow"><i className="live-dot live" />FIELD SNAPSHOT</span>
                     <h2>Good morning, Shittu Akinsanya</h2>
                     <p>VSR · Lagos Central · Ikeja North — here is today&apos;s snapshot.</p>
                   </div>
@@ -155,7 +155,7 @@ export default function VsrOperationsPage() {
                   { label: "Target progress", value: `${targetPct}%`, trend: "collected", up: targetPct >= 100, sub: "vs daily target", icon: Target, tone: "amber" },
                 ]} />
 
-                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
                   <div className="card">
                     <div className="card-head"><div><h3>Sales this week</h3><p>Daily collected value in ₦ millions</p></div></div>
                     <div style={{ height: 240, marginTop: 8 }}>
@@ -198,9 +198,9 @@ export default function VsrOperationsPage() {
                       <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#f59e0b", display: "inline-block" }} />Credit · ₦{(creditValue / 1000000).toFixed(1)}M</span>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <FadeIn delay={0.1} className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
                   <div className="card">
                     <div className="card-head"><div><h3>Completion by route</h3><p>Field completion across your routes</p></div></div>
                     <div style={{ height: 220, marginTop: 8 }}>
@@ -229,9 +229,9 @@ export default function VsrOperationsPage() {
                       </ResponsiveContainer>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="card">
+                <FadeIn delay={0.15} className="card">
                   <div className="card-head"><div><h3>Target progress</h3><p>Collected value against today&apos;s target of ₦{(dailyTarget / 1000000).toFixed(0)}M</p></div><Target size={16} /></div>
                   <div style={{ padding: 16 }}>
                     <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
@@ -242,7 +242,7 @@ export default function VsrOperationsPage() {
                       <span>{targetPct >= 100 ? "Target met" : targetPct >= 70 ? "Almost there" : "Keep going"}</span>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
               </div>
             </>
           )}

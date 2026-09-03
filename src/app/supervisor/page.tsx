@@ -14,7 +14,7 @@ import {
   products, supervisors, getChildren, getStoresBySupervisor,
   getActivitiesByStaff, getVSRRoute,
 } from "../hierarchy-data";
-import { KpiGrid, SelectBox } from "../shared";
+import { FadeIn, KpiGrid, SelectBox } from "../shared";
 
 type PageKey =
   | "home"
@@ -248,7 +248,7 @@ export default function SupervisorDashboard() {
               <div className="page-admin page-supervisor" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
                 <div className="heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
                   <div>
-                    <span className="eyebrow">SUPERVISOR OVERVIEW</span>
+                    <span className="eyebrow"><i className="live-dot live" />SUPERVISOR OVERVIEW</span>
                     <h2>Welcome back, {supervisor.name}</h2>
                     <p>Supervisor · {supervisor.territory}, {supervisor.region} — your team, targets and field execution at a glance.</p>
                   </div>
@@ -277,7 +277,7 @@ export default function SupervisorDashboard() {
                   { label: "Below target", value: String(myTeam.filter((m) => m.completion < completionTarget).length), trend: "coaching", up: true, sub: "needs attention", icon: Layers, tone: "blue" },
                 ]} />
 
-                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
                   <div className="card">
                     <div className="card-head"><div><h3>Team completion trend</h3><p>Average execution against the {completionTarget}% minimum over time</p></div></div>
                     <div style={{ height: 240, marginTop: 8 }}>
@@ -320,9 +320,9 @@ export default function SupervisorDashboard() {
                       <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#2563eb", display: "inline-block" }} />VSRs · {myVSRs.length}</span>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <FadeIn delay={0.1} className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
                   <div className="card">
                     <div className="card-head"><div><h3>Completion by member</h3><p>Individual output against target</p></div></div>
                     <div style={{ height: 220, marginTop: 8 }}>
@@ -351,9 +351,9 @@ export default function SupervisorDashboard() {
                       </ResponsiveContainer>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="card">
+                <FadeIn delay={0.15} className="card">
                   <div className="card-head"><div><h3>Team overview</h3><p>Direct reports with completion and target status</p></div><Users size={16} /></div>
                   <div className="vsr-target-list">
                     {myTeam.map((member) => {
@@ -377,9 +377,9 @@ export default function SupervisorDashboard() {
                       );
                     })}
                   </div>
-                </div>
+                </FadeIn>
 
-                <div className="card">
+                <FadeIn delay={0.2} className="card">
                   <div className="card-head"><div><h3>Avg completion vs target</h3><p>Overall team execution compared to {completionTarget}% minimum</p></div><Target size={16} /></div>
                   <div style={{ padding: 16 }}>
                     <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
@@ -390,7 +390,7 @@ export default function SupervisorDashboard() {
                       <span>{completionTarget}% target</span>
                     </div>
                   </div>
-                </div>
+                </FadeIn>
               </div>
             </>
           )}

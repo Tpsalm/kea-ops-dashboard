@@ -1,9 +1,10 @@
 "use client";
 
 // Reusable presentational components shared by all dedicated tab pages.
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import type { LucideIcon } from "lucide-react";
+import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import {
   ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Download, Filter,
   MoreHorizontal, RefreshCw, Search, TrendingDown, TrendingUp,
@@ -20,6 +21,85 @@ const OperationsMap = dynamic(() => import("./operations-map"), {
   ssr: false,
   loading: () => <div className="map-loading"><RefreshCw size={20} /> Loading live Nigerian map…</div>,
 });
+
+/* ------------------------- motion primitives ------------------------- */
+
+const easeOut = [0.22, 1, 0.36, 1] as const;
+
+export function FadeIn({ children, delay = 0, y = 18, className, style }: { children: ReactNode; delay?: number; y?: number; className?: string; style?: CSSProperties }) {
+  return (
+    <motion.div
+      className={className}
+      style={style}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, delay, ease: easeOut }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+export function Stagger({ children, className, gap = 0.06 }: { children: ReactNode; className?: string; gap?: number }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.12 });
+  return (
+    <div ref={ref} className={className} style={{ display: "contents" }}>
+      <AnimatePresence>
+        {inView &&
+          <motion.div
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: gap } } }}
+            style={{ display: "contents" }}
+          >
+            {children}
+          </motion.div>}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export function Reveal({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <motion.div
+      className={className}
+      variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
+      transition={{ duration: 0.5, ease: easeOut }}
+      style={{ display: "contents" }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* Animated number that counts up when scrolled into view, keeping prefixes/suffixes. */
+export function Counter({ value, duration = 1.1, className }: { value: string; duration?: number; className?: string }) {
+  const match = value.match(/^([^0-9]*)([0-9.,]+)%?([^0-9]*)$/);
+  const prefix = match?.[1] ?? "";
+  const suffix = match?.[3] ?? "";
+  const rawNum = match?.[2] ? parseFloat(match[2].replace(/,/g, "")) : null;
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const mv = useMotionValue(0);
+  const spring = useSpring(mv, { damping: 26, stiffness: 90 });
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    if (rawNum === null) return;
+    if (!inView) return;
+    mv.set(rawNum);
+    const unsub = spring.on("change", (v) => {
+      const rounded = Number.isInteger(rawNum) ? Math.round(v) : Number(v.toFixed(1));
+      setDisplay(`${prefix}${rounded.toLocaleString("en-US", { maximumFractionDigits: 1 })}${suffix}`);
+    });
+    return unsub;
+  }, [inView, rawNum, prefix, suffix, mv, spring]);
+
+  return <span ref={ref} className={className}>{rawNum === null ? value : display}</span>;
+}
 
 /* ----------------------------- primitives ----------------------------- */
 
@@ -93,17 +173,27 @@ export function KpiGrid({ items, focus, onFocus }: { items: Kpi[]; focus?: strin
   const activeFocus = focus || selected;
   return (
     <section className="kpi-grid">
-      {items.map(({ label, value, trend, up, sub, icon: Icon, tone }) => (
-        <button className={`kpi ${activeFocus === label ? "selected" : ""}`} key={label} onClick={() => { setSelected(label); onFocus?.(label); }}>
+      {items.map(({ label, value, trend, up, sub, icon: Icon, tone }, index) => (
+        <motion.button
+          className={`kpi ${activeFocus === label ? "selected" : ""}`}
+          key={label}
+          onClick={() => { setSelected(label); onFocus?.(label); }}
+          initial={{ opacity: 0, y: 22, scale: 0.96 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.5, delay: index * 0.06, ease: easeOut }}
+          whileHover={{ y: -4, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
           <div className={`kpi-icon ${tone}`}><Icon size={20} /></div>
           <MoreHorizontal className="kpi-more" size={18} />
           <span>{label}</span>
-          <strong>{value}</strong>
+          <strong><Counter value={value} /></strong>
           <div className={up ? "trend up" : "trend down"}>
             {up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             <b>{trend}</b><small>{sub}</small>
           </div>
-        </button>
+        </motion.button>
       ))}
     </section>
   );

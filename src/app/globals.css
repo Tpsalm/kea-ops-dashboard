@@ -645,3 +645,41 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 .sidebar-signout span{flex:1}
 .modal-row.danger{border-color:#fecaca;background:#fef2f2;color:#991b1b}
 .modal-row.danger:hover{border-color:#f87171;background:#fee2e2}
+
+/* ------------------------- motion / "alive" layer ------------------------- */
+
+@keyframes cardGlow {
+  0%,100%{box-shadow:0 3px 10px rgba(0,0,0,.05)}
+  50%{box-shadow:0 6px 22px rgba(0,0,0,.09)}
+}
+.charts-row .card,.card.cmotion{animation:cardGlow 5s ease-in-out infinite}
+
+@keyframes livePulse {
+  0%{box-shadow:0 0 0 0 var(--accent-soft,#dcfce7)}
+  70%{box-shadow:0 0 0 9px rgba(0,0,0,0)}
+  100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}
+}
+.live-dot.live{animation:livePulse 2.4s ease-out infinite}
+
+@keyframes shimmerLine {
+  0%{background-position:-200% 0}
+  100%{background-position:200% 0}
+}
+.kpi-icon{transition:transform .25s ease}
+.kpi:hover .kpi-icon{transform:rotate(-6deg) scale(1.08)}
+.kpi strong,.kpi b{transition:color .25s ease}
+.kpi:hover strong{color:var(--accent,#2563eb)}
+
+/* recharts hover emphasis */
+.recharts-bar-rectangle{transition:filter .2s ease,transform .2s ease;transform-origin:bottom}
+.recharts-bar-rectangle:hover{filter:brightness(1.12)}
+.recharts-sector{transition:transform .2s ease;transform-origin:center}
+.recharts-sector:hover{transform:scale(1.04)}
+.recharts-active-dot{filter:drop-shadow(0 0 6px rgba(37,99,235,.6))}
+
+/* progress bar glow-fill */
+.glow-fill{transition:width 1.1s cubic-bezier(.22,1,.36,1)}
+
+/* enhanced card hover lift for chart cards */
+.charts-row .card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.charts-row .card:hover{transform:translateY(-4px);border-color:#87adf4;box-shadow:0 14px 34px rgba(37,99,235,.12)}
