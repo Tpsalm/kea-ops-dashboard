@@ -58,6 +58,13 @@ export default function SupervisorDashboard() {
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
   const [pendingOutlets, setPendingOutlets] = useState(outletData.filter((o) => o.status === "Pending"));
   const [uploaded, setUploaded] = useState(0);
+  const [reportMember, setReportMember] = useState("");
+  const [reportType, setReportType] = useState("Store visit report");
+  const [reportNotes, setReportNotes] = useState("");
+  const [reportFiles, setReportFiles] = useState<{ name: string; size: number }[]>([]);
+  const [submittedReports, setSubmittedReports] = useState<{ id: string; member: string; type: string; date: string; files: number }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   const supervisor = useMemo(
     () => supervisors.find((s) => s.id === supervisorId) ?? supervisors[0],
@@ -147,9 +154,44 @@ export default function SupervisorDashboard() {
     setPendingOutlets((prev) => prev.filter((o) => o.id !== id));
   }
 
+  function openFolderPicker() {
+    fileInputRef.current?.click();
+  }
+
+  function onFilesChosen(files: FileList | null) {
+    if (!files) return;
+    const next = Array.from(files).map((file) => ({ name: file.name, size: file.size }));
+    setReportFiles((prev) => [...prev, ...next].slice(0, 10));
+  }
+
+  function onDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragOver(false);
+    if (event.dataTransfer?.files) onFilesChosen(event.dataTransfer.files);
+  }
+
+  function removeFile(name: string) {
+    setReportFiles((prev) => prev.filter((f) => f.name !== name));
+  }
+
   function handleUpload() {
+    if (!reportMember) {
+      alert("Please select a team member.");
+      return;
+    }
+    if (reportFiles.length === 0) {
+      alert("Please choose at least one file (photo / evidence) to upload.");
+      return;
+    }
+    const now = new Date();
+    setSubmittedReports((prev) => [
+      { id: `RT-${Date.now()}`, member: reportMember, type: reportType, date: now.toISOString().slice(0, 10), files: reportFiles.length },
+      ...prev,
+    ]);
     setUploaded((n) => n + 1);
-    alert("Visit report uploaded successfully.");
+    setReportFiles([]);
+    setReportNotes("");
+    alert(`Visit report uploaded successfully — ${reportFiles.length} file(s) attached for ${reportMember}.`);
   }
 
   return (
@@ -472,14 +514,15 @@ export default function SupervisorDashboard() {
                 <div style={{ padding: 16, display: "grid", gap: 12 }}>
                   <label className="admin-select" style={{ width: "100%" }}>
                     <span>TEAM MEMBER</span>
-                    <select>
-                      {myTeam.map((m) => <option key={m.id}>{m.name}</option>)}
+                    <select value={reportMember} onChange={(e) => setReportMember(e.target.value)}>
+                      <option value="">Select team member...</option>
+                      {myTeam.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
                     </select>
                     <ChevronDown size={13} />
                   </label>
                   <label className="admin-select" style={{ width: "100%" }}>
                     <span>REPORT TYPE</span>
-                    <select>
+                    <select value={reportType} onChange={(e) => setReportType(e.target.value)}>
                       <option>Store visit report</option>
                       <option>Stock observation</option>
                       <option>Credit collection</option>
@@ -487,12 +530,52 @@ export default function SupervisorDashboard() {
                     </select>
                     <ChevronDown size={13} />
                   </label>
-                  <div style={{ border: "1.5px dashed #c2ccc7", borderRadius: 8, padding: 20, textAlign: "center", fontSize: 12, color: "var(--muted)" }}>
-                    Drag & drop photos here or <span style={{ color: "#07535a", fontWeight: 700 }}>browse</span> to attach evidence (max 10 files)
+
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={openFolderPicker}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={onDrop}
+                    style={{
+                      border: `1.5px dashed ${dragOver ? "#07535a" : "#c2ccc7"}`,
+                      background: dragOver ? "#eef7f5" : "#fafcfb",
+                      borderRadius: 8, padding: 20, textAlign: "center", fontSize: 12, color: "var(--muted)",
+                      cursor: "pointer", outline: "none",
+                    }}
+                  >
+                    <Upload size={22} style={{ color: "#07535a", marginBottom: 6, display: "block", margin: "0 auto 6px" }} />
+                    Drag & drop files here, or <span style={{ color: "#07535a", fontWeight: 700 }}>click to browse files</span>
+                    <div style={{ fontSize: 10, marginTop: 4 }}>Photos / evidence · max 10 files</div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx"
+                      style={{ display: "none" }}
+                      onChange={(e) => { onFilesChosen(e.target.files); e.target.value = ""; }}
+                    />
                   </div>
+
+                  {reportFiles.length > 0 && (
+                    <div style={{ display: "grid", gap: 6 }}>
+                      {reportFiles.map((file) => (
+                        <div key={file.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--soft)", borderRadius: 6, padding: "7px 10px", fontSize: 11 }}>
+                          <span style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                            <Upload size={13} style={{ color: "#07535a", flex: "none" }} />
+                            <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.name}</b>
+                            <small style={{ color: "var(--muted)" }}>({(file.size / 1024).toFixed(0)} KB)</small>
+                          </span>
+                          <button type="button" onClick={() => removeFile(file.name)} style={{ border: "none", background: "none", color: "#b42318", fontWeight: 800, cursor: "pointer", fontSize: 13 }} aria-label={`Remove ${file.name}`}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div>
                     <span style={{ fontSize: 11, fontWeight: 700 }}>Notes</span>
-                    <textarea rows={3} placeholder="Add observations from the visit..." style={{ width: "100%", marginTop: 6, border: "1px solid #dfe4e2", borderRadius: 6, padding: 10, fontSize: 12, fontFamily: "inherit", resize: "vertical" }} />
+                    <textarea rows={3} value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} placeholder="Add observations from the visit..." style={{ width: "100%", marginTop: 6, border: "1px solid #dfe4e2", borderRadius: 6, padding: 10, fontSize: 12, fontFamily: "inherit", resize: "vertical" }} />
                   </div>
                   <div>
                     <button type="button" onClick={handleUpload} style={{ background: "#07535a", color: "#fff", border: "none", borderRadius: 6, padding: "11px 16px", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
@@ -501,6 +584,28 @@ export default function SupervisorDashboard() {
                   </div>
                 </div>
               </section>
+
+              {submittedReports.length > 0 && (
+                <section className="admin-panel">
+                  <header><div><h2>Submitted reports</h2><p>Visit reports uploaded in this session</p></div><ClipboardCheck size={16} /></header>
+                  <div className="table-scroll">
+                    <table>
+                      <thead><tr><th>Report</th><th>Team member</th><th>Type</th><th>Date</th><th>Files</th></tr></thead>
+                      <tbody>
+                        {submittedReports.map((report) => (
+                          <tr key={report.id}>
+                            <td data-label="Report"><b>{report.id}</b></td>
+                            <td data-label="Team member">{report.member}</td>
+                            <td data-label="Type">{report.type}</td>
+                            <td data-label="Date">{report.date}</td>
+                            <td data-label="Files">{report.files}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
               <section className="admin-panel">
                 <header><div><h2>Recent field activity</h2><p>Evidence uploads and store visits from your team</p></div><ClipboardCheck size={16} /></header>
                 <div className="table-scroll">
