@@ -4,11 +4,11 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
-  Activity, BarChart3, Bell, Building2, CalendarDays, CheckCircle2,
+  Activity, BarChart3, Bell, Building2, CalendarCheck, CalendarDays, CheckCircle2,
   ChevronDown, ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, Download,
-  FileSpreadsheet, Filter, LayoutDashboard, Map, Menu, Moon, MoreHorizontal,
-  PackageCheck, RefreshCw, Route, Search, Settings, ShieldCheck, Store, Sun,
-  TrendingDown, TrendingUp, UserRound, Users, X, Zap, Network, KeyRound
+  FileSpreadsheet, Filter, Landmark, LayoutDashboard, Map, Menu, Moon, MoreHorizontal,
+  PackageCheck, RefreshCw, Route, Search, Settings, ShieldCheck, Store, Sun, Target,
+  TrendingDown, TrendingUp, UserRound, Users, Wallet, X, Zap, Network, KeyRound,
 } from "lucide-react";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, Pie, PieChart,
@@ -67,7 +67,10 @@ const roleData = [
 ];
 const nav = [
   { label: "Overview", icon: LayoutDashboard, path: "/" }, { label: "Live map", icon: Map, path: "/live-map" },
-  { label: "Workforce", icon: Users, path: "/workforce" }, { label: "Stores & products", icon: Store, path: "/stores" },
+  { label: "Workforce", icon: Users, path: "/workforce" }, { label: "Sales", icon: Wallet, path: "/sales" },
+  { label: "Credits", icon: Landmark, path: "/credits" }, { label: "Targets", icon: Target, path: "/targets" },
+  { label: "Outlets", icon: Route, path: "/outlets" }, { label: "Visits", icon: CalendarCheck, path: "/visits" },
+  { label: "Stores & products", icon: Store, path: "/stores" },
   { label: "Performance", icon: BarChart3, path: "/performance" },
   { label: "Client portal", icon: Building2, path: "/client-portal" }
 ];
@@ -166,6 +169,22 @@ export default function Dashboard() {
         <div className="view-context"><span>Showing: <b>{kpiFocus}</b></span>{kpiFocus!=="All operations"&&<button onClick={()=>setKpiFocus("All operations")}><X size={13}/> Clear focus</button>}</div>
 
         <section className="kpi-grid">{kpis.map(({label,value,trend,up,sub,icon:Icon,tone})=><button className={`kpi ${kpiFocus===label?"selected":""}`} key={label} onClick={()=>setKpiFocus(label)}><div className={`kpi-icon ${tone}`}><Icon size={20}/></div><MoreHorizontal className="kpi-more" size={18}/><span>{label}</span><strong>{value}</strong><div className={up?"trend up":"trend down"}>{up?<TrendingUp size={14}/>:<TrendingDown size={14}/>}<b>{trend}</b><small>{sub}</small></div></button>)}</section>
+
+        <section className="commerce-grid" id="commerce">
+          {[
+            { href: "/sales", label: "Sales", sub: "Revenue & volumes", icon: Wallet, color: "#2563eb" },
+            { href: "/credits", label: "Credits", sub: "Loans & exposure", icon: Landmark, color: "#14b8a6" },
+            { href: "/targets", label: "Targets", sub: "Attainment", icon: Target, color: "#8b5cf6" },
+            { href: "/outlets", label: "Outlets", sub: "Retail network", icon: Route, color: "#f59e0b" },
+            { href: "/visits", label: "Visits", sub: "Field execution", icon: CalendarCheck, color: "#0ea5e9" },
+          ].map(({ href, label, sub, icon: Icon, color }) => (
+            <Link key={href} href={href} className="commerce-card" style={{ textDecoration: "none" }}>
+              <div className="commerce-icon" style={{ background: `${color}1a`, color }}><Icon size={20} /></div>
+              <span><b>{label}</b><small>{sub}</small></span>
+              <ChevronRight size={17} className="commerce-arrow" />
+            </Link>
+          ))}
+        </section>
 
         <section className="row charts-row" id="performance">
           <article className="card activity-card"><div className="card-head"><div><h2>Field activity</h2><p>Visits and product checks over time</p></div><div className="legend"><span><i className="blue"/>Visits</span><span><i className="teal"/>Product checks</span><button type="button" aria-label="Field activity options" onClick={()=>setPanel("activity")}><MoreHorizontal size={18}/></button></div></div><div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartActivityData} margin={{top:10,right:8,left:-22,bottom:0}}><defs><linearGradient id="blueFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563eb" stopOpacity={.22}/><stop offset="100%" stopColor="#2563eb" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)"/><XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill:"var(--muted)",fontSize:11}}/><YAxis axisLine={false} tickLine={false} tick={{fill:"var(--muted)",fontSize:11}}/><Tooltip content={<Tip/>}/><Area type="monotone" dataKey="checks" stroke="#14b8a6" strokeWidth={2} fill="transparent"/><Area type="monotone" dataKey="visits" stroke="#2563eb" strokeWidth={2.5} fill="url(#blueFill)"/></AreaChart></ResponsiveContainer></div></article>

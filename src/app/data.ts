@@ -4,7 +4,8 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3, Building2, LayoutDashboard, Map, Store, Users,
   FileText, ClipboardCheck, ShieldCheck, Network, Search, MapPin,
-  PackageCheck, Activity, Layers, TrendingUp
+  PackageCheck, Activity, Layers, TrendingUp, Wallet, Landmark,
+  Target, Route, CalendarCheck
 } from "lucide-react";
 
 export type Role = "VSR" | "TSR" | "Supervisor" | "Merchandiser";
@@ -241,6 +242,214 @@ export const vsrTrackerRows: VsrTrackerRow[] = [
   { id: 50, fullName: "Samuel Adebayo", vsrType: "New", status: "Awaiting Funding", notes: "", dateFunded: "", location: "Lagos", email: "", phone: "", priority: 2, riskAlert: "" }
 ];
 
+/* ---------------------------- Sales ---------------------------- */
+
+export type SalesRecord = {
+  id: string;
+  region: string;
+  territory: string;
+  account: string;
+  clientId?: string;
+  quantity: number;
+  value: number;
+  orders: number;
+  returnedValue: number;
+  date: string;
+  productLine: string;
+};
+
+export const salesData: SalesRecord[] = [
+  // Lagos Region
+  { id: "SL-1001", region: "Lagos", territory: "Lagos Central", account: "Royal Prince", clientId: "client-a", quantity: 1240, value: 18600000, orders: 96, returnedValue: 240000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1002", region: "Lagos", territory: "Lagos West", account: "Jendel", clientId: "client-b", quantity: 1080, value: 16500000, orders: 84, returnedValue: 180000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1003", region: "Lagos", territory: "Lagos North", account: "Justrite", clientId: "client-a", quantity: 1420, value: 21400000, orders: 112, returnedValue: 320000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1004", region: "Lagos", territory: "Lagos East", account: "Market Square", clientId: "client-a", quantity: 980, value: 14800000, orders: 78, returnedValue: 150000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1005", region: "Lagos", territory: "Lagos Island", account: "Spar", clientId: "client-b", quantity: 1560, value: 23600000, orders: 121, returnedValue: 410000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1006", region: "Lagos", territory: "Lagos South", account: "Jendal", clientId: "client-b", quantity: 1120, value: 16900000, orders: 89, returnedValue: 210000, date: "2026-08-28", productLine: "Household" },
+
+  // Ogun Region
+  { id: "SL-1007", region: "Ogun", territory: "Abeokuta", account: "Market Square Ekenwan", clientId: "client-a", quantity: 840, value: 12300000, orders: 66, returnedValue: 110000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1008", region: "Ogun", territory: "Abeokuta", account: "Justrite", clientId: "client-b", quantity: 720, value: 10400000, orders: 58, returnedValue: 96000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1009", region: "Ogun", territory: "Ijebu", account: "Jendal", clientId: "client-a", quantity: 690, value: 9900000, orders: 54, returnedValue: 82000, date: "2026-08-28", productLine: "Household" },
+
+  // Oyo Region
+  { id: "SL-1010", region: "Oyo", territory: "Ibadan", account: "Ring Road Superstore", clientId: "client-a", quantity: 1150, value: 16800000, orders: 91, returnedValue: 250000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1011", region: "Oyo", territory: "Ibadan", account: "Montess Supermarket", clientId: "client-b", quantity: 940, value: 13700000, orders: 74, returnedValue: 130000, date: "2026-08-28", productLine: "Household" },
+
+  // Delta Region
+  { id: "SL-1012", region: "Delta", territory: "Asaba", account: "Asaba Core Trade", clientId: "client-b", quantity: 610, value: 8800000, orders: 48, returnedValue: 74000, date: "2026-08-28", productLine: "Household" },
+
+  // Rivers Region (Port Harcourt)
+  { id: "SL-1013", region: "Port Harcourt", territory: "Port Harcourt", account: "Hypericity Isubu", clientId: "client-a", quantity: 1030, value: 15400000, orders: 81, returnedValue: 200000, date: "2026-08-28", productLine: "Household" },
+  { id: "SL-1014", region: "Port Harcourt", territory: "Port Harcourt", account: "Market Square Mile 3", clientId: "client-b", quantity: 870, value: 12800000, orders: 67, returnedValue: 105000, date: "2026-08-28", productLine: "Household" },
+
+  // Imo Region (Owerri)
+  { id: "SL-1015", region: "Owerri", territory: "Owerri", account: "Market Square Rumuigbo", clientId: "client-a", quantity: 760, value: 11200000, orders: 60, returnedValue: 88000, date: "2026-08-28", productLine: "Household" },
+
+  // Enugu Region
+  { id: "SL-1016", region: "South East", territory: "Enugu", account: "Bohan Stores", clientId: "client-b", quantity: 700, value: 10100000, orders: 55, returnedValue: 90000, date: "2026-08-28", productLine: "Household" },
+
+  // Aba Region
+  { id: "SL-1017", region: "South East", territory: "Aba", account: "Market Square Aba", clientId: "client-a", quantity: 730, value: 10600000, orders: 57, returnedValue: 95000, date: "2026-08-28", productLine: "Household" },
+
+  // Calabar Region
+  { id: "SL-1018", region: "South South", territory: "Calabar", account: "Calvary GRA", clientId: "client-b", quantity: 580, value: 8400000, orders: 45, returnedValue: 70000, date: "2026-08-28", productLine: "Household" },
+
+  // Uyo Region
+  { id: "SL-1019", region: "South South", territory: "Uyo", account: "Market Square Uyo", clientId: "client-a", quantity: 620, value: 9100000, orders: 49, returnedValue: 76000, date: "2026-08-28", productLine: "Household" },
+
+  // Kano Region
+  { id: "SL-1020", region: "North", territory: "Kano", account: "Grand Square", clientId: "client-b", quantity: 880, value: 12600000, orders: 69, returnedValue: 120000, date: "2026-08-28", productLine: "Household" },
+];
+
+export const salesTrend = [
+  { week: "Wk 24", sales: 182, target: 176 }, { week: "Wk 25", sales: 194, target: 180 },
+  { week: "Wk 26", sales: 188, target: 184 }, { week: "Wk 27", sales: 205, target: 188 },
+  { week: "Wk 28", sales: 212, target: 192 }, { week: "Wk 29", sales: 221, target: 196 },
+];
+
+/* ---------------------------- Credits ---------------------------- */
+
+export type CreditStatus = "Outstanding" | "Partially Paid" | "Settled" | "Overdue";
+
+export type CreditRecord = {
+  id: string;
+  account: string;
+  region: string;
+  territory: string;
+  type: "VSR Loan" | "Trade Credit" | "Retail Revolving";
+  amount: number;
+  outstanding: number;
+  issued: string;
+  due: string;
+  status: CreditStatus;
+  owner: string;
+};
+
+export const creditData: CreditRecord[] = [
+  { id: "CR-2081", account: "Shittu Akinsanya", region: "Lagos", territory: "Lagos Central", type: "VSR Loan", amount: 1500000, outstanding: 900000, issued: "18-Jun-2026", due: "18-Dec-2026", status: "Partially Paid", owner: "KEA-1048" },
+  { id: "CR-2082", account: "Abel Nduka", region: "Lagos", territory: "Lagos West", type: "VSR Loan", amount: 1500000, outstanding: 1500000, issued: "15-Jun-2026", due: "15-Dec-2026", status: "Outstanding", owner: "KEA-1082" },
+  { id: "CR-2083", account: "Royal Prince", region: "Lagos", territory: "Lagos Central", type: "Trade Credit", amount: 4800000, outstanding: 2100000, issued: "02-Aug-2026", due: "02-Dec-2026", status: "Partially Paid", owner: "M0001" },
+  { id: "CR-2084", account: "Jendel", region: "Lagos", territory: "Lagos West", type: "Trade Credit", amount: 3600000, outstanding: 3600000, issued: "05-Aug-2026", due: "15-Sep-2026", status: "Overdue", owner: "M0002" },
+  { id: "CR-2085", account: "Ring Road Superstore", region: "Oyo", territory: "Ibadan", type: "Retail Revolving", amount: 2900000, outstanding: 0, issued: "12-Jul-2026", due: "12-Oct-2026", status: "Settled", owner: "M0032" },
+  { id: "CR-2086", account: "Market Square Aba", region: "South East", territory: "Aba", type: "Retail Revolving", amount: 2200000, outstanding: 720000, issued: "20-Jul-2026", due: "20-Sep-2026", status: "Partially Paid", owner: "M0055" },
+  { id: "CR-2087", account: "Oluwapelumi Oyeleke", region: "Lagos", territory: "Lagos Central", type: "VSR Loan", amount: 1500000, outstanding: 780000, issued: "15-Jun-2026", due: "15-Dec-2026", status: "Partially Paid", owner: "KEA-1100" },
+  { id: "CR-2088", account: "Hypericity Mile 3", region: "Port Harcourt", territory: "Port Harcourt", type: "Trade Credit", amount: 3100000, outstanding: 3100000, issued: "08-Aug-2026", due: "08-Dec-2026", status: "Overdue", owner: "M0077" },
+  { id: "CR-2089", account: "Bohan Stores Enugu", region: "South East", territory: "Enugu", type: "Trade Credit", amount: 1750000, outstanding: 620000, issued: "01-Aug-2026", due: "01-Nov-2026", status: "Partially Paid", owner: "M0051" },
+  { id: "CR-2090", account: "Ikechukwu Maduora", region: "Delta", territory: "Asaba", type: "VSR Loan", amount: 1400000, outstanding: 1400000, issued: "—", due: "—", status: "Outstanding", owner: "KEA-1281" },
+  { id: "CR-2091", account: "Asaba Core Trade", region: "Delta", territory: "Asaba", type: "Retail Revolving", amount: 1800000, outstanding: 90000, issued: "18-Jul-2026", due: "18-Oct-2026", status: "Partially Paid", owner: "M0040" },
+  { id: "CR-2092", account: "Grand Square Kano", region: "North", territory: "Kano", type: "Trade Credit", amount: 2600000, outstanding: 0, issued: "10-Jun-2026", due: "10-Aug-2026", status: "Settled", owner: "M0045" },
+];
+
+/* ---------------------------- Targets ---------------------------- */
+
+export type TargetRecord = {
+  id: string;
+  region: string;
+  territory: string;
+  metric: "Sales" | "Visits" | "New Outlets" | "Collection";
+  target: number;
+  achieved: number;
+  period: string;
+  owner: string;
+};
+
+export const targetData: TargetRecord[] = [
+  { id: "TG-301", region: "Lagos", territory: "Lagos Central", metric: "Sales", target: 24000000, achieved: 22600000, period: "Aug 2026", owner: "Abubakar Hassan" },
+  { id: "TG-302", region: "Lagos", territory: "Lagos West", metric: "Sales", target: 21000000, achieved: 19800000, period: "Aug 2026", owner: "Abubakar Hassan" },
+  { id: "TG-303", region: "Lagos", territory: "Lagos Island", metric: "Sales", target: 26000000, achieved: 25100000, period: "Aug 2026", owner: "Abubakar Hassan" },
+  { id: "TG-304", region: "Ogun", territory: "Abeokuta", metric: "Sales", target: 16000000, achieved: 15300000, period: "Aug 2026", owner: "Yusuf Abimbola" },
+  { id: "TG-305", region: "Oyo", territory: "Ibadan", metric: "Sales", target: 18000000, achieved: 17600000, period: "Aug 2026", owner: "Yusuf Abimbola" },
+  { id: "TG-306", region: "Lagos", territory: "Lagos Central", metric: "Visits", target: 320, achieved: 302, period: "Aug 2026", owner: "Abubakar Hassan" },
+  { id: "TG-307", region: "Lagos", territory: "Lagos West", metric: "Visits", target: 280, achieved: 256, period: "Aug 2026", owner: "Abubakar Hassan" },
+  { id: "TG-308", region: "Ogun", territory: "Abeokuta", metric: "Visits", target: 220, achieved: 208, period: "Aug 2026", owner: "Yusuf Abimbola" },
+  { id: "TG-309", region: "Port Harcourt", territory: "Port Harcourt", metric: "New Outlets", target: 12, achieved: 9, period: "Aug 2026", owner: "Oladupe Bisadu" },
+  { id: "TG-310", region: "South East", territory: "Aba", metric: "New Outlets", target: 8, achieved: 6, period: "Aug 2026", owner: "Keleshi Espetchele" },
+  { id: "TG-311", region: "South South", territory: "Calabar", metric: "Collection", target: 12000000, achieved: 11400000, period: "Aug 2026", owner: "Angbgbu Blessing" },
+  { id: "TG-312", region: "Owerri", territory: "Owerri", metric: "Collection", target: 11000000, achieved: 9800000, period: "Aug 2026", owner: "Blessing Fred" },
+];
+
+/* ---------------------------- Outlets ---------------------------- */
+
+export type OutletType = "Supermarket" | "Convenience" | "Wholesale" | "Pharmacy" | "Horeca" | "Kiosk";
+export type OutletStatus = "Active" | "Dormant" | "New" | "Suspended";
+
+export type OutletRecord = {
+  id: string;
+  name: string;
+  region: string;
+  territory: string;
+  chain: string;
+  type: OutletType;
+  status: OutletStatus;
+  weeklyVisits: number;
+  lastVisit: string;
+  merchandiser: string;
+  tier: "A" | "B" | "C";
+};
+
+export const outletData: OutletRecord[] = [
+  { id: "OL-4001", name: "Royal Prince Ikosi", region: "Lagos", territory: "Lagos Central", chain: "Royal Prince", type: "Supermarket", status: "Active", weeklyVisits: 5, lastVisit: "2026-08-28", merchandiser: "Toluwaleni Adio", tier: "A" },
+  { id: "OL-4002", name: "Jendel Surulere", region: "Lagos", territory: "Lagos West", chain: "Jendel", type: "Supermarket", status: "Active", weeklyVisits: 4, lastVisit: "2026-08-27", merchandiser: "Terapb Chioma", tier: "A" },
+  { id: "OL-4003", name: "Justrite Dopemu", region: "Lagos", territory: "Lagos North", chain: "Justrite", type: "Convenience", status: "Active", weeklyVisits: 4, lastVisit: "2026-08-28", merchandiser: "Mopelola Sebilau", tier: "B" },
+  { id: "OL-4004", name: "Market Square Maryland", region: "Lagos", territory: "Lagos East", chain: "Market Square", type: "Supermarket", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-26", merchandiser: "Akinola Towobilwu", tier: "A" },
+  { id: "OL-4005", name: "Spar Lekki", region: "Lagos", territory: "Lagos Island", chain: "Spar", type: "Supermarket", status: "Active", weeklyVisits: 5, lastVisit: "2026-08-28", merchandiser: "Ajisun Favour", tier: "A" },
+  { id: "OL-4006", name: "Justrite Ayobo", region: "Lagos", territory: "Lagos West", chain: "Justrite", type: "Convenience", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-25", merchandiser: "Aniye Akuakuomop", tier: "B" },
+  { id: "OL-4007", name: "Jendal Ota", region: "Ogun", territory: "Abeokuta", chain: "Jendal", type: "Wholesale", status: "Active", weeklyVisits: 4, lastVisit: "2026-08-27", merchandiser: "ADETORO ABIMBOLA", tier: "B" },
+  { id: "OL-4008", name: "Market Square Ekenwan", region: "Ogun", territory: "Abeokuta", chain: "Market Square", type: "Supermarket", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-28", merchandiser: "Olushotun Adio", tier: "A" },
+  { id: "OL-4009", name: "Ring Road Superstore", region: "Oyo", territory: "Ibadan", chain: "Ring Road", type: "Supermarket", status: "Active", weeklyVisits: 5, lastVisit: "2026-08-28", merchandiser: "Jonathan Okena", tier: "A" },
+  { id: "OL-4010", name: "Montess Supermarket", region: "Oyo", territory: "Ibadan", chain: "Montess", type: "Supermarket", status: "New", weeklyVisits: 2, lastVisit: "2026-08-22", merchandiser: "Abduiganya Lafesiah", tier: "B" },
+  { id: "OL-4011", name: "Asaba Core Trade", region: "Delta", territory: "Asaba", chain: "Indie", type: "Wholesale", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-24", merchandiser: "Ikechukwu Maduora", tier: "B" },
+  { id: "OL-4012", name: "Hypericity Isubu", region: "Port Harcourt", territory: "Port Harcourt", chain: "Hypericity", type: "Supermarket", status: "Active", weeklyVisits: 4, lastVisit: "2026-08-28", merchandiser: "Beauty D. Jackson", tier: "A" },
+  { id: "OL-4013", name: "Market Square Mile 3", region: "Port Harcourt", territory: "Port Harcourt", chain: "Market Square", type: "Supermarket", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-27", merchandiser: "Emmeneuon Chyuanu", tier: "A" },
+  { id: "OL-4014", name: "Spar Trans Amadi", region: "Port Harcourt", territory: "Port Harcourt", chain: "Spar", type: "Supermarket", status: "Dormant", weeklyVisits: 0, lastVisit: "2026-07-30", merchandiser: "Chillei Tony", tier: "A" },
+  { id: "OL-4015", name: "Bohan Stores Nsukka", region: "South East", territory: "Enugu", chain: "Bohan", type: "Convenience", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-26", merchandiser: "Eghoma Nsapo", tier: "B" },
+  { id: "OL-4016", name: "Townsquare Aba", region: "South East", territory: "Aba", chain: "Townsquare", type: "Wholesale", status: "Active", weeklyVisits: 2, lastVisit: "2026-08-23", merchandiser: "Beatrice Nlejinameke", tier: "C" },
+  { id: "OL-4017", name: "Calvary GRA Calabar", region: "South South", territory: "Calabar", chain: "Calvary", type: "Convenience", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-27", merchandiser: "Angbgbu Blessing", tier: "B" },
+  { id: "OL-4018", name: "Market Square Uyo", region: "South South", territory: "Uyo", chain: "Market Square", type: "Supermarket", status: "Active", weeklyVisits: 4, lastVisit: "2026-08-28", merchandiser: "Chibuka Chinaemerem", tier: "A" },
+  { id: "OL-4019", name: "Grand Square Kano", region: "North", territory: "Kano", chain: "Grand Square", type: "Supermarket", status: "Active", weeklyVisits: 1, lastVisit: "2026-08-20", merchandiser: "Olorunde Bialo", tier: "B" },
+  { id: "OL-4020", name: "Market Square Rumuigbo", region: "Owerri", territory: "Owerri", chain: "Market Square", type: "Supermarket", status: "New", weeklyVisits: 2, lastVisit: "2026-08-21", merchandiser: "Maryan Queen", tier: "B" },
+  { id: "OL-4021", name: "Spar Ikoyi", region: "Lagos", territory: "Lagos Island", chain: "Spar", type: "Horeca", status: "Active", weeklyVisits: 3, lastVisit: "2026-08-26", merchandiser: "Deseshe Deborah", tier: "C" },
+  { id: "OL-4022", name: "Justrite Bariga", region: "Lagos", territory: "Lagos East", chain: "Justrite", type: "Kiosk", status: "Suspended", weeklyVisits: 0, lastVisit: "2026-07-28", merchandiser: "Grace Peter", tier: "C" },
+];
+
+/* ---------------------------- Visits ---------------------------- */
+
+export type VisitType = "Retail Check" | "Merchandising" | "Credit Collection" | "New Account";
+export type VisitOutcome = "Completed" | "Partial" | "Missed" | "Rescheduled";
+
+export type VisitRecord = {
+  id: string;
+  staff: string;
+  role: string;
+  region: string;
+  territory: string;
+  outlet: string;
+  type: VisitType;
+  scheduled: string;
+  outcome: VisitOutcome;
+  completion: number;
+};
+
+export const visitData: VisitRecord[] = [
+  { id: "VS-5001", staff: "Shittu Akinsanya", role: "VSR", region: "Lagos", territory: "Lagos Central", outlet: "Royal Prince Ikosi", type: "Credit Collection", scheduled: "2026-08-28", outcome: "Completed", completion: 100 },
+  { id: "VS-5002", staff: "Abel Nduka", role: "VSR", region: "Lagos", territory: "Lagos West", outlet: "Jendel Surulere", type: "Retail Check", scheduled: "2026-08-28", outcome: "Completed", completion: 100 },
+  { id: "VS-5003", staff: "Toluwaleni Adio", role: "Merchandiser", region: "Lagos", territory: "Lagos Central", outlet: "Royal Prince Ikosi", type: "Merchandising", scheduled: "2026-08-28", outcome: "Completed", completion: 100 },
+  { id: "VS-5004", staff: "Grace Peter", role: "Merchandiser", region: "Lagos", territory: "Lagos East", outlet: "Justrite Bariga", type: "Merchandising", scheduled: "2026-08-28", outcome: "Partial", completion: 65 },
+  { id: "VS-5005", staff: "Paul Olakonipekun", role: "VSR", region: "Ogun", territory: "Abeokuta", outlet: "Market Square Ekenwan", type: "Credit Collection", scheduled: "2026-08-28", outcome: "Completed", completion: 100 },
+  { id: "VS-5006", staff: "Jonathan Okena", role: "Merchandiser", region: "Oyo", territory: "Ibadan", outlet: "Ring Road Superstore", type: "Merchandising", scheduled: "2026-08-28", outcome: "Completed", completion: 100 },
+  { id: "VS-5007", staff: "Ikechukwu Maduora", role: "VSR", region: "Delta", territory: "Asaba", outlet: "Asaba Core Trade", type: "Credit Collection", scheduled: "2026-08-28", outcome: "Missed", completion: 0 },
+  { id: "VS-5008", staff: "Beauty D. Jackson", role: "Merchandiser", region: "Port Harcourt", territory: "Port Harcourt", outlet: "Hypericity Isubu", type: "Merchandising", scheduled: "2026-08-28", outcome: "Completed", completion: 100 },
+  { id: "VS-5009", staff: "Angbgbu Blessing", role: "Merchandiser", region: "South South", territory: "Calabar", outlet: "Calvary GRA Calabar", type: "New Account", scheduled: "2026-08-28", outcome: "Rescheduled", completion: 0 },
+  { id: "VS-5010", staff: "Chibuka Chinaemerem", role: "Merchandiser", region: "South South", territory: "Uyo", outlet: "Market Square Uyo", type: "Merchandising", scheduled: "2026-08-28", outcome: "Completed", completion: 100 },
+  { id: "VS-5011", staff: "Olorunde Bialo", role: "Merchandiser", region: "North", territory: "Kano", outlet: "Grand Square Kano", type: "Retail Check", scheduled: "2026-08-28", outcome: "Partial", completion: 70 },
+  { id: "VS-5012", staff: "Maryan Queen", role: "Merchandiser", region: "Owerri", territory: "Owerri", outlet: "Market Square Rumuigbo", type: "New Account", scheduled: "2026-08-28", outcome: "Completed", completion: 100 },
+  { id: "VS-5013", staff: "Terapb Chioma Nneme", role: "Merchandiser", region: "Lagos", territory: "Lagos West", outlet: "Jendel Surulere", type: "Merchandising", scheduled: "2026-08-27", outcome: "Completed", completion: 100 },
+  { id: "VS-5014", staff: "Akinola Towobilwu", role: "Merchandiser", region: "Lagos", territory: "Lagos East", outlet: "Market Square Maryland", type: "Merchandising", scheduled: "2026-08-26", outcome: "Completed", completion: 100 },
+  { id: "VS-5015", staff: "Keleshi Espetchele", role: "Merchandiser", region: "South East", territory: "Aba", outlet: "Townsquare Aba", type: "Credit Collection", scheduled: "2026-08-26", outcome: "Partial", completion: 60 },
+  { id: "VS-5016", staff: "Olushotun Adio", role: "Merchandiser", region: "Ogun", territory: "Abeokuta", outlet: "Justrite", type: "Merchandising", scheduled: "2026-08-25", outcome: "Completed", completion: 100 },
+];
+
 export const ROLE_COLORS: Record<Role, string> = {
   VSR: "#2563eb",           // blue
   Merchandiser: "#14b8a6",  // teal
@@ -253,6 +462,11 @@ export const NAV: { label: string; path: string; icon: LucideIcon }[] = [
   { label: "Overview", path: "/", icon: LayoutDashboard },
   { label: "Live map", path: "/live-map", icon: Map },
   { label: "Workforce", path: "/workforce", icon: Users },
+  { label: "Sales", path: "/sales", icon: Wallet },
+  { label: "Credits", path: "/credits", icon: Landmark },
+  { label: "Targets", path: "/targets", icon: Target },
+  { label: "Outlets", path: "/outlets", icon: Route },
+  { label: "Visits", path: "/visits", icon: CalendarCheck },
   { label: "Stores & products", path: "/stores", icon: Store },
   { label: "Performance", path: "/performance", icon: BarChart3 },
   { label: "Hierarchy", path: "/hierarchy", icon: Layers },
