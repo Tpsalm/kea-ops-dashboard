@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   AlertTriangle, Bell, Building2, CheckCircle2, ChevronDown, Gauge, Home, Layers,
   LogOut, Map, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
@@ -19,6 +19,7 @@ import { FieldHero } from "../../components/field-hero";
 import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
 import { Badge } from "../../components/ui/badge";
+import { ProfileSettingsPanel } from "../../components/profile-settings-panel";
 
 import { useTheme } from "../../lib/theme-provider";
 
@@ -43,7 +44,7 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   outlets: { title: "NEW OUTLETS ACQUIRED", subtitle: "Retail outlets under your territory coverage." },
   map: { title: "TERRITORY MAP", subtitle: "Field staff and coverage across your assigned territory." },
   supervisors: { title: "SUPERVISOR PERFORMANCE", subtitle: "Your supervisors' field output against targets." },
-  settings: { title: "SETTINGS", subtitle: "Profile, preferences, theme and security." },
+  settings: { title: "SETTINGS & PREFERENCES", subtitle: "Display lighting mode, profile details, and account preferences." },
 };
 
 export default function TsrDashboard() {
@@ -58,10 +59,36 @@ export default function TsrDashboard() {
   const [newType, setNewType] = useState("Convenience");
   const [newTerritory, setNewTerritory] = useState("Lagos Central");
   const [period, setPeriod] = useState("Last 30 days");
+  const [notice, setNotice] = useState("");
+
+  function flash(message: string) {
+    setNotice(message);
+    window.setTimeout(() => setNotice(""), 3000);
+  }
+
+  // Profile avatar & custom info state
+  const [userAvatar, setUserAvatar] = useState<string>("");
+  const [userName, setUserName] = useState<string>("TSR Lead");
+
+  const tsr = useMemo(() => tsrs.find((item) => item.id === tsrId) ?? tsrs[0], [tsrId]);
+
+  useEffect(() => {
+    function loadProfile() {
+      try {
+        const av = localStorage.getItem("kea_tsr_avatar") || localStorage.getItem("kea_user_avatar");
+        if (av) setUserAvatar(av);
+        const name = localStorage.getItem("kea_tsr_name");
+        if (name) setUserName(name);
+      } catch {}
+    }
+    loadProfile();
+    window.addEventListener("kea-avatar-updated", loadProfile);
+    return () => window.removeEventListener("kea-avatar-updated", loadProfile);
+  }, []);
+
   const [region, setRegion] = useState("All regions");
   const [status, setStatus] = useState("All statuses");
 
-  const tsr = useMemo(() => tsrs.find((item) => item.id === tsrId) ?? tsrs[0], [tsrId]);
   const myStores = useMemo(() => getStoresByTSR(tsrId), [tsrId]);
   const myChildren = useMemo(() => getChildren(tsrId), [tsrId]);
   const supervisors = useMemo(() => myChildren.filter((person) => person.role === "Supervisor"), [myChildren]);
@@ -120,6 +147,11 @@ export default function TsrDashboard() {
       type: newType as "Convenience" | "Supermarket" | "Wholesale" | "Kiosk",
       status: "Pending" as const,
       weeklyVisits: 0,
+      monthlyCompliance: 0,
+      stockHealth: "Normal" as const,
+      auditRate: 0,
+      shareOfShelf: 0,
+      posmDeployed: 0,
       lastVisit: "—",
       merchandiser: tsr?.name ?? "Unassigned",
       tier: "C" as const,
@@ -129,8 +161,17 @@ export default function TsrDashboard() {
     alert("Outlet request submitted — it is now Pending and will be activated once your supervisor approves it.");
   }
 
+  const initials = (userName || tsr?.name || "TSR")
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "TS";
+
   return (
     <div className={isDark ? "tsr-reference dark" : "tsr-reference"}>
+      {notice && <div className="toast"><CheckCircle2 size={17} />{notice}</div>}
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
@@ -145,6 +186,37 @@ export default function TsrDashboard() {
             </button>
           ))}
         </nav>
+
+        {/* Profile Card in Sidebar Footer */}
+        <div
+          onClick={() => { setActivePage("settings"); setMobileNav(false); }}
+          style={{
+            display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+            background: "var(--soft)", borderRadius: 10, border: "1px solid var(--line)",
+            cursor: "pointer", marginTop: "auto", marginBottom: 6, transition: "background 0.2s"
+          }}
+          title="Click to view Profile & Settings"
+        >
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", border: "1.5px solid var(--line)",
+            background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
+            display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
+            overflow: "hidden", flexShrink: 0
+          }}>
+            {userAvatar ? (
+              <img src={userAvatar} alt="TSR profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              initials
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+            <b style={{ display: "block", fontSize: 11, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {userName || tsr?.name}
+            </b>
+            <span style={{ display: "block", fontSize: 9, color: "var(--muted)" }}>TSR · {tsr?.region}</span>
+          </div>
+        </div>
+
         <button className="reference-settings" type="button" onClick={signOut}><LogOut size={15} /> Sign out</button>
       </aside>
 
@@ -153,8 +225,28 @@ export default function TsrDashboard() {
           <button className="reference-menu" type="button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu size={19} /></button>
           <span className="vsr-page-title">{pageTitles[activePage].title}</span>
           <div className="reference-actions">
+            <button type="button" onClick={toggleTheme} aria-label="Toggle dark mode" title={`Switch to ${isDark ? "Light" : "Dark"} mode`}>
+              {isDark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
             <button type="button" aria-label="Notifications"><Bell size={15} /></button>
-            <span>TS</span>
+            <button
+              type="button"
+              onClick={() => setActivePage("settings")}
+              style={{
+                width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
+                background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
+                display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
+                cursor: "pointer", overflow: "hidden", padding: 0
+              }}
+              title="Open Profile & Settings"
+              aria-label="Profile and settings"
+            >
+              {userAvatar ? (
+                <img src={userAvatar} alt="TSR avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                initials
+              )}
+            </button>
           </div>
         </header>
 
@@ -509,40 +601,16 @@ export default function TsrDashboard() {
           )}
 
           {activePage === "settings" && (
-            <>
-              <section className="admin-panel">
-                <header><div><h2>Profile</h2><p>Your account details</p></div><Users size={16} /></header>
-                <div style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-                  <div className="user-avatar" style={{ width: 44, height: 44, fontSize: 14 }}>TS</div>
-                  <div><b style={{ fontSize: 14 }}>{tsr?.name ?? "TSR"}</b><br /><small style={{ color: "var(--muted)" }}>TSR · {tsr?.region} · {tsr?.route}</small></div>
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Preferences</h2><p>Theme and notifications</p></div></header>
-                <div className="vsr-settings-list">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>{isDark ? <Moon size={15} /> : <Sun size={15} />} Dark mode</span>
-                    <button type="button" className={isDark ? "vsr-toggle on" : "vsr-toggle"} onClick={toggleTheme} aria-label="Toggle dark mode"><i /></button>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span><Bell size={15} /> Daily territory reminders</span>
-                    <button type="button" className={notifications.daily ? "vsr-toggle on" : "vsr-toggle"} onClick={() => setNotifications((n) => ({ ...n, daily: !n.daily }))} aria-label="Toggle daily reminders"><i /></button>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span><AlertTriangle size={15} /> Performance alerts</span>
-                    <button type="button" className={notifications.alerts ? "vsr-toggle on" : "vsr-toggle"} onClick={() => setNotifications((n) => ({ ...n, alerts: !n.alerts }))} aria-label="Toggle alerts"><i /></button>
-                  </div>
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Security</h2><p>Session and account access</p></div></header>
-                <div style={{ padding: 14 }}>
-                  <button type="button" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#b42318", color: "#fff", border: "none", borderRadius: 6, padding: "11px 16px", fontWeight: 700, fontSize: 11, cursor: "pointer" }} onClick={signOut}>
-                    <LogOut size={15} /> Sign out
-                  </button>
-                </div>
-              </section>
-            </>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <ProfileSettingsPanel
+                role="tsr"
+                defaultName={tsr?.name || "TSR Lead"}
+                defaultEmail="tsr.lead@kea.com"
+                roleLabel="Territory Sales Representative · Regional Lead"
+                territoryLabel={`${tsr?.region || "Lagos"} · ${tsr?.route || "Territory"}`}
+                onFlash={flash}
+              />
+            </div>
           )}
         </div>
       </main>

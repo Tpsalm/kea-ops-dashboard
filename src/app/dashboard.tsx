@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { nigeriaLocations } from "./nigeria-locations";
 import { useTheme } from "../lib/theme-provider";
+import { ProfileSettingsPanel } from "../components/profile-settings-panel";
 
 const OperationsMap = dynamic(() => import("./operations-map"), {
   ssr: false,
@@ -206,29 +207,18 @@ export default function Dashboard() {
     {panel && <div className="modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setPanel(null)}}><section className={panel==="model"?"action-modal model-modal":"action-modal"} role="dialog" aria-modal="true" aria-label="Dashboard action panel"><div className="modal-head"><div><small>KEA OPERATIONS</small><h2>{panel==="data"?"Data quality":panel==="reports"?"Reports & exports":panel==="settings"?"Display settings":panel==="activity"?"Field activity options":panel==="workforce"?"Workforce mix options":panel==="completion"?"Visit completion options":panel==="filters"?"Advanced workforce filters":panel==="profile"?"Administrator profile":panel==="model"?"KEA operational data model":"Client dashboard"}</h2></div><button type="button" onClick={()=>setPanel(null)} aria-label="Close panel"><X size={19}/></button></div><div className="modal-body">
       {panel==="data"&&<><div className="healthy-state"><CheckCircle2 size={25}/><div><b>All records are healthy</b><span>GPS, staff IDs and product records are validated.</span></div></div><button type="button" className="modal-row" onClick={()=>{setPanel(null);flash("Data validation completed successfully")}}><RefreshCw size={17}/><span><b>Run validation now</b><small>Recheck the current operational dataset</small></span><ChevronRight size={16}/></button></>}
       {panel==="model"&&<div className="model-view"><div className="model-summary"><Network size={20}/><div><b>Operational relationship model</b><span>Normalized hierarchy powering workforce, geographic, merchandising and client reporting.</span></div><em>12 entities · 13 relationships</em></div><div className="model-scroll"><div className="shared-dimensions"><div className="entity-card dimension"><div><Building2 size={15}/><b>Client</b></div><span><KeyRound size={10}/> client_id <i>PK</i></span><span>client_name</span><span>contract_status</span></div><div className="relationship"><b>1</b><i/><b>∞</b></div><div className="entity-card dimension"><div><Map size={15}/><b>Geography</b></div><span><KeyRound size={10}/> geography_id <i>PK</i></span><span>region · state · LGA</span><span>territory_id <i>FK</i></span></div><div className="relationship"><b>1</b><i/><b>∞</b></div><div className="entity-card root"><div><Users size={15}/><b>TSR</b></div><span><KeyRound size={10}/> tsr_id <i>PK</i></span><span>territory_id <i>FK</i></span><span>staff_status</span></div></div><div className="model-branch"><header><Store size={15}/><span><b>Merchandising hierarchy</b><small>Store execution and product availability</small></span></header><div className="entity-flow">{[["Supervisor","supervisor_id","tsr_id"],["Merchandiser","merchandiser_id","supervisor_id"],["Store","store_id","merchandiser_id"],["Product","product_id","store_id"],["Activity","activity_id","product_id"]].map((entity,index)=><div className="flow-unit" key={entity[0]}><div className="entity-card"><div><b>{entity[0]}</b></div><span><KeyRound size={10}/> {entity[1]} <i>PK</i></span><span>{entity[2]} <i>FK</i></span></div>{index<4&&<div className="relationship"><b>1</b><i/><b>∞</b></div>}</div>)}</div></div><div className="model-branch vsr-branch"><header><Route size={15}/><span><b>VSR operations hierarchy</b><small>Route assignment and geographic coverage</small></span></header><div className="entity-flow compact"><div className="entity-card"><div><b>VSR</b></div><span><KeyRound size={10}/> vsr_id <i>PK</i></span><span>tsr_id <i>FK</i></span></div><div className="relationship"><b>1</b><i/><b>∞</b></div><div className="entity-card"><div><b>Route</b></div><span><KeyRound size={10}/> route_id <i>PK</i></span><span>vsr_id <i>FK</i></span></div><div className="relationship"><b>1</b><i/><b>∞</b></div><div className="entity-card"><div><b>Coverage Area</b></div><span><KeyRound size={10}/> coverage_id <i>PK</i></span><span>route_id <i>FK</i></span></div></div></div></div><div className="model-legend"><span><i className="pk-dot"/> PK · Primary key</span><span><i className="fk-dot"/> FK · Foreign key</span><span><b>1 — ∞</b> One-to-many relationship</span></div></div>}
-      {panel==="settings"&&<>
-        <p className="modal-label">WORKSPACE LIGHTING & THEME</p>
-        <div className="theme-selector-grid">
-          <button type="button" className={`theme-card-btn ${theme === "light" ? "active" : ""}`} onClick={() => { setTheme("light"); flash("Light theme applied"); }}>
-            <div className="theme-card-icon"><Sun size={18}/></div>
-            <strong>Light</strong>
-            <span>Daylight mode</span>
-          </button>
-          <button type="button" className={`theme-card-btn ${theme === "dark" ? "active" : ""}`} onClick={() => { setTheme("dark"); flash("Dark theme applied"); }}>
-            <div className="theme-card-icon"><Moon size={18}/></div>
-            <strong>Dark</strong>
-            <span>Low-light mode</span>
-          </button>
-          <button type="button" className={`theme-card-btn ${theme === "system" ? "active" : ""}`} onClick={() => { setTheme("system"); flash("System theme synced"); }}>
-            <div className="theme-card-icon"><Settings size={18}/></div>
-            <strong>System</strong>
-            <span>OS match</span>
-          </button>
-        </div>
-      </>}
+      {(panel==="settings" || panel==="profile")&&<ProfileSettingsPanel
+        role="super-admin"
+        defaultName="KEA Administrator"
+        defaultEmail="admin@kea.com"
+        roleLabel="Executive Administrator · Operations"
+        territoryLabel="National Operations Control"
+        isModal={false}
+        onFlash={flash}
+        onSave={()=>setPanel(null)}
+      />}
       {(panel==="activity"||panel==="workforce"||panel==="completion")&&<div className="modal-grid"><button type="button" onClick={()=>{setPanel(null);exportReport("csv")}}><Download size={20}/><b>Download data</b><span>Export the current filtered view</span></button><button type="button" onClick={()=>{setPanel(null);goTo("workforce")}}><Users size={20}/><b>View records</b><span>Open supporting workforce detail</span></button></div>}
       {panel==="filters"&&<><p className="modal-label">QUICK ROLE FILTER</p><div className="filter-buttons">{["All roles","VSR","TSR","Supervisor","Merchandiser"].map(r=><button type="button" key={r} className={role===r?"chosen":""} onClick={()=>setRole(r)}>{r}</button>)}</div><div className="modal-actions"><button type="button" className="secondary" onClick={()=>{setRole("All roles");setRegion("All regions")}}>Clear</button><button type="button" className="primary" onClick={()=>{setPanel(null);setPage(1);flash("Workforce filters applied")}}>Apply filters</button></div></>}
-      {panel==="profile"&&<><div className="profile-summary"><div className="user-avatar">KA</div><div><b>KEA Administrator</b><span>Operations · Full access</span></div></div><button type="button" className="modal-row" onClick={()=>{setPanel("settings")}}><Settings size={17}/><span><b>Display preferences</b><small>Theme and dashboard appearance</small></span><ChevronRight size={16}/></button><button type="button" className="modal-row" onClick={()=>{setPanel(null);flash("Profile is up to date")}}><UserRound size={17}/><span><b>Review profile</b><small>Account details and access role</small></span><ChevronRight size={16}/></button></>}
       {panel==="client"&&<><p className="modal-label">SELECT CLIENT WORKSPACE</p><div className="client-list">{["Nova Consumer","Aria Foods"].map(c=><button type="button" key={c} onClick={()=>{setClient(c);setKpiFocus(c+" contract");setPanel(null);flash(c+" dashboard loaded")}}><Building2 size={18}/><span><b>{c}</b><small>Open isolated client performance view</small></span><ChevronRight size={16}/></button>)}</div></>}
     </div></section></div>}
 

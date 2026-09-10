@@ -25,6 +25,7 @@ import { UserOnboarding } from "./user-onboarding";
 import { LeaveManagement } from "./leave-management";
 import { DocumentVault } from "./document-vault";
 import { SupervisorAlertInbox } from "./alert-inbox";
+import { ProfileSettingsPanel } from "../../components/profile-settings-panel";
 import { useTheme } from "../../lib/theme-provider";
 
 type PageKey =
@@ -93,6 +94,24 @@ export default function SupervisorDashboard() {
   const [vsrFilter, setVsrFilter] = useState<"all" | "funded" | "non_funded" | "on_loan" | "due_funding">("all");
   const [notice, setNotice] = useState("");
 
+  // Profile avatar & custom info state
+  const [userAvatar, setUserAvatar] = useState<string>("");
+  const [userName, setUserName] = useState<string>("Michael Olayiwola");
+
+  useEffect(() => {
+    function loadProfile() {
+      try {
+        const av = localStorage.getItem("kea_supervisor_avatar") || localStorage.getItem("kea_user_avatar");
+        if (av) setUserAvatar(av);
+        const name = localStorage.getItem("kea_supervisor_name");
+        if (name) setUserName(name);
+      } catch {}
+    }
+    loadProfile();
+    window.addEventListener("kea-avatar-updated", loadProfile);
+    return () => window.removeEventListener("kea-avatar-updated", loadProfile);
+  }, []);
+
   function flash(message: string) {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 3000);
@@ -153,6 +172,14 @@ export default function SupervisorDashboard() {
     flash(`Funding request of ${amount} for ${vsrName} endorsed and forwarded to Super Admin!`);
   }
 
+  const initials = (userName || supervisor.name)
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "SV";
+
   return (
     <div className={isDark ? "tsr-reference dark" : "tsr-reference"}>
       {notice && <div className="toast"><CheckCircle2 size={17} />{notice}</div>}
@@ -176,6 +203,37 @@ export default function SupervisorDashboard() {
             </button>
           ))}
         </nav>
+
+        {/* Profile Card in Sidebar Footer */}
+        <div
+          onClick={() => { setActivePage("settings"); setMobileNav(false); }}
+          style={{
+            display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+            background: "var(--soft)", borderRadius: 10, border: "1px solid var(--line)",
+            cursor: "pointer", marginTop: "auto", marginBottom: 6, transition: "background 0.2s"
+          }}
+          title="Click to view Profile & Settings"
+        >
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", border: "1.5px solid var(--line)",
+            background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
+            display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
+            overflow: "hidden", flexShrink: 0
+          }}>
+            {userAvatar ? (
+              <img src={userAvatar} alt="Supervisor profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              initials
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+            <b style={{ display: "block", fontSize: 11, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {userName || supervisor.name}
+            </b>
+            <span style={{ display: "block", fontSize: 9, color: "var(--muted)" }}>Supervisor · {supervisor.territory}</span>
+          </div>
+        </div>
+
         <button className="reference-settings" type="button" onClick={signOut}><LogOut size={15} /> Sign out</button>
       </aside>
 
@@ -190,9 +248,24 @@ export default function SupervisorDashboard() {
             <button type="button" aria-label="Notifications" onClick={() => setActivePage("alert-inbox")}>
               <Bell size={15} />
             </button>
-            <span style={{ cursor: "pointer" }} onClick={() => setActivePage("settings")} title="Open settings">
-              SV
-            </span>
+            <button
+              type="button"
+              onClick={() => setActivePage("settings")}
+              style={{
+                width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
+                background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
+                display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
+                cursor: "pointer", overflow: "hidden", padding: 0
+              }}
+              title="Open Profile & Settings"
+              aria-label="Profile and settings"
+            >
+              {userAvatar ? (
+                <img src={userAvatar} alt="Supervisor avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                initials
+              )}
+            </button>
           </div>
         </header>
 
@@ -734,46 +807,14 @@ export default function SupervisorDashboard() {
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "settings" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div className="settings-section-card">
-                <div className="settings-section-header">
-                  <Sun size={15} />
-                  <span>Display Lighting & Theme Mode</span>
-                </div>
-                <div className="theme-selector-grid">
-                  <button
-                    type="button"
-                    className={`theme-card-btn ${theme === "light" ? "active" : ""}`}
-                    onClick={() => { setTheme("light"); flash("Light theme applied"); }}
-                  >
-                    {theme === "light" && <div className="theme-card-check"><Check size={11} /></div>}
-                    <div className="theme-card-icon"><Sun size={18} /></div>
-                    <strong>Light Mode</strong>
-                    <span>Crisp daylight contrast</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`theme-card-btn ${theme === "dark" ? "active" : ""}`}
-                    onClick={() => { setTheme("dark"); flash("Dark theme applied"); }}
-                  >
-                    {theme === "dark" && <div className="theme-card-check"><Check size={11} /></div>}
-                    <div className="theme-card-icon"><Moon size={18} /></div>
-                    <strong>Dark Mode</strong>
-                    <span>Low-light night contrast</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`theme-card-btn ${theme === "system" ? "active" : ""}`}
-                    onClick={() => { setTheme("system"); flash("System theme synced"); }}
-                  >
-                    {theme === "system" && <div className="theme-card-check"><Check size={11} /></div>}
-                    <div className="theme-card-icon"><Settings size={18} /></div>
-                    <strong>Auto System</strong>
-                    <span>Matches operating system</span>
-                  </button>
-                </div>
-              </div>
+              <ProfileSettingsPanel
+                role="supervisor"
+                defaultName={supervisor.name}
+                defaultEmail="michael.olayiwola@kea.com"
+                roleLabel="Field Supervisor · Operations Control"
+                territoryLabel={`${supervisor.territory}, ${supervisor.region}`}
+                onFlash={flash}
+              />
             </div>
           )}
         </div>

@@ -18,6 +18,7 @@ import { FieldHero } from "../../components/field-hero";
 import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
 import { Badge } from "../../components/ui/badge";
+import { ProfileSettingsPanel } from "../../components/profile-settings-panel";
 import { useTheme } from "../../lib/theme-provider";
 
 type PageKey = "home" | "funding" | "reports" | "routes" | "sales" | "performance" | "settings";
@@ -50,6 +51,24 @@ export default function VsrOperationsPage() {
   const [salesLog, setSalesLog] = useState(dailySales);
   const [period, setPeriod] = useState("Today");
   const [notice, setNotice] = useState("");
+
+  // Profile avatar & custom info state
+  const [userAvatar, setUserAvatar] = useState<string>("");
+  const [userName, setUserName] = useState<string>("Babatunde Adeleke");
+
+  useEffect(() => {
+    function loadProfile() {
+      try {
+        const av = localStorage.getItem("kea_vsr_avatar") || localStorage.getItem("kea_user_avatar");
+        if (av) setUserAvatar(av);
+        const name = localStorage.getItem("kea_vsr_name");
+        if (name) setUserName(name);
+      } catch {}
+    }
+    loadProfile();
+    window.addEventListener("kea-avatar-updated", loadProfile);
+    return () => window.removeEventListener("kea-avatar-updated", loadProfile);
+  }, []);
 
   // Funding & Loan State
   const [currentDebt, setCurrentDebt] = useState<number>(0); // ₦0 debt = eligible
@@ -281,6 +300,14 @@ export default function VsrOperationsPage() {
     );
   }, [search, vsrStaff]);
 
+  const initials = (userName || "Babatunde Adeleke")
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "VS";
+
   return (
     <div className={isDark ? "vsr-reference dark" : "vsr-reference"}>
       {notice && <div className="toast"><CheckCircle2 size={17} />{notice}</div>}
@@ -304,6 +331,37 @@ export default function VsrOperationsPage() {
             </button>
           ))}
         </nav>
+
+        {/* Profile Card in Sidebar Footer */}
+        <div
+          onClick={() => { setActivePage("settings"); setMobileNav(false); }}
+          style={{
+            display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+            background: "var(--soft)", borderRadius: 10, border: "1px solid var(--line)",
+            cursor: "pointer", marginTop: "auto", marginBottom: 6, transition: "background 0.2s"
+          }}
+          title="Click to view Profile & Settings"
+        >
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", border: "1.5px solid var(--line)",
+            background: "linear-gradient(135deg, #2563eb, #0d9488)", color: "#fff",
+            display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
+            overflow: "hidden", flexShrink: 0
+          }}>
+            {userAvatar ? (
+              <img src={userAvatar} alt="VSR profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              initials
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+            <b style={{ display: "block", fontSize: 11, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {userName || "Babatunde Adeleke"}
+            </b>
+            <span style={{ display: "block", fontSize: 9, color: "var(--muted)" }}>VSR · Route 04</span>
+          </div>
+        </div>
+
         <button className="reference-settings" type="button" onClick={signOut}><LogOut size={15} /> Sign out</button>
       </aside>
 
@@ -316,9 +374,24 @@ export default function VsrOperationsPage() {
               {isDark ? <Sun size={15} /> : <Moon size={15} />}
             </button>
             <button type="button" aria-label="Notifications" onClick={() => setActivePage("funding")}><Bell size={15} /></button>
-            <span style={{ cursor: "pointer" }} onClick={() => setActivePage("settings")} title="Open settings">
-              VS
-            </span>
+            <button
+              type="button"
+              onClick={() => setActivePage("settings")}
+              style={{
+                width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
+                background: "linear-gradient(135deg, #2563eb, #0d9488)", color: "#fff",
+                display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
+                cursor: "pointer", overflow: "hidden", padding: 0
+              }}
+              title="Open Profile & Settings"
+              aria-label="Profile and settings"
+            >
+              {userAvatar ? (
+                <img src={userAvatar} alt="VSR avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                initials
+              )}
+            </button>
           </div>
         </header>
 
@@ -986,46 +1059,14 @@ export default function VsrOperationsPage() {
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "settings" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div className="settings-section-card">
-                <div className="settings-section-header">
-                  <Sun size={15} />
-                  <span>Display Lighting & Theme Mode</span>
-                </div>
-                <div className="theme-selector-grid">
-                  <button
-                    type="button"
-                    className={`theme-card-btn ${theme === "light" ? "active" : ""}`}
-                    onClick={() => { setTheme("light"); flash("Light theme applied"); }}
-                  >
-                    {theme === "light" && <div className="theme-card-check"><Check size={11} /></div>}
-                    <div className="theme-card-icon"><Sun size={18} /></div>
-                    <strong>Light Mode</strong>
-                    <span>Crisp daylight contrast</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`theme-card-btn ${theme === "dark" ? "active" : ""}`}
-                    onClick={() => { setTheme("dark"); flash("Dark theme applied"); }}
-                  >
-                    {theme === "dark" && <div className="theme-card-check"><Check size={11} /></div>}
-                    <div className="theme-card-icon"><Moon size={18} /></div>
-                    <strong>Dark Mode</strong>
-                    <span>Low-light night contrast</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`theme-card-btn ${theme === "system" ? "active" : ""}`}
-                    onClick={() => { setTheme("system"); flash("System theme synced"); }}
-                  >
-                    {theme === "system" && <div className="theme-card-check"><Check size={11} /></div>}
-                    <div className="theme-card-icon"><Settings size={18} /></div>
-                    <strong>Auto System</strong>
-                    <span>Matches operating system</span>
-                  </button>
-                </div>
-              </div>
+              <ProfileSettingsPanel
+                role="vsr"
+                defaultName={userName || "Babatunde Adeleke"}
+                defaultEmail="babatunde.adeleke@kea.com"
+                roleLabel="Van Sales Representative · Fleet Lead"
+                territoryLabel="Route 04 - Lagos Central Axis"
+                onFlash={flash}
+              />
             </div>
           )}
         </div>
