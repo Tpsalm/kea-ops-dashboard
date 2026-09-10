@@ -15,13 +15,13 @@ interface KpiCardProps {
   className?: string;
 }
 
-const tones: Record<string, { bg: string; fg: string }> = {
-  blue:   { bg: "#eef2ff", fg: "#356bc2" },
-  teal:   { bg: "#ecfdf5", fg: "#0e918a" },
-  amber:  { bg: "#fffbeb", fg: "#d97706" },
-  violet: { bg: "#f5f3ff", fg: "#7c3aed" },
-  red:    { bg: "#fef2f2", fg: "#dc2626" },
-  green:  { bg: "#f0fdf4", fg: "#16a34a" },
+const tones: Record<string, { bg: string; fg: string; border: string }> = {
+  blue:   { bg: "#eff6ff", fg: "#2563eb", border: "#dbeafe" },
+  teal:   { bg: "#f0fdf4", fg: "#0e918a", border: "#ccfbf1" },
+  amber:  { bg: "#fffbeb", fg: "#d97706", border: "#fef3c7" },
+  violet: { bg: "#f5f3ff", fg: "#7c3aed", border: "#ede9fe" },
+  red:    { bg: "#fef2f2", fg: "#dc2626", border: "#fee2e2" },
+  green:  { bg: "#f0fdf4", fg: "#16a34a", border: "#dcfce7" },
 };
 
 export function KpiCard({ label, value, icon: Icon, tone = "blue", trend, trendUp, subtitle, className }: KpiCardProps) {
@@ -52,19 +52,100 @@ export function KpiCard({ label, value, icon: Icon, tone = "blue", trend, trendU
   const t = tones[tone] ?? tones.blue;
 
   return (
-    <div ref={ref} className={`kpi-card ${className ?? ""}`} style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(12px)", transition: "all .5s cubic-bezier(.22,1,.36,1)" }}>
-      <div className="kpi-icon" style={{ background: t.bg, color: t.fg }}>
-        {Icon && <Icon size={18} />}
-      </div>
-      <div className="kpi-body">
-        <span className="kpi-value" style={{ color: t.fg }}>{display}</span>
-        <span className="kpi-label">{label}</span>
-        {subtitle && <span className="kpi-sub">{subtitle}</span>}
-      </div>
-      {trend && (
-        <span className="kpi-trend" style={{ color: trendUp ? "#16a34a" : "#dc2626" }}>
-          {trendUp ? "↑" : "↓"} {trend}
+    <div
+      ref={ref}
+      className={`kpi-card ${className ?? ""}`}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        background: "var(--card, #ffffff)",
+        border: `1px solid var(--line, ${t.border})`,
+        borderRadius: 12,
+        padding: "16px 18px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+        position: "relative",
+        minHeight: 115,
+        opacity: inView ? 1 : 0,
+        transform: inView ? "translateY(0)" : "translateY(10px)",
+        transition: "all .4s cubic-bezier(.22,1,.36,1)"
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
+        <span
+          className="kpi-label"
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "var(--muted, #64748b)",
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+            lineHeight: 1.3
+          }}
+        >
+          {label}
         </span>
+        <div
+          className="kpi-icon"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            display: "grid",
+            placeItems: "center",
+            background: t.bg,
+            color: t.fg,
+            flexShrink: 0
+          }}
+        >
+          {Icon && <Icon size={16} />}
+        </div>
+      </div>
+
+      <div className="kpi-body" style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <div
+          className="kpi-value"
+          style={{
+            fontSize: 26,
+            fontWeight: 800,
+            color: "var(--text, #0f172a)",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1
+          }}
+        >
+          {display}
+        </div>
+        {subtitle && (
+          <div
+            className="kpi-sub"
+            style={{
+              fontSize: 11,
+              color: "var(--muted, #64748b)",
+              lineHeight: 1.3,
+              fontWeight: 500
+            }}
+          >
+            {subtitle}
+          </div>
+        )}
+      </div>
+
+      {trend && (
+        <div
+          className="kpi-trend"
+          style={{
+            marginTop: 8,
+            fontSize: 11,
+            fontWeight: 700,
+            color: trendUp ? "#16a34a" : "#dc2626",
+            display: "flex",
+            alignItems: "center",
+            gap: 4
+          }}
+        >
+          <span>{trendUp ? "↑" : "↓"}</span>
+          <span>{trend}</span>
+        </div>
       )}
     </div>
   );
