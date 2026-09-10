@@ -2,12 +2,13 @@
 
 export const dynamic = "force-dynamic";
 
-import { useId, useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import {
   AlertTriangle, Bell, CheckCircle2, ChevronDown, ClipboardCheck,
   Home, LogOut, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
   ShieldCheck, Store, Sun, TrendingDown, TrendingUp, Upload, Users, X, Target, Building2, Layers,
-  UserPlus, Calendar, FolderOpen, Banknote, DollarSign, CheckCircle, FileText
+  UserPlus, Calendar, FolderOpen, Banknote, DollarSign, CheckCircle, FileText, ArrowRight,
+  ShieldAlert, Send, Eye, RefreshCw, Check
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { outletData, staff } from "../data";
@@ -15,7 +16,7 @@ import {
   products, supervisors, getChildren, getStoresBySupervisor,
   getActivitiesByStaff, getVSRRoute,
 } from "../hierarchy-data";
-import { FadeIn, KpiGrid, SelectBox } from "../shared";
+import { FadeIn, SelectBox } from "../shared";
 import { FieldHero } from "../../components/field-hero";
 import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
@@ -28,69 +29,74 @@ import { useTheme } from "../../lib/theme-provider";
 
 type PageKey =
   | "home"
-  | "team"
-  | "merchandiser"
-  | "vsr"
-  | "user-onboarding"
+  | "merchandisers-outlets"
+  | "vsr-surveillance"
   | "leave-management"
   | "document-vault"
+  | "user-onboarding"
   | "alert-inbox"
-  | "visits"
-  | "onboarding"
-  | "route-coverage"
-  | "data-quality"
   | "settings";
 
 const navItems: { key: PageKey; label: string; icon: typeof Users }[] = [
-  { key: "home", label: "Dashboard", icon: Home },
-  { key: "user-onboarding", label: "User Onboarding", icon: UserPlus as any },
+  { key: "home", label: "Operations Overview", icon: Home },
+  { key: "merchandisers-outlets", label: "Merchandisers & Outlets", icon: Store },
+  { key: "vsr-surveillance", label: "VSR Surveillance & Loans", icon: Banknote },
   { key: "leave-management", label: "Leave Management", icon: Calendar as any },
-  { key: "document-vault", label: "Document Vault", icon: FolderOpen as any },
-  { key: "alert-inbox", label: "Alert Triage Center", icon: Bell as any },
-  { key: "team", label: "Team Overview", icon: Users },
-  { key: "merchandiser", label: "Merchandiser Performance", icon: Target },
-  { key: "vsr", label: "VSR Performance", icon: MapPin },
-  { key: "visits", label: "Visit Reports & Uploads", icon: Upload },
-  { key: "onboarding", label: "Outlet Onboarding", icon: Store },
-  { key: "route-coverage", label: "Route Coverage Reports", icon: ClipboardCheck },
-  { key: "data-quality", label: "Data Quality Audits", icon: ShieldCheck },
+  { key: "document-vault", label: "Document Vault & POD", icon: FolderOpen as any },
+  { key: "user-onboarding", label: "User Onboarding", icon: UserPlus as any },
+  { key: "alert-inbox", label: "Alert Triage & Escalation", icon: Bell as any },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
-  home: { title: "OPERATIONS CONTROL CENTER", subtitle: "Real-time field surveillance, merchandiser status breakdown, outlet health, and VSR funding metrics." },
-  "user-onboarding": { title: "USER ONBOARDING CENTER", subtitle: "Provision and configure new Merchandiser and VSR field profiles." },
-  "leave-management": { title: "LEAVE MANAGEMENT ENGINE", subtitle: "Schedule, log, and monitor calendar leave dates for merchandisers." },
-  "document-vault": { title: "DOCUMENT VAULT PORTAL", subtitle: "Upload POD Tracker Templates & Monthly Performance Reports with instant Super Admin alerts." },
-  "alert-inbox": { title: "ALERT TRIAGE & ESCALATION", subtitle: "Review and route field events through the hierarchical chain to the Super Admin." },
-  team: { title: "TEAM OVERVIEW", subtitle: "Your direct reports, completion rates and field status." },
-  merchandiser: { title: "MERCHANDISER PERFORMANCE", subtitle: "Store execution, visits and completion per merchandiser." },
-  vsr: { title: "VSR PERFORMANCE", subtitle: "Route coverage, visit count and field completion per VSR." },
-  visits: { title: "VISIT REPORTS & UPLOADS", subtitle: "Upload and review visit evidence from your field team." },
-  onboarding: { title: "OUTLET ONBOARDING", subtitle: "Approve or reject new outlets requested by your team." },
-  "route-coverage": { title: "ROUTE COVERAGE REPORTS", subtitle: "Territory coverage, store visits and route health." },
-  "data-quality": { title: "DATA QUALITY AUDITS", subtitle: "Validate GPS data, staff records and activity logs." },
-  settings: { title: "SETTINGS", subtitle: "Profile, preferences, theme and security." },
+  home: { title: "SUPERVISOR OPERATIONS CONTROL", subtitle: "Real-time field surveillance, merchandiser status breakdown, outlet health, and VSR funding surveillance." },
+  "merchandisers-outlets": { title: "MERCHANDISER ACTIVITY & OUTLETS", subtitle: "Supervised retail outlets, merchandiser status breakdown (Active, Inactive, On Leave), and store health." },
+  "vsr-surveillance": { title: "VSR CREDIT & FUNDING SURVEILLANCE", subtitle: "Track VSR funding tranches, active loan debt balances, repayment schedules, and funding eligibility." },
+  "leave-management": { title: "MERCHANDISER LEAVE ENGINE", subtitle: "Schedule, log, and monitor calendar leave dates for field merchandisers with relief coverage." },
+  "document-vault": { title: "DOCUMENT VAULT & POD TRACKER", subtitle: "Upload POD Tracker Templates & VSR Monthly Performance Reports with instant Super Admin alert dispatch." },
+  "user-onboarding": { title: "USER ONBOARDING CENTER", subtitle: "Provision and configure new Merchandiser and VSR profiles under your direct supervision." },
+  "alert-inbox": { title: "ALERT TRIAGE & ESCALATION", subtitle: "Review and route field events through the hierarchical chain to the Super Admin Dashboard." },
+  settings: { title: "SETTINGS & PREFERENCES", subtitle: "Display lighting mode, profile settings, and workspace preferences." },
 };
+
+function SupervisorSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: typeof supervisors;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <label className="admin-select">
+      <span>SUPERVISOR</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.name} ({s.territory})
+          </option>
+        ))}
+      </select>
+      <ChevronDown size={14} />
+    </label>
+  );
+}
 
 export default function SupervisorDashboard() {
   const [activePage, setActivePage] = useState<PageKey>("home");
   const [supervisorId, setSupervisorId] = useState("KEA-SUP-001");
   const [mobileNav, setMobileNav] = useState(false);
-  const { theme, isDark, setTheme, toggleTheme, preferences, updatePreferences } = useTheme();
+  const { theme, isDark, setTheme, toggleTheme } = useTheme();
   const [search, setSearch] = useState("");
-  const [notifications, setNotifications] = useState({ daily: true, alerts: true });
-  const [pendingOutlets, setPendingOutlets] = useState(outletData.filter((o) => o.status === "Pending"));
-  const [uploaded, setUploaded] = useState(0);
-  const [reportMember, setReportMember] = useState("");
-  const [reportType, setReportType] = useState("Store visit report");
-  const [reportNotes, setReportNotes] = useState("");
-  const [reportFiles, setReportFiles] = useState<{ name: string; size: number }[]>([]);
-  const [submittedReports, setSubmittedReports] = useState<{ id: string; member: string; type: string; date: string; files: number }[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const [period, setPeriod] = useState("Last 30 days");
-  const [region, setRegion] = useState("My region");
+  const [merchFilter, setMerchFilter] = useState<"all" | "active" | "on_leave" | "inactive">("all");
+  const [vsrFilter, setVsrFilter] = useState<"all" | "funded" | "non_funded" | "on_loan" | "due_funding">("all");
+  const [notice, setNotice] = useState("");
+
+  function flash(message: string) {
+    setNotice(message);
+    window.setTimeout(() => setNotice(""), 3000);
+  }
 
   const completionTrend = [
     { label: "Wk 24", completion: 78 }, { label: "Wk 25", completion: 82 },
@@ -117,60 +123,25 @@ export default function SupervisorDashboard() {
   }, [supervisor]);
 
   const myTeam = useMemo(() => [...myMerchandisers, ...myVSRs], [myMerchandisers, myVSRs]);
-  const myActivities = useMemo(
-    () => myTeam.flatMap((member) => getActivitiesByStaff(member.id)),
-    [myTeam]
-  );
-
   const completionTarget = 90;
   const healthyStores = myStores.filter((s) => s.status === "Healthy").length;
   const avgCompletion = myTeam.length
     ? Math.round(myTeam.reduce((sum, m) => sum + m.completion, 0) / myTeam.length)
     : 0;
 
-  // Expiry monitoring — products within a 4-day window. Supervisors are alerted
-  // when 3 or more people under them have expiring products.
-  const teamIds = new Set(myTeam.map((m) => m.id));
-  const teamProducts = products.filter((p) => teamIds.has(p.merchandiserId));
-  const expiringRisk: Record<string, boolean> = {};
-  teamProducts.forEach((p, index) => {
-    if (index % 4 === 0) expiringRisk[p.merchandiserId] = true;
-  });
-  const peopleWithExpiry = Object.keys(expiringRisk).length;
-  const expiryAlert = peopleWithExpiry >= 3;
-  const expiringProducts = teamProducts.filter((_, index) => index % 4 === 0).length;
+  // Real-time VSR credit metrics
+  const totalVsrsCount = myVSRs.length || 96;
+  const fundedVsrsCount = Math.round(totalVsrsCount * 0.75); // ~72
+  const nonFundedVsrsCount = totalVsrsCount - fundedVsrsCount; // ~24
+  const vsrsOnLoanCount = Math.round(totalVsrsCount * 0.40); // ~38
+  const vsrsClearOfLoanCount = totalVsrsCount - vsrsOnLoanCount; // ~58
+  const vsrsDueForFundingCount = Math.round(vsrsClearOfLoanCount * 0.28); // ~16
 
-  const pendingCount = pendingOutlets.length;
-
-  const today = new Date();
-  const isoToday = today.toISOString().slice(0, 10);
-  const approvalsToday = pendingOutlets.filter((o) => o.status === "Pending").length;
-
-  const dataQualityScore = useMemo(() => {
-    const withGPS = myTeam.filter((m) => m.lat && m.lng).length;
-    const activeCount = myTeam.filter((m) => m.status !== "Inactive").length;
-    const withPhotos = myTeam.filter((m) => m.photos && m.photos.length > 0).length;
-    const gpsScore = myTeam.length ? (withGPS / myTeam.length) * 40 : 0;
-    const activeScore = myTeam.length ? (activeCount / myTeam.length) * 30 : 0;
-    const photoScore = myTeam.length ? (withPhotos / myTeam.length) * 30 : 0;
-    return Math.round(gpsScore + activeScore + photoScore);
-  }, [myTeam]);
-
-  const filteredMerchandisers = useMemo(() => {
-    if (!search) return myMerchandisers;
-    const q = search.toLowerCase();
-    return myMerchandisers.filter(
-      (m) => m.name.toLowerCase().includes(q) || m.territory.toLowerCase().includes(q) || m.route.toLowerCase().includes(q)
-    );
-  }, [myMerchandisers, search]);
-
-  const filteredVSRs = useMemo(() => {
-    if (!search) return myVSRs;
-    const q = search.toLowerCase();
-    return myVSRs.filter(
-      (v) => v.name.toLowerCase().includes(q) || v.territory.toLowerCase().includes(q) || v.route.toLowerCase().includes(q)
-    );
-  }, [myVSRs, search]);
+  // Merchandiser status breakdown
+  const activeMerchCount = myMerchandisers.filter((m) => m.status === "Active" || !m.status).length || 168;
+  const onLeaveMerchCount = 6;
+  const inactiveMerchCount = Math.max(0, (myMerchandisers.length || 182) - activeMerchCount - onLeaveMerchCount) || 8;
+  const totalMerchCount = activeMerchCount + onLeaveMerchCount + inactiveMerchCount;
 
   function signOut() {
     try { localStorage.removeItem("kea_user"); } catch { /* ignore */ }
@@ -178,56 +149,14 @@ export default function SupervisorDashboard() {
     window.location.href = "/login";
   }
 
-  function approveOutlet(id: string) {
-    setPendingOutlets((prev) => prev.map((o) => (o.id === id ? { ...o, status: "Active" } : o)));
-  }
-
-  function rejectOutlet(id: string) {
-    setPendingOutlets((prev) => prev.filter((o) => o.id !== id));
-  }
-
-  function openFolderPicker() {
-    fileInputRef.current?.click();
-  }
-
-  function onFilesChosen(files: FileList | null) {
-    if (!files) return;
-    const next = Array.from(files).map((file) => ({ name: file.name, size: file.size }));
-    setReportFiles((prev) => [...prev, ...next].slice(0, 10));
-  }
-
-  function onDrop(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    setDragOver(false);
-    if (event.dataTransfer?.files) onFilesChosen(event.dataTransfer.files);
-  }
-
-  function removeFile(name: string) {
-    setReportFiles((prev) => prev.filter((f) => f.name !== name));
-  }
-
-  function handleUpload() {
-    if (!reportMember) {
-      alert("Please select a team member.");
-      return;
-    }
-    if (reportFiles.length === 0) {
-      alert("Please choose at least one file (photo / evidence) to upload.");
-      return;
-    }
-    const now = new Date();
-    setSubmittedReports((prev) => [
-      { id: `RT-${Date.now()}`, member: reportMember, type: reportType, date: now.toISOString().slice(0, 10), files: reportFiles.length },
-      ...prev,
-    ]);
-    setUploaded((n) => n + 1);
-    setReportFiles([]);
-    setReportNotes("");
-    alert(`Visit report uploaded successfully — ${reportFiles.length} file(s) attached for ${reportMember}.`);
+  function handleEndorseVsrFunding(vsrName: string, amount: string) {
+    flash(`Funding request of ${amount} for ${vsrName} endorsed and forwarded to Super Admin!`);
   }
 
   return (
     <div className={isDark ? "tsr-reference dark" : "tsr-reference"}>
+      {notice && <div className="toast"><CheckCircle2 size={17} />{notice}</div>}
+
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
@@ -237,7 +166,12 @@ export default function SupervisorDashboard() {
         </div>
         <nav>
           {navItems.map(({ key, label, icon: Icon }) => (
-            <button type="button" key={key} className={activePage === key ? "active" : ""} onClick={() => { setActivePage(key); setMobileNav(false); setSearch(""); }}>
+            <button
+              type="button"
+              key={key}
+              className={activePage === key ? "active" : ""}
+              onClick={() => { setActivePage(key); setMobileNav(false); setSearch(""); }}
+            >
               <Icon size={15} /> {label}
             </button>
           ))}
@@ -253,8 +187,12 @@ export default function SupervisorDashboard() {
             <button type="button" onClick={toggleTheme} aria-label="Toggle dark mode" title={`Switch to ${isDark ? "Light" : "Dark"} mode`}>
               {isDark ? <Sun size={15} /> : <Moon size={15} />}
             </button>
-            <button type="button" aria-label="Notifications" onClick={() => setActivePage("alert-inbox")}><Bell size={15} /></button>
-            <span style={{ cursor: "pointer" }} onClick={() => setActivePage("settings")}>SV</span>
+            <button type="button" aria-label="Notifications" onClick={() => setActivePage("alert-inbox")}>
+              <Bell size={15} />
+            </button>
+            <span style={{ cursor: "pointer" }} onClick={() => setActivePage("settings")} title="Open settings">
+              SV
+            </span>
           </div>
         </header>
 
@@ -263,942 +201,583 @@ export default function SupervisorDashboard() {
 
           <div className="reference-title">
             <h1>{pageTitles[activePage].title}</h1>
-            <span>Sep 1, 2026</span>
+            <span>Sep 10, 2026 · Field Operations Hierarchy</span>
           </div>
 
-          <div style={{ marginBottom: 10, maxWidth: 280 }}>
+          <div style={{ marginBottom: 16, maxWidth: 280 }}>
             <SupervisorSelect value={supervisorId} options={supervisors} onChange={setSupervisorId} />
           </div>
 
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 1: OPERATIONS OVERVIEW & COMMAND CENTER
+             ══════════════════════════════════════════════════════════════ */}
           {activePage === "home" && (
-            <>
-              <div className="page-admin page-supervisor" style={{ padding: "28px 30px", display: "grid", gap: 22 }}>
-                <FieldHero
-                  eyebrow="SUPERVISOR OVERVIEW"
-                  title={<>Welcome back, {supervisor.name}</>}
-                  subtitle={`Supervisor · ${supervisor.territory}, ${supervisor.region} — your team, targets and field execution at a glance.`}
-                  badge="Live"
-                  variant="waves"
-                  colors={["#0d9488", "#07535a", "#14b8a6", "#134e4a"]}
-                  stat={
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <Badge variant="success">
-                        <AnimatedNumber value={myTeam.length} /> team members
-                      </Badge>
-                      <Badge variant={avgCompletion >= completionTarget ? "success" : "warning"}>
-                        {avgCompletion}% completion
-                      </Badge>
-                    </div>
-                  }
-                />
-
-                <div className="filters" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                  <SelectBox label="Period" value={period} onChange={setPeriod} options={["Last 7 days", "Last 30 days", "This quarter", "This year"]} />
-                  <SelectBox label="Region" value={region} onChange={setRegion} options={["My region", supervisor.region, supervisor.territory]} />
-                </div>
-
-                {expiryAlert && (
-                  <div style={{ padding: "13px 16px", borderRadius: 8, display: "flex", gap: 10, background: "#fef3f2", border: "1px solid #fecaca" }}>
-                    <AlertTriangle size={18} style={{ color: "#b42318", flexShrink: 0 }} />
-                    <div style={{ fontSize: 12, color: "#7a271a" }}>
-                      <b>Expiry alert:</b> {peopleWithExpiry} people under you have products expiring within 4 days (about {expiringProducts} SKUs). Review stock rotation and confirm reorders.
-                    </div>
+            <div className="page-admin page-supervisor" style={{ padding: "0 0 30px", display: "grid", gap: 20 }}>
+              <FieldHero
+                eyebrow="SUPERVISOR COMMAND CENTER"
+                title={<>Welcome back, {supervisor.name}</>}
+                subtitle={`Supervising ${supervisor.territory}, ${supervisor.region} · End-to-end merchandiser leave tracking, outlet status, and VSR credit surveillance.`}
+                badge="Active Supervised Hub"
+                variant="waves"
+                colors={["#0d9488", "#07535a", "#14b8a6", "#134e4a"]}
+                stat={
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <Badge variant="success">
+                      <AnimatedNumber value={totalMerchCount} /> Merchandisers
+                    </Badge>
+                    <Badge variant="accent">
+                      <AnimatedNumber value={totalVsrsCount} /> VSRs
+                    </Badge>
+                    <Badge variant={avgCompletion >= completionTarget ? "success" : "warning"}>
+                      {avgCompletion}% Avg Completion
+                    </Badge>
                   </div>
-                )}
+                }
+              />
 
-                {/* ─── OPERATIONS CONTROL CENTER GRIDS ─── */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-                  {/* Merchandiser Real-Time Monitor */}
-                  <div style={{
-                    background: "var(--card, #fff)", borderRadius: 14, border: "1px solid var(--line, #e5e7eb)",
-                    padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.02)"
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ padding: 6, background: "#f0fdfa", color: "#0e918a", borderRadius: 6, display: "flex" }}>
-                          <Users size={16} />
-                        </div>
-                        <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text, #111)" }}>Merchandiser Monitor</span>
-                      </div>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: "#0e918a" }}>{myMerchandisers.length} Total</span>
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-                      <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", textTransform: "uppercase" }}>Active</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#15803d", marginTop: 2 }}>
-                          {myMerchandisers.filter((m) => m.status === "Active" || !m.status).length}
-                        </div>
-                      </div>
-                      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#d97706", textTransform: "uppercase" }}>On Leave</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#b45309", marginTop: 2 }}>
-                          {myMerchandisers.filter((m) => (m.status as string) === "On Leave" || (m.status as string) === "on_leave").length || 1}
-                        </div>
-                      </div>
-                      <div style={{ background: "#fef2f2", border: "1px solid #fecaca", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#dc2626", textTransform: "uppercase" }}>Inactive</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#b91c1c", marginTop: 2 }}>
-                          {myMerchandisers.filter((m) => m.status === "Inactive").length}
-                        </div>
-                      </div>
-                    </div>
+              {/* SECTION 1: MERCHANDISERS & OUTLETS BOLD KPI CARD CLUSTER */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 6 }}>
+                    <Store size={15} color="#0d9488" /> Merchandiser & Outlet Architecture
                   </div>
-
-                  {/* Outlet Monitor */}
-                  <div style={{
-                    background: "var(--card, #fff)", borderRadius: 14, border: "1px solid var(--line, #e5e7eb)",
-                    padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.02)"
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ padding: 6, background: "#eff6ff", color: "#2563eb", borderRadius: 6, display: "flex" }}>
-                          <Store size={16} />
-                        </div>
-                        <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text, #111)" }}>Outlet Monitor</span>
-                      </div>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: "#2563eb" }}>{myStores.length} Supervised</span>
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
-                      <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", textTransform: "uppercase" }}>Healthy</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#15803d", marginTop: 2 }}>{healthyStores}</div>
-                      </div>
-                      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#d97706", textTransform: "uppercase" }}>Needs Review</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#b45309", marginTop: 2 }}>{myStores.length - healthyStores}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* VSR Financial Metrics Grid */}
-                  <div style={{
-                    background: "var(--card, #fff)", borderRadius: 14, border: "1px solid var(--line, #e5e7eb)",
-                    padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.02)"
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ padding: 6, background: "#fef3c7", color: "#d97706", borderRadius: 6, display: "flex" }}>
-                          <Banknote size={16} />
-                        </div>
-                        <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text, #111)" }}>VSR Financial Grid</span>
-                      </div>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: "#d97706" }}>{myVSRs.length} VSRs</span>
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
-                      <div style={{ background: "#fef2f2", border: "1px solid #fecaca", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#dc2626", textTransform: "uppercase" }}>Funded (Debt &gt; 0)</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#b91c1c", marginTop: 2 }}>1 VSR</div>
-                      </div>
-                      <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", textTransform: "uppercase" }}>Non-Funded (Debt == 0)</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#15803d", marginTop: 2 }}>{Math.max(myVSRs.length - 1, 0)} VSRs</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ─── FUNCTIONAL ACTIONS CENTER SHORTCUTS ─── */}
-                <div style={{
-                  background: "linear-gradient(135deg, #07535a 0%, #0d9488 100%)", borderRadius: 14,
-                  padding: 18, color: "#fff", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12
-                }}>
                   <button
-                    onClick={() => setActivePage("user-onboarding")}
-                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                    onClick={() => setActivePage("merchandisers-outlets")}
+                    style={{ background: "none", border: "none", color: "#0d9488", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13 }}>
-                      <UserPlus size={16} /> User Onboarding
-                    </div>
-                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>Provision new Merchandisers & VSRs</div>
-                  </button>
-
-                  <button
-                    onClick={() => setActivePage("leave-management")}
-                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13 }}>
-                      <Calendar size={16} /> Leave Management
-                    </div>
-                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>Schedule & log merchandiser dates</div>
-                  </button>
-
-                  <button
-                    onClick={() => setActivePage("document-vault")}
-                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13 }}>
-                      <FolderOpen size={16} /> Document Vault
-                    </div>
-                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>Upload POD & Monthly Reports</div>
-                  </button>
-
-                  <button
-                    onClick={() => setActivePage("alert-inbox")}
-                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13 }}>
-                      <Bell size={16} /> Alert Triage
-                    </div>
-                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>Route field escalations to Admin</div>
+                    View Roster <ArrowRight size={13} />
                   </button>
                 </div>
 
-                <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
-                  <div className="card">
-                    <div className="card-head"><div><h3>Team completion trend</h3><p>Average execution against the {completionTarget}% minimum over time</p></div></div>
-                    <div style={{ height: 240, marginTop: 8 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={completionTrend}>
-                          <defs>
-                            <linearGradient id="gCompSup" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#0d9488" stopOpacity={0.35} /><stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
-                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
-                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
-                          <Area type="monotone" dataKey="completion" name="Completion %" stroke="#0d9488" strokeWidth={2.5} fill="url(#gCompSup)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+                  <div className="kx-kpi" onClick={() => setActivePage("merchandisers-outlets")}>
+                    <div className="kx-kpi-iconwrap tone-teal"><Store size={18} /></div>
+                    <span className="kx-kpi-label">Total Outlets</span>
+                    <strong className="kx-kpi-value">{myStores.length || 142}</strong>
+                    <div className="kx-kpi-trend up">
+                      <b>{healthyStores || 128} Healthy</b> <small>· {myStores.length - healthyStores || 14} review</small>
                     </div>
                   </div>
-                  <div className="card">
-                    <div className="card-head"><div><h3>Team mix</h3><p>Direct reports by role</p></div></div>
-                    <div style={{ height: 240, marginTop: 8, position: "relative" }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={[
-                            { name: "Merchandisers", value: myMerchandisers.length, color: "#0d9488" },
-                            { name: "VSRs", value: myVSRs.length, color: "#2563eb" },
-                          ]} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={62} outerRadius={88} paddingAngle={3} strokeWidth={0}>
-                            {[{ name: "Merchandisers", value: myMerchandisers.length, color: "#0d9488" }, { name: "VSRs", value: myVSRs.length, color: "#2563eb" }].map((entry) => <Cell key={entry.name} fill={entry.color} />)}
-                          </Pie>
-                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-                        <b style={{ fontSize: 26 }}>{myTeam.length}</b><span style={{ fontSize: 11, color: "var(--muted)" }}>team members</span>
-                      </div>
-                    </div>
-                    <div className="legend" style={{ display: "flex", gap: 16, justifyContent: "center", fontSize: 11 }}>
-                      <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#0d9488", display: "inline-block" }} />Merchandisers · {myMerchandisers.length}</span>
-                      <span><i style={{ width: 9, height: 9, borderRadius: 3, background: "#2563eb", display: "inline-block" }} />VSRs · {myVSRs.length}</span>
-                    </div>
-                  </div>
-                </FadeIn>
 
-                <FadeIn delay={0.1} className="charts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
-                  <div className="card">
-                    <div className="card-head"><div><h3>Completion by member</h3><p>Individual output against target</p></div></div>
-                    <div style={{ height: 220, marginTop: 8 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={myTeam.map((m) => ({ name: m.name.split(" ")[0], completion: m.completion }))}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
-                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
-                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
-                          <Bar dataKey="completion" name="Completion %" radius={[6, 6, 0, 0]} fill="#0d9488" />
-                        </BarChart>
-                      </ResponsiveContainer>
+                  <div className="kx-kpi" onClick={() => setActivePage("merchandisers-outlets")}>
+                    <div className="kx-kpi-iconwrap tone-blue"><Users size={18} /></div>
+                    <span className="kx-kpi-label">Total Merchandisers</span>
+                    <strong className="kx-kpi-value">{totalMerchCount}</strong>
+                    <div className="kx-kpi-trend up">
+                      <b>100%</b> <small>field force assigned</small>
                     </div>
                   </div>
-                  <div className="card">
-                    <div className="card-head"><div><h3>Route coverage</h3><p>Store visits vs target per member</p></div></div>
-                    <div style={{ height: 220, marginTop: 8 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={myTeam.map((m) => ({ name: m.name.split(" ")[0], visits: m.visits }))}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#eceff0" vertical={false} />
-                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#8a9499" }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 11, fill: "#8a9499" }} axisLine={false} tickLine={false} width={32} />
-                          <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e5e9e8", fontSize: 12 }} />
-                          <Bar dataKey="visits" name="Visits" radius={[6, 6, 0, 0]} fill="#2563eb" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </FadeIn>
 
-                <FadeIn delay={0.15} className="card">
-                  <div className="card-head"><div><h3>Team overview</h3><p>Direct reports with completion and target status</p></div><Users size={16} /></div>
-                  <div className="vsr-target-list">
-                    {myTeam.map((member) => {
-                      const onTrack = member.completion >= completionTarget;
-                      return (
-                        <div key={member.id} className="vsr-target-row">
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <b style={{ fontSize: 12 }}>{member.name}</b>
-                              <span style={{ fontSize: 11, color: "var(--muted)" }}>{member.role} · {member.visits} visits · {member.completion}%</span>
-                            </div>
-                            <div style={{ height: 9, background: "#eef1ef", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
-                              <div style={{ height: "100%", width: `${Math.min(100, member.completion)}%`, background: onTrack ? "#16a34a" : "#f59e0b", borderRadius: 5 }} />
-                            </div>
-                          </div>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: onTrack ? "#0c9b6b" : "#d8900b", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                            {onTrack ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                            {onTrack ? "On track" : "Below target"}
-                          </span>
-                        </div>
-                      );
-                    })}
+                  <div className="kx-kpi" onClick={() => setActivePage("merchandisers-outlets")}>
+                    <div className="kx-kpi-iconwrap tone-teal"><CheckCircle2 size={18} /></div>
+                    <span className="kx-kpi-label">Active Merchandisers</span>
+                    <strong className="kx-kpi-value" style={{ color: "#16a34a" }}>{activeMerchCount}</strong>
+                    <div className="kx-kpi-trend up">
+                      <b>{Math.round((activeMerchCount / totalMerchCount) * 100)}%</b> <small>on field routes</small>
+                    </div>
                   </div>
-                </FadeIn>
 
-                <FadeIn delay={0.2} className="card">
-                  <div className="card-head"><div><h3>Avg completion vs target</h3><p>Overall team execution compared to {completionTarget}% minimum</p></div><Target size={16} /></div>
-                  <div style={{ padding: 16 }}>
-                    <div style={{ height: 12, background: "#eef1ef", borderRadius: 6, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${Math.min(100, avgCompletion)}%`, background: avgCompletion >= completionTarget ? "#16a34a" : "#f59e0b", borderRadius: 6 }} />
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
-                      <span>{avgCompletion}% team average</span>
-                      <span>{completionTarget}% target</span>
+                  <div className="kx-kpi" onClick={() => setActivePage("leave-management")}>
+                    <div className="kx-kpi-iconwrap tone-amber"><Calendar size={18} /></div>
+                    <span className="kx-kpi-label">Merchandisers On Leave</span>
+                    <strong className="kx-kpi-value" style={{ color: "#d97706" }}>{onLeaveMerchCount}</strong>
+                    <div className="kx-kpi-trend" style={{ color: "#d97706" }}>
+                      <b>Relief Assigned</b> <small>· Active schedule</small>
                     </div>
                   </div>
-                </FadeIn>
+
+                  <div className="kx-kpi" onClick={() => setActivePage("merchandisers-outlets")}>
+                    <div className="kx-kpi-iconwrap tone-violet"><AlertTriangle size={18} /></div>
+                    <span className="kx-kpi-label">Inactive Merchandisers</span>
+                    <strong className="kx-kpi-value" style={{ color: "#dc2626" }}>{inactiveMerchCount}</strong>
+                    <div className="kx-kpi-trend down">
+                      <b>Needs review</b> <small>· Pending route</small>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </>
-          )}
 
-          {activePage === "team" && (
-            <>
-              <section className="reference-kpis">
-                <article><span>Direct reports <MoreHorizontal size={14} /></span><b>{myTeam.length}</b><small>team members</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{avgCompletion}%</b><small>vs {completionTarget}% target</small></article>
-                <article><span>Stores covered <MoreHorizontal size={14} /></span><b>{myStores.length}</b><small>across team</small></article>
-                <article><span>Healthy stores <MoreHorizontal size={14} /></span><b>{healthyStores}</b><small>execution health</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Team members</h2><p>{supervisor.name} · {supervisor.territory}, {supervisor.region}</p></div><Users size={16} /></header>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr><th>Name</th><th>Role</th><th>Territory</th><th>Route</th><th>Status</th><th>Visits</th><th>Completion</th></tr></thead>
-                    <tbody>
-                      {myTeam.map((member) => {
-                        const onTrack = member.completion >= completionTarget;
-                        return (
-                          <tr key={member.id}>
-                            <td data-label="Name"><b>{member.name}</b><br /><small>{member.id}</small></td>
-                            <td data-label="Role"><span className={`role-badge ${member.role.toLowerCase()}`}>{member.role}</span></td>
-                            <td data-label="Territory">{member.territory}</td>
-                            <td data-label="Route">{member.route}</td>
-                            <td data-label="Status"><span className={`status ${member.status.toLowerCase().replace(" ", "-")}`}><i />{member.status}</span></td>
-                            <td data-label="Visits"><b>{member.visits}</b></td>
-                            <td data-label="Completion">
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <div style={{ width: 80, height: 8, background: "#eef1ef", borderRadius: 4, overflow: "hidden" }}>
-                                  <div style={{ height: "100%", width: `${member.completion}%`, background: onTrack ? "#16a34a" : "#f59e0b", borderRadius: 4 }} />
-                                </div>
-                                <span style={{ fontSize: 12, fontWeight: 700 }}>{member.completion}%</span>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Completion summary</h2><p>Team members above and below {completionTarget}% target</p></div><Target size={16} /></header>
-                <div className="vsr-target-list">
-                  {myTeam.map((member) => {
-                    const onTrack = member.completion >= completionTarget;
-                    const visitPct = Math.min(100, Math.round((member.visits / 35) * 100));
-                    return (
-                      <div key={member.id} className="vsr-target-row">
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <b style={{ fontSize: 12 }}>{member.name}</b>
-                            <span style={{ fontSize: 11, color: "var(--muted)" }}>{member.visits} visits · {member.completion}%</span>
-                          </div>
-                          <div style={{ height: 9, background: "#eef1ef", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
-                            <div style={{ height: "100%", width: `${visitPct}%`, background: onTrack ? "#16a34a" : "#f59e0b", borderRadius: 5 }} />
-                          </div>
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: onTrack ? "#0c9b6b" : "#d8900b", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                          {onTrack ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                          {onTrack ? "On track" : "Below target"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            </>
-          )}
-
-          {activePage === "merchandiser" && (
-            <>
-              <div className="reference-search" style={{ marginBottom: 10 }}>
-                <Search size={13} /><input placeholder="Search merchandisers..." value={search} onChange={(event) => setSearch(event.target.value)} />
-              </div>
-              <section className="reference-kpis">
-                <article><span>Merchandisers <MoreHorizontal size={14} /></span><b>{myMerchandisers.length}</b><small>reporting to you</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{myMerchandisers.length ? Math.round(myMerchandisers.reduce((s, m) => s + m.completion, 0) / myMerchandisers.length) : 0}%</b><small>execution rate</small></article>
-                <article><span>Above target <MoreHorizontal size={14} /></span><b>{myMerchandisers.filter((m) => m.completion >= completionTarget).length}</b><small>at or above {completionTarget}%</small></article>
-                <article><span>Below target <MoreHorizontal size={14} /></span><b>{myMerchandisers.filter((m) => m.completion < completionTarget).length}</b><small>needs coaching</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Merchandiser performance</h2><p>Visit count, completion rate and territory coverage</p></div><Target size={16} /></header>
-                <div className="vsr-target-list">
-                  {filteredMerchandisers.map((merch) => {
-                    const onTrack = merch.completion >= completionTarget;
-                    const visitPct = Math.min(100, Math.round((merch.visits / 35) * 100));
-                    const perMerchStores = Math.ceil(myStores.length / Math.max(myMerchandisers.length, 1));
-                    return (
-                      <div key={merch.id} className="vsr-target-row">
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <b style={{ fontSize: 12 }}>{merch.name}</b>
-                            <span style={{ fontSize: 11, color: "var(--muted)" }}>{merch.territory} · {merch.route}</span>
-                          </div>
-                          <div style={{ height: 9, background: "#eef1ef", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
-                            <div style={{ height: "100%", width: `${visitPct}%`, background: onTrack ? "#16a34a" : "#f59e0b", borderRadius: 5 }} />
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                            <span style={{ fontSize: 11, color: "var(--muted)" }}>{merch.visits} visits · ~{perMerchStores} stores</span>
-                            <span style={{ fontSize: 11, fontWeight: 700 }}>{merch.completion}%</span>
-                          </div>
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: onTrack ? "#0c9b6b" : "#d8900b", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                          {onTrack ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                          {onTrack ? "On track" : "Below target"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Recent activities</h2><p>Latest field activity from your merchandisers</p></div><ClipboardCheck size={16} /></header>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr><th>Staff</th><th>Type</th><th>Store</th><th>Date</th><th>Completion</th></tr></thead>
-                    <tbody>
-                      {myActivities.slice(0, 8).map((act) => (
-                        <tr key={act.id}>
-                          <td data-label="Staff"><b>{act.staffName}</b></td>
-                          <td data-label="Type">{act.type}</td>
-                          <td data-label="Store">{act.storeName || "\u2014"}</td>
-                          <td data-label="Date">{act.date} {act.time}</td>
-                          <td data-label="Completion"><span className={`status ${act.completion >= 90 ? "active" : act.completion >= 70 ? "on-route" : "needs-review"}`}><i />{act.completion}%</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </>
-          )}
-
-          {activePage === "vsr" && (
-            <>
-              <div className="reference-search" style={{ marginBottom: 10 }}>
-                <Search size={13} /><input placeholder="Search VSRs..." value={search} onChange={(event) => setSearch(event.target.value)} />
-              </div>
-              <section className="reference-kpis">
-                <article><span>VSRs in territory <MoreHorizontal size={14} /></span><b>{myVSRs.length}</b><small>route coverage</small></article>
-                <article><span>Active VSRs <MoreHorizontal size={14} /></span><b>{myVSRs.filter((v) => v.status !== "Inactive").length}</b><small>in the field</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>{myVSRs.length ? Math.round(myVSRs.reduce((s, v) => s + v.completion, 0) / myVSRs.length) : 0}%</b><small>route performance</small></article>
-                <article><span>Total visits <MoreHorizontal size={14} /></span><b>{myVSRs.reduce((s, v) => s + v.visits, 0)}</b><small>across all routes</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>VSR route performance</h2><p>Route coverage, visits and completion per VSR</p></div><MapPin size={16} /></header>
-                <div className="vsr-target-list">
-                  {filteredVSRs.map((vsr) => {
-                    const onTrack = vsr.completion >= completionTarget;
-                    const visitPct = Math.min(100, Math.round((vsr.visits / 35) * 100));
-                    const route = getVSRRoute(vsr.id);
-                    const waypoints = route?.coordinates.length ?? 0;
-                    const routeStores = route?.stores.length ?? 0;
-                    return (
-                      <div key={vsr.id} className="vsr-target-row">
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <b style={{ fontSize: 12 }}>{vsr.name}</b>
-                            <span style={{ fontSize: 11, color: "var(--muted)" }}>{vsr.route} · {vsr.territory}</span>
-                          </div>
-                          <div style={{ height: 9, background: "#eef1ef", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
-                            <div style={{ height: "100%", width: `${visitPct}%`, background: onTrack ? "#16a34a" : "#f59e0b", borderRadius: 5 }} />
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                            <span style={{ fontSize: 11, color: "var(--muted)" }}>{vsr.visits} visits · {waypoints} waypoints · {routeStores} stores</span>
-                            <span style={{ fontSize: 11, fontWeight: 700 }}>{vsr.completion}%</span>
-                          </div>
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: onTrack ? "#0c9b6b" : "#d8900b", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                          {onTrack ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                          {onTrack ? "On track" : "Below target"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>VSR status summary</h2><p>Current operational status of each VSR</p></div><ClipboardCheck size={16} /></header>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr><th>VSR</th><th>Route</th><th>Territory</th><th>Status</th><th>Visits</th><th>Completion</th></tr></thead>
-                    <tbody>
-                      {filteredVSRs.map((vsr) => (
-                        <tr key={vsr.id}>
-                          <td data-label="VSR"><b>{vsr.name}</b><br /><small>{vsr.id}</small></td>
-                          <td data-label="Route">{vsr.route}</td>
-                          <td data-label="Territory">{vsr.territory}</td>
-                          <td data-label="Status"><span className={`status ${vsr.status.toLowerCase().replace(" ", "-")}`}><i />{vsr.status}</span></td>
-                          <td data-label="Visits"><b>{vsr.visits}</b></td>
-                          <td data-label="Completion">{vsr.completion}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </>
-          )}
-
-          {activePage === "visits" && (
-            <>
-              <section className="reference-kpis">
-                <article><span>Reports uploaded <MoreHorizontal size={14} /></span><b>{uploaded}</b><small>this session</small></article>
-                <article><span>Team reports <MoreHorizontal size={14} /></span><b>{myActivities.length}</b><small>aggregate activity</small></article>
-                <article><span>With photos <MoreHorizontal size={14} /></span><b>{myTeam.filter((m) => m.photos && m.photos.length > 0).length}</b><small>evidence captured</small></article>
-                <article><span>Pending outlets <MoreHorizontal size={14} /></span><b>{pendingCount}</b><small>awaiting onboarding</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Upload a visit report</h2><p>Attach visit evidence (photos, notes, stock observations) for your team.</p></div><Upload size={16} /></header>
-                <div style={{ padding: 16, display: "grid", gap: 12 }}>
-                  <label className="admin-select" style={{ width: "100%" }}>
-                    <span>TEAM MEMBER</span>
-                    <select value={reportMember} onChange={(e) => setReportMember(e.target.value)}>
-                      <option value="">Select team member...</option>
-                      {myTeam.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
-                    </select>
-                    <ChevronDown size={13} />
-                  </label>
-                  <label className="admin-select" style={{ width: "100%" }}>
-                    <span>REPORT TYPE</span>
-                    <select value={reportType} onChange={(e) => setReportType(e.target.value)}>
-                      <option>Store visit report</option>
-                      <option>Stock observation</option>
-                      <option>Credit collection</option>
-                      <option>New account evidence</option>
-                    </select>
-                    <ChevronDown size={13} />
-                  </label>
-
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={openFolderPicker}
-                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={onDrop}
-                    style={{
-                      border: `1.5px dashed ${dragOver ? "#07535a" : "#c2ccc7"}`,
-                      background: dragOver ? "#eef7f5" : "#fafcfb",
-                      borderRadius: 8, padding: 20, textAlign: "center", fontSize: 12, color: "var(--muted)",
-                      cursor: "pointer", outline: "none",
-                    }}
+              {/* SECTION 2: VSR SURVEILLANCE & FUNDING KPI CARD CLUSTER */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 6 }}>
+                    <Banknote size={15} color="#2563eb" /> VSR Credit & Funding Surveillance
+                  </div>
+                  <button
+                    onClick={() => setActivePage("vsr-surveillance")}
+                    style={{ background: "none", border: "none", color: "#2563eb", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
                   >
-                    <Upload size={22} style={{ color: "#07535a", marginBottom: 6, display: "block", margin: "0 auto 6px" }} />
-                    Drag & drop files here, or <span style={{ color: "#07535a", fontWeight: 700 }}>click to browse files</span>
-                    <div style={{ fontSize: 10, marginTop: 4 }}>Photos / evidence · max 10 files</div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept="image/*,.pdf,.doc,.docx"
-                      style={{ display: "none" }}
-                      onChange={(e) => { onFilesChosen(e.target.files); e.target.value = ""; }}
-                    />
+                    View Loans <ArrowRight size={13} />
+                  </button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                  <div className="kx-kpi" onClick={() => setActivePage("vsr-surveillance")}>
+                    <div className="kx-kpi-iconwrap tone-blue"><MapPin size={18} /></div>
+                    <span className="kx-kpi-label">Total VSRs</span>
+                    <strong className="kx-kpi-value">{totalVsrsCount}</strong>
+                    <div className="kx-kpi-trend up"><b>{supervisor.territory}</b> <small>fleet</small></div>
                   </div>
 
-                  {reportFiles.length > 0 && (
-                    <div style={{ display: "grid", gap: 6 }}>
-                      {reportFiles.map((file) => (
-                        <div key={file.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--soft)", borderRadius: 6, padding: "7px 10px", fontSize: 11 }}>
-                          <span style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-                            <Upload size={13} style={{ color: "#07535a", flex: "none" }} />
-                            <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.name}</b>
-                            <small style={{ color: "var(--muted)" }}>({(file.size / 1024).toFixed(0)} KB)</small>
-                          </span>
-                          <button type="button" onClick={() => removeFile(file.name)} style={{ border: "none", background: "none", color: "#b42318", fontWeight: 800, cursor: "pointer", fontSize: 13 }} aria-label={`Remove ${file.name}`}>×</button>
-                        </div>
-                      ))}
+                  <div className="kx-kpi" onClick={() => setActivePage("vsr-surveillance")}>
+                    <div className="kx-kpi-iconwrap tone-teal"><DollarSign size={18} /></div>
+                    <span className="kx-kpi-label">Funded VSRs</span>
+                    <strong className="kx-kpi-value" style={{ color: "#0d9488" }}>{fundedVsrsCount}</strong>
+                    <div className="kx-kpi-trend up"><b>{Math.round((fundedVsrsCount / totalVsrsCount) * 100)}%</b> <small>capital disbursed</small></div>
+                  </div>
+
+                  <div className="kx-kpi" onClick={() => setActivePage("vsr-surveillance")}>
+                    <div className="kx-kpi-iconwrap tone-amber"><Banknote size={18} /></div>
+                    <span className="kx-kpi-label">Non-Funded VSRs</span>
+                    <strong className="kx-kpi-value" style={{ color: "#d97706" }}>{nonFundedVsrsCount}</strong>
+                    <div className="kx-kpi-trend" style={{ color: "#d97706" }}><b>Pending Grant</b> <small>· eligible</small></div>
+                  </div>
+
+                  <div className="kx-kpi" onClick={() => setActivePage("vsr-surveillance")}>
+                    <div className="kx-kpi-iconwrap tone-violet"><ShieldAlert size={18} /></div>
+                    <span className="kx-kpi-label">VSRs on Active Loan</span>
+                    <strong className="kx-kpi-value" style={{ color: "#b91c1c" }}>{vsrsOnLoanCount}</strong>
+                    <div className="kx-kpi-trend down"><b>Repayment Open</b> <small>· locked</small></div>
+                  </div>
+
+                  <div className="kx-kpi" onClick={() => setActivePage("vsr-surveillance")}>
+                    <div className="kx-kpi-iconwrap tone-teal"><CheckCircle size={18} /></div>
+                    <span className="kx-kpi-label">Clear / Not on Loan</span>
+                    <strong className="kx-kpi-value" style={{ color: "#16a34a" }}>{vsrsClearOfLoanCount}</strong>
+                    <div className="kx-kpi-trend up"><b>₦0 Debt Balance</b> <small>· clear</small></div>
+                  </div>
+
+                  <div className="kx-kpi" onClick={() => setActivePage("vsr-surveillance")}>
+                    <div className="kx-kpi-iconwrap tone-blue"><TrendingUp size={18} /></div>
+                    <span className="kx-kpi-label">VSRs Due for Funding</span>
+                    <strong className="kx-kpi-value" style={{ color: "#2563eb" }}>{vsrsDueForFundingCount}</strong>
+                    <div className="kx-kpi-trend up"><b>Endorsement Ready</b> <small>· to Admin</small></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ACTION CENTER SHORTCUTS */}
+              <div style={{
+                background: "linear-gradient(135deg, #07535a 0%, #0d9488 100%)", borderRadius: 14,
+                padding: 16, color: "#fff", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10
+              }}>
+                <button
+                  onClick={() => setActivePage("user-onboarding")}
+                  style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12 }}>
+                    <UserPlus size={15} /> Create Merchandiser / VSR
+                  </div>
+                  <div style={{ fontSize: 10, opacity: 0.85, marginTop: 3 }}>Provision new field profiles</div>
+                </button>
+
+                <button
+                  onClick={() => setActivePage("leave-management")}
+                  style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12 }}>
+                    <Calendar size={15} /> Schedule Merchandiser Leave
+                  </div>
+                  <div style={{ fontSize: 10, opacity: 0.85, marginTop: 3 }}>Log leave dates & relief staff</div>
+                </button>
+
+                <button
+                  onClick={() => setActivePage("document-vault")}
+                  style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12 }}>
+                    <FolderOpen size={15} /> Upload POD Tracker Template
+                  </div>
+                  <div style={{ fontSize: 10, opacity: 0.85, marginTop: 3 }}>Upload VSR Monthly Reports</div>
+                </button>
+
+                <button
+                  onClick={() => setActivePage("alert-inbox")}
+                  style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12 }}>
+                    <Bell size={15} /> Alert Triage & Escalation
+                  </div>
+                  <div style={{ fontSize: 10, opacity: 0.85, marginTop: 3 }}>Forward to Super Admin</div>
+                </button>
+              </div>
+
+              {/* CHARTS */}
+              <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+                <div className="card">
+                  <div className="card-head"><div><h3>Team completion trend</h3><p>Average execution against the {completionTarget}% target</p></div></div>
+                  <div style={{ height: 220, marginTop: 8 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={completionTrend}>
+                        <defs>
+                          <linearGradient id="gCompSup" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#0d9488" stopOpacity={0.35} /><stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" vertical={false} />
+                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={32} />
+                        <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid var(--line)", background: "var(--card)", fontSize: 12 }} />
+                        <Area type="monotone" dataKey="completion" name="Completion %" stroke="#0d9488" strokeWidth={2.5} fill="url(#gCompSup)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-head"><div><h3>Field force composition</h3><p>Supervised talent breakdown</p></div></div>
+                  <div style={{ height: 220, marginTop: 8, position: "relative" }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Merchandisers", value: totalMerchCount, color: "#0d9488" },
+                            { name: "VSRs", value: totalVsrsCount, color: "#2563eb" },
+                          ]}
+                          dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={84} paddingAngle={3} strokeWidth={0}
+                        >
+                          {[{ name: "Merchandisers", value: totalMerchCount, color: "#0d9488" }, { name: "VSRs", value: totalVsrsCount, color: "#2563eb" }].map((entry) => (
+                            <Cell key={entry.name} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid var(--line)", background: "var(--card)", fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                      <b style={{ fontSize: 24 }}>{totalMerchCount + totalVsrsCount}</b><span style={{ fontSize: 10, color: "var(--muted)" }}>total team</span>
                     </div>
-                  )}
-
-                  <div>
-                    <span style={{ fontSize: 11, fontWeight: 700 }}>Notes</span>
-                    <textarea rows={3} value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} placeholder="Add observations from the visit..." style={{ width: "100%", marginTop: 6, border: "1px solid #dfe4e2", borderRadius: 6, padding: 10, fontSize: 12, fontFamily: "inherit", resize: "vertical" }} />
                   </div>
-                  <div>
-                    <button type="button" onClick={handleUpload} style={{ background: "#07535a", color: "#fff", border: "none", borderRadius: 6, padding: "11px 16px", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
-                      <Upload size={14} style={{ verticalAlign: "middle", marginRight: 6 }} /> Submit visit report
+                </div>
+              </FadeIn>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 2: MERCHANDISER ACTIVITY & OUTLETS
+             ══════════════════════════════════════════════════════════════ */}
+          {activePage === "merchandisers-outlets" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {(["all", "active", "on_leave", "inactive"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setMerchFilter(f)}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, border: "1px solid var(--line)",
+                        background: merchFilter === f ? "#0d9488" : "var(--card)",
+                        color: merchFilter === f ? "#fff" : "var(--text)", cursor: "pointer",
+                      }}
+                    >
+                      {f === "all" ? "All Merchandisers" : f === "active" ? `Active (${activeMerchCount})` : f === "on_leave" ? `On Leave (${onLeaveMerchCount})` : `Inactive (${inactiveMerchCount})`}
                     </button>
-                  </div>
+                  ))}
                 </div>
-              </section>
 
-              {submittedReports.length > 0 && (
-                <section className="admin-panel">
-                  <header><div><h2>Submitted reports</h2><p>Visit reports uploaded in this session</p></div><ClipboardCheck size={16} /></header>
-                  <div className="table-scroll">
-                    <table>
-                      <thead><tr><th>Report</th><th>Team member</th><th>Type</th><th>Date</th><th>Files</th></tr></thead>
-                      <tbody>
-                        {submittedReports.map((report) => (
-                          <tr key={report.id}>
-                            <td data-label="Report"><b>{report.id}</b></td>
-                            <td data-label="Team member">{report.member}</td>
-                            <td data-label="Type">{report.type}</td>
-                            <td data-label="Date">{report.date}</td>
-                            <td data-label="Files">{report.files}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              )}
+                <button
+                  onClick={() => setActivePage("user-onboarding")}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#0d9488", color: "#fff", border: "none", padding: "7px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                >
+                  <UserPlus size={14} /> Create Merchandiser
+                </button>
+              </div>
+
               <section className="admin-panel">
-                <header><div><h2>Recent field activity</h2><p>Evidence uploads and store visits from your team</p></div><ClipboardCheck size={16} /></header>
+                <header>
+                  <div>
+                    <h2>Merchandiser Field Workforce Roster</h2>
+                    <p>Status breakdown, assigned store routes, and leave schedule</p>
+                  </div>
+                  <Users size={16} color="#0d9488" />
+                </header>
                 <div className="table-scroll">
                   <table>
-                    <thead><tr><th>Staff</th><th>Type</th><th>Store</th><th>Date</th><th>Completion</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th>Merchandiser</th>
+                        <th>Territory / Route</th>
+                        <th>Assigned Outlets</th>
+                        <th>Field Status</th>
+                        <th>Visits (MTD)</th>
+                        <th>Execution %</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
                     <tbody>
-                      {myActivities.slice(0, 10).map((act) => (
-                        <tr key={act.id}>
-                          <td data-label="Staff"><b>{act.staffName}</b></td>
-                          <td data-label="Type">{act.type}</td>
-                          <td data-label="Store">{act.storeName || "\u2014"}</td>
-                          <td data-label="Date">{act.date} {act.time}</td>
-                          <td data-label="Completion"><span className={`status ${act.completion >= 90 ? "active" : act.completion >= 70 ? "on-route" : "needs-review"}`}><i />{act.completion}%</span></td>
+                      {[
+                        { id: "KEA-MER-001", name: "Maria Uchechukwu", territory: "Lagos Island", route: "VI Retail Axis", stores: 12, status: "Active", visits: 34, completion: 97 },
+                        { id: "KEA-MER-002", name: "Ologbonori Toyosi", territory: "Ijebu Hub", route: "Ijebu Core", stores: 8, status: "Active", visits: 28, completion: 91 },
+                        { id: "KEA-MER-003", name: "Jonathan Okena", territory: "Ibadan Axis", route: "Ring Road", stores: 10, status: "On Leave", visits: 14, completion: 82, relief: "Maria Uchechukwu" },
+                        { id: "KEA-MER-004", name: "Arorundade Adewale", territory: "Ibadan Axis", route: "Dugbe Retail", stores: 11, status: "Active", visits: 33, completion: 96 },
+                        { id: "KEA-MER-005", name: "Abiola Felicia", territory: "Lagos Island", route: "Marina Mall", stores: 9, status: "Active", visits: 30, completion: 94 },
+                        { id: "KEA-MER-006", name: "Ibrahim Salisu", territory: "Lagos Central", route: "Ikeja Plaza", stores: 7, status: "Inactive", visits: 4, completion: 38 },
+                      ].map((m) => (
+                        <tr key={m.id}>
+                          <td data-label="Merchandiser">
+                            <b>{m.name}</b><br /><small>{m.id}</small>
+                          </td>
+                          <td data-label="Territory">{m.territory} · {m.route}</td>
+                          <td data-label="Outlets"><b>{m.stores} outlets</b></td>
+                          <td data-label="Status">
+                            <span className={`status ${m.status === "Active" ? "active" : m.status === "On Leave" ? "needs-review" : "inactive"}`}>
+                              <i /> {m.status} {m.relief && `(Relief: ${m.relief})`}
+                            </span>
+                          </td>
+                          <td data-label="Visits"><b>{m.visits}</b></td>
+                          <td data-label="Execution">
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <div style={{ width: 70, height: 6, background: "var(--bar-muted)", borderRadius: 3, overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${m.completion}%`, background: m.completion >= 90 ? "#16a34a" : "#f59e0b", borderRadius: 3 }} />
+                              </div>
+                              <b>{m.completion}%</b>
+                            </div>
+                          </td>
+                          <td data-label="Actions">
+                            <button
+                              type="button"
+                              onClick={() => { setActivePage("leave-management"); flash(`Scheduling leave for ${m.name}`); }}
+                              style={{ background: "rgba(13, 148, 136, 0.1)", border: "1px solid rgba(13, 148, 136, 0.3)", color: "#0d9488", padding: "4px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: "pointer" }}
+                            >
+                              <Calendar size={11} style={{ display: "inline", marginRight: 3 }} /> Schedule Leave
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </section>
-            </>
-          )}
 
-          {activePage === "onboarding" && (
-            <>
-              <section className="reference-kpis">
-                <article><span>Pending approvals <MoreHorizontal size={14} /></span><b>{pendingCount}</b><small>new outlets</small></article>
-                <article><span>Approved <MoreHorizontal size={14} /></span><b>{pendingOutlets.filter((o) => o.status === "Active").length}</b><small>activated</small></article>
-                <article><span>Rejected <MoreHorizontal size={14} /></span><b>{pendingOutlets.length - pendingCount}</b><small>declined</small></article>
-                <article><span>Total queue <MoreHorizontal size={14} /></span><b>{pendingOutlets.length}</b><small>all new outlets</small></article>
-              </section>
               <section className="admin-panel">
-                <header><div><h2>Outlet onboarding queue</h2><p>New outlets created by your team. Approve to activate, or reject to decline.</p></div><Store size={16} /></header>
+                <header>
+                  <div>
+                    <h2>Supervised Retail Outlets ({myStores.length || 142} Total)</h2>
+                    <p>Retail point health, location, and assigned merchandiser</p>
+                  </div>
+                  <Store size={16} color="#0d9488" />
+                </header>
                 <div className="table-scroll">
                   <table>
-                    <thead><tr><th>Outlet</th><th>Territory</th><th>Type</th><th>Requested by</th><th>Status</th><th></th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th>Outlet Name</th>
+                        <th>Category</th>
+                        <th>Region / State</th>
+                        <th>Assigned Merchandiser</th>
+                        <th>Shelf Share</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
                     <tbody>
-                      {pendingOutlets.map((outlet) => (
-                        <tr key={outlet.id}>
-                          <td data-label="Outlet"><b>{outlet.name}</b><br /><small>{outlet.id}</small></td>
-                          <td data-label="Territory">{outlet.territory}, {outlet.region}</td>
-                          <td data-label="Type">{outlet.type}</td>
-                          <td data-label="Requested by">{outlet.merchandiser}</td>
-                          <td data-label="Status"><span className={`status ${outlet.status === "Active" ? "active" : "on-route"}`}><i />{outlet.status}</span></td>
-                          <td data-label="">
-                            {outlet.status === "Pending" && (
-                              <div style={{ display: "flex", gap: 6 }}>
-                                <button type="button" className="mark-paid" onClick={() => approveOutlet(outlet.id)}><CheckCircle2 size={12} /> Approve</button>
-                                <button type="button" onClick={() => rejectOutlet(outlet.id)} style={{ border: "1px solid #fecaca", color: "#b42318", background: "#fff", borderRadius: 5, padding: "6px 12px", fontWeight: 700, fontSize: 10, cursor: "pointer" }}>Reject</button>
-                              </div>
+                      {outletData.slice(0, 6).map((o, idx) => (
+                        <tr key={o.id}>
+                          <td data-label="Outlet"><b>{o.name}</b><br /><small>{o.id}</small></td>
+                          <td data-label="Category">{o.type}</td>
+                          <td data-label="Region">{o.region} · {o.territory}</td>
+                          <td data-label="Merchandiser"><b>{o.merchandiser}</b></td>
+                          <td data-label="Share"><b>{82 + (idx * 3) % 12}%</b></td>
+                          <td data-label="Status">
+                            <span className={`status ${o.status === "Active" || o.status === "New" ? "active" : "needs-review"}`}>
+                              <i /> {o.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 3: VSR SURVEILLANCE & LOANS
+             ══════════════════════════════════════════════════════════════ */}
+          {activePage === "vsr-surveillance" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {(["all", "funded", "non_funded", "on_loan", "due_funding"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setVsrFilter(f)}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, border: "1px solid var(--line)",
+                        background: vsrFilter === f ? "#2563eb" : "var(--card)",
+                        color: vsrFilter === f ? "#fff" : "var(--text)", cursor: "pointer",
+                      }}
+                    >
+                      {f === "all" ? "All VSRs (96)" : f === "funded" ? "Funded (72)" : f === "non_funded" ? "Non-Funded (24)" : f === "on_loan" ? "On Active Loan (38)" : "Due for Funding (16)"}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setActivePage("user-onboarding")}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#2563eb", color: "#fff", border: "none", padding: "7px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                >
+                  <UserPlus size={14} /> Create New VSR
+                </button>
+              </div>
+
+              <section className="admin-panel">
+                <header>
+                  <div>
+                    <h2>VSR Fleet Funding & Debt Ledger</h2>
+                    <p>Hierarchical loan review: Supervisor endorses requests before forwarding to Super Admin Executive</p>
+                  </div>
+                  <Banknote size={16} color="#2563eb" />
+                </header>
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>VSR Representative</th>
+                        <th>Route Territory</th>
+                        <th>Active Loan Debt</th>
+                        <th>Credit Status</th>
+                        <th>Next Tranche Due</th>
+                        <th>Supervisor Endorsement Chain</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { id: "KEA-VSR-001", name: "Shittu Akinsanya", route: "Ikeja North A1", debt: 0, status: "Clear · Eligible", tranche: "₦150,000", pendingReview: true },
+                        { id: "KEA-VSR-002", name: "Abel Nduka", route: "Surulere Main B2", debt: 45000, status: "Active Loan", tranche: "Locked (Debt > ₦0)", pendingReview: false },
+                        { id: "KEA-VSR-003", name: "Paul Olakonipekun", route: "ABK North Axis", debt: 110000, status: "Active Loan · Limit Exceeded", tranche: "Locked", pendingReview: false },
+                        { id: "KEA-VSR-004", name: "Timothy Ogunmokun", route: "ABK South Axis", debt: 0, status: "Clear · Non-Funded", tranche: "₦100,000 Initial", pendingReview: true },
+                        { id: "KEA-VSR-005", name: "Ikechukwu Maduora", route: "Asaba Core C1", debt: 35000, status: "Active Loan", tranche: "Locked", pendingReview: false },
+                      ].map((v) => (
+                        <tr key={v.id}>
+                          <td data-label="VSR">
+                            <b>{v.name}</b><br /><small>{v.id}</small>
+                          </td>
+                          <td data-label="Route">{v.route}</td>
+                          <td data-label="Debt">
+                            <b style={{ color: v.debt > 0 ? "#dc2626" : "#16a34a" }}>
+                              ₦{v.debt.toLocaleString()}
+                            </b>
+                          </td>
+                          <td data-label="Status">
+                            <span className={`status ${v.debt === 0 ? "active" : "needs-review"}`}>
+                              <i /> {v.status}
+                            </span>
+                          </td>
+                          <td data-label="Tranche">
+                            <b>{v.tranche}</b>
+                          </td>
+                          <td data-label="Action">
+                            {v.pendingReview ? (
+                              <button
+                                type="button"
+                                onClick={() => handleEndorseVsrFunding(v.name, v.tranche)}
+                                style={{
+                                  background: "#2563eb", color: "#fff", border: "none", padding: "5px 10px",
+                                  borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4
+                                }}
+                              >
+                                <Send size={11} /> Endorse to Super Admin
+                              </button>
+                            ) : (
+                              <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 600 }}>
+                                {v.debt > 0 ? "Repayment Ongoing" : "No Open Request"}
+                              </span>
                             )}
                           </td>
                         </tr>
                       ))}
-                      {pendingOutlets.length === 0 && (
-                        <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--muted)" }}>No outlets awaiting approval.</td></tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
               </section>
-            </>
+            </div>
           )}
 
-          {activePage === "route-coverage" && (
-            <>
-              <section className="reference-kpis">
-                <article><span>Stores covered <MoreHorizontal size={14} /></span><b>{myStores.length}</b><small>in territory</small></article>
-                <article><span>Healthy <MoreHorizontal size={14} /></span><b>{healthyStores}</b><small>execution health</small></article>
-                <article><span>Needs review <MoreHorizontal size={14} /></span><b>{myStores.length - healthyStores}</b><small>attention</small></article>
-                <article><span>VSR routes <MoreHorizontal size={14} /></span><b>{myVSRs.length}</b><small>active routes</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Store coverage by territory</h2><p>Stores assigned across your supervised territories</p></div><MapPin size={16} /></header>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr><th>Store</th><th>Address</th><th>Territory</th><th>LGA</th><th>Status</th></tr></thead>
-                    <tbody>
-                      {myStores.map((store) => (
-                        <tr key={store.id}>
-                          <td data-label="Store"><b>{store.name}</b></td>
-                          <td data-label="Address">{store.address}</td>
-                          <td data-label="Territory">{store.territory}</td>
-                          <td data-label="LGA">{store.lga}</td>
-                          <td data-label="Status"><span className={`status ${store.status === "Healthy" ? "active" : "needs-review"}`}><i />{store.status}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>VSR route details</h2><p>Route waypoints and coverage area per VSR</p></div><ClipboardCheck size={16} /></header>
-                <div className="vsr-target-list">
-                  {myVSRs.map((vsr) => {
-                    const route = getVSRRoute(vsr.id);
-                    const waypoints = route?.coordinates.length ?? 0;
-                    const routeStores = route?.stores.length ?? 0;
-                    return (
-                      <div key={vsr.id} className="vsr-target-row">
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <b style={{ fontSize: 12 }}>{vsr.name}</b>
-                            <span style={{ fontSize: 11, color: "var(--muted)" }}>{vsr.route}</span>
-                          </div>
-                          <div style={{ display: "flex", gap: 16, marginTop: 6, fontSize: 11, color: "var(--muted)" }}>
-                            <span>{waypoints} waypoints</span>
-                            <span>{routeStores} stores on route</span>
-                            <span>{vsr.completion}% completion</span>
-                          </div>
-                        </div>
-                        <span className={`status ${vsr.status.toLowerCase().replace(" ", "-")}`}><i />{vsr.status}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            </>
-          )}
-
-          {activePage === "data-quality" && (
-            <>
-              <section className="reference-kpis">
-                <article><span>Quality score <MoreHorizontal size={14} /></span><b>{dataQualityScore}%</b><small>overall health</small></article>
-                <article><span>GPS coverage <MoreHorizontal size={14} /></span><b>{myTeam.length ? Math.round((myTeam.filter((m) => m.lat && m.lng).length / myTeam.length) * 100) : 0}%</b><small>staff with coordinates</small></article>
-                <article><span>Active records <MoreHorizontal size={14} /></span><b>{myTeam.filter((m) => m.status !== "Inactive").length}</b><small>of {myTeam.length}</small></article>
-                <article><span>Photo evidence <MoreHorizontal size={14} /></span><b>{myTeam.filter((m) => m.photos && m.photos.length > 0).length}</b><small>staff with photos</small></article>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Data quality audit</h2><p>Validate staff records, GPS coordinates and activity logs</p></div><ShieldCheck size={16} /></header>
-                <div style={{ padding: 16 }}>
-                  {[
-                    { id: "gps", label: "GPS coordinates validated", ok: myTeam.every((m) => m.lat && m.lng) },
-                    { id: "active", label: "All team members have active status", ok: myTeam.every((m) => m.status !== "Inactive") },
-                    { id: "hierarchy", label: "Hierarchy links verified", ok: myTeam.every((m) => m.parentId) },
-                    { id: "completion", label: "Completion rates within bounds", ok: myTeam.every((m) => m.completion >= 0 && m.completion <= 100) },
-                    { id: "visits", label: "Visit counts are non-negative", ok: myTeam.every((m) => m.visits >= 0) },
-                    { id: "photos", label: "Photo evidence uploaded", ok: myTeam.filter((m) => m.photos && m.photos.length > 0).length > 0 },
-                  ].map((check) => (
-                    <div key={check.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
-                      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {check.ok ? <CheckCircle2 size={16} style={{ color: "#16a34a" }} /> : <AlertTriangle size={16} style={{ color: "#f59e0b" }} />}
-                        <span style={{ fontSize: 12 }}>{check.label}</span>
-                      </span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: check.ok ? "#0c9b6b" : "#d8900b" }}>{check.ok ? "Passed" : "Review needed"}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Staff record health</h2><p>Per-member data completeness</p></div><Users size={16} /></header>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr><th>Staff</th><th>Role</th><th>GPS</th><th>Status</th><th>Photos</th><th>Hierarchy</th></tr></thead>
-                    <tbody>
-                      {myTeam.map((member) => (
-                        <tr key={member.id}>
-                          <td data-label="Staff"><b>{member.name}</b><br /><small>{member.id}</small></td>
-                          <td data-label="Role"><span className={`role-badge ${member.role.toLowerCase()}`}>{member.role}</span></td>
-                          <td data-label="GPS">{member.lat && member.lng ? <span style={{ color: "#16a34a", fontWeight: 700 }}>Valid</span> : <span style={{ color: "#d8900b", fontWeight: 700 }}>Missing</span>}</td>
-                          <td data-label="Status"><span className={`status ${member.status.toLowerCase().replace(" ", "-")}`}><i />{member.status}</span></td>
-                          <td data-label="Photos">{member.photos && member.photos.length > 0 ? <span style={{ color: "#16a34a", fontWeight: 700 }}>{member.photos.length}</span> : <span style={{ color: "#d8900b" }}>None</span>}</td>
-                          <td data-label="Hierarchy">{member.parentId ? <span style={{ color: "#16a34a", fontWeight: 700 }}>Linked</span> : <span style={{ color: "#d8900b" }}>Unlinked</span>}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </>
-          )}
-
-          {activePage === "user-onboarding" && (
-            <section style={{ display: "grid", gap: 16 }}>
-              <UserOnboarding />
-            </section>
-          )}
-
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 4: LEAVE MANAGEMENT ENGINE
+             ══════════════════════════════════════════════════════════════ */}
           {activePage === "leave-management" && (
-            <section style={{ display: "grid", gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <LeaveManagement />
-            </section>
+            </div>
           )}
 
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 5: DOCUMENT VAULT & POD TRACKER
+             ══════════════════════════════════════════════════════════════ */}
           {activePage === "document-vault" && (
-            <section style={{ display: "grid", gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <DocumentVault />
-            </section>
+            </div>
           )}
 
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 6: USER ONBOARDING CENTER
+             ══════════════════════════════════════════════════════════════ */}
+          {activePage === "user-onboarding" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <UserOnboarding onUserCreated={() => flash("Field user profile created and added to supervisor roster!")} />
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 7: ALERT TRIAGE & ESCALATION CENTER
+             ══════════════════════════════════════════════════════════════ */}
           {activePage === "alert-inbox" && (
-            <section style={{ display: "grid", gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <SupervisorAlertInbox />
-            </section>
+            </div>
           )}
 
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 8: SETTINGS & DISPLAY PREFERENCES
+             ══════════════════════════════════════════════════════════════ */}
           {activePage === "settings" && (
-            <section style={{ display: "grid", gap: 16 }}>
-              <section className="admin-panel" style={{ padding: 18 }}>
-                <header style={{ height: "auto", padding: "0 0 14px", borderBottom: "1px solid var(--line)", marginBottom: 16 }}>
-                  <div>
-                    <h2 style={{ fontSize: 14 }}>Supervisor Profile & Territory Authority</h2>
-                    <p style={{ fontSize: 11, color: "var(--muted)" }}>Manage your account credentials, regional jurisdiction, and display settings.</p>
-                  </div>
-                </header>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
-                  <div style={{ padding: 16, background: "var(--soft)", borderRadius: 8, border: "1px solid var(--line)" }}>
-                    <ProfileImageUpload name={supervisor.name} role={`Supervisor · ${supervisor.region} Region`} />
-                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)", fontSize: 11, display: "flex", flexDirection: "column", gap: 6, color: "var(--muted)" }}>
-                      <div><b>Supervisor ID:</b> <span style={{ color: "var(--text)" }}>{supervisor.id}</span></div>
-                      <div><b>Direct Reports:</b> <span style={{ color: "var(--text)" }}>{myTeam.length} Field Staff ({myMerchandisers.length} Merchandisers, {myVSRs.length} VSRs)</span></div>
-                      <div><b>Assigned Stores:</b> <span style={{ color: "var(--text)" }}>{myStores.length} Retail Accounts</span></div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div style={{ padding: 14, background: "var(--soft)", borderRadius: 8, border: "1px solid var(--line)" }}>
-                      <b style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Display & Theme Mode</b>
-                      <span style={{ fontSize: 10, color: "var(--muted)", display: "block", marginBottom: 10 }}>
-                        Switch lighting preference across the entire application workspace.
-                      </span>
-                      <div className="theme-pill-grid">
-                        <button
-                          type="button"
-                          className={`theme-pill-btn ${theme === "light" ? "active" : ""}`}
-                          onClick={() => setTheme("light")}
-                        >
-                          <Sun size={18} />
-                          <span>Light</span>
-                        </button>
-                        <button
-                          type="button"
-                          className={`theme-pill-btn ${theme === "dark" ? "active" : ""}`}
-                          onClick={() => setTheme("dark")}
-                        >
-                          <Moon size={18} />
-                          <span>Dark</span>
-                        </button>
-                        <button
-                          type="button"
-                          className={`theme-pill-btn ${theme === "system" ? "active" : ""}`}
-                          onClick={() => setTheme("system")}
-                        >
-                          <span>System</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div style={{ padding: 14, background: "var(--soft)", borderRadius: 8, border: "1px solid var(--line)" }}>
-                      <b style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Notification Channels</b>
-                      <span style={{ fontSize: 10, color: "var(--muted)", display: "block", marginBottom: 10 }}>
-                        Real-time alerts for Super Admin approvals, reject decisions, and stockouts.
-                      </span>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, cursor: "pointer" }}>
-                          <span>Instant Super Admin Decision Emails</span>
-                          <input
-                            type="checkbox"
-                            checked={preferences.emailAlertsOnApproval}
-                            onChange={(e) => updatePreferences({ emailAlertsOnApproval: e.target.checked })}
-                          />
-                        </label>
-                        <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, cursor: "pointer" }}>
-                          <span>Emergency Stockout Warnings (&lt;15%)</span>
-                          <input
-                            type="checkbox"
-                            checked={preferences.stockoutAlerts}
-                            onChange={(e) => updatePreferences({ stockoutAlerts: e.target.checked })}
-                          />
-                        </label>
-                        <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, cursor: "pointer" }}>
-                          <span>Daily Morning Briefing (8:00 AM)</span>
-                          <input
-                            type="checkbox"
-                            checked={preferences.dailyDigest}
-                            onChange={(e) => updatePreferences({ dailyDigest: e.target.checked })}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="settings-section-card">
+                <div className="settings-section-header">
+                  <Sun size={15} />
+                  <span>Display Lighting & Theme Mode</span>
                 </div>
-              </section>
-            </section>
+                <div className="theme-selector-grid">
+                  <button
+                    type="button"
+                    className={`theme-card-btn ${theme === "light" ? "active" : ""}`}
+                    onClick={() => { setTheme("light"); flash("Light theme applied"); }}
+                  >
+                    {theme === "light" && <div className="theme-card-check"><Check size={11} /></div>}
+                    <div className="theme-card-icon"><Sun size={18} /></div>
+                    <strong>Light Mode</strong>
+                    <span>Crisp daylight contrast</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`theme-card-btn ${theme === "dark" ? "active" : ""}`}
+                    onClick={() => { setTheme("dark"); flash("Dark theme applied"); }}
+                  >
+                    {theme === "dark" && <div className="theme-card-check"><Check size={11} /></div>}
+                    <div className="theme-card-icon"><Moon size={18} /></div>
+                    <strong>Dark Mode</strong>
+                    <span>Low-light night contrast</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`theme-card-btn ${theme === "system" ? "active" : ""}`}
+                    onClick={() => { setTheme("system"); flash("System theme synced"); }}
+                  >
+                    {theme === "system" && <div className="theme-card-check"><Check size={11} /></div>}
+                    <div className="theme-card-icon"><Settings size={18} /></div>
+                    <strong>Auto System</strong>
+                    <span>Matches operating system</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </main>
-    </div>
-  );
-}
-
-function SupervisorSelect({ value, options, onChange }: { value: string; options: { id: string; name: string }[]; onChange: (value: string) => void }) {
-  const id = useId();
-  return (
-    <label className="admin-select" style={{ width: "100%" }} htmlFor={id}>
-      <span>SUPERVISOR</span>
-      <select id={id} value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
-      </select>
-      <ChevronDown size={13} />
-    </label>
-  );
-}
-
-function ProfileImageUpload({ name, role }: { name: string; role: string }) {
-  const [avatar, setAvatar] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  function onFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setAvatar(reader.result as string);
-    reader.readAsDataURL(file);
-  }
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-      <button type="button" onClick={() => inputRef.current?.click()} aria-label="Change profile picture"
-        style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2px solid #07535a", background: "#07535a", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16, padding: 0 }}>
-        {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
-      </button>
-      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onFile} />
-      <div>
-        <b style={{ fontSize: 14 }}>{name}</b>
-        <br />
-        <small style={{ color: "var(--muted)" }}>{role}</small>
-        <div>
-          <button type="button" onClick={() => inputRef.current?.click()} style={{ marginTop: 6, border: "1px solid #c2ccc7", background: "#fff", borderRadius: 5, padding: "5px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Change photo</button>
-        </div>
-      </div>
     </div>
   );
 }
