@@ -95,21 +95,39 @@ export function SupervisorAlertInbox() {
   const displayAlerts: Alert[] = alerts.length > 0 ? alerts : [
     {
       id: "alt-001",
+      type: "pod_submission",
+      severity: "info",
+      title: "[POD Received] Merchandiser Toluwaleni Adio Uploaded POD Tracker",
+      message: "Completed Proof of Delivery tracker submitted for Royal Prince Ikosi (Ref: WB-2026-09-842). Store manager signature attached.",
+      status: "pending",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "alt-002",
+      type: "field_report_submission",
+      severity: "info",
+      title: "[Report Received] VSR Shittu Akinsanya Submitted Week 36 Sales Report",
+      message: "Gross Sales: ₦1,850,000.00 · Cash Collected: ₦1,420,000.00 · Attached: VSR_Shittu_Wk36_RouteReport.xlsx.",
+      status: "pending",
+      created_at: new Date(Date.now() - 1800000).toISOString()
+    },
+    {
+      id: "alt-003",
       type: "funding_request",
       severity: "info",
       title: "Super Admin Approved Funding for Shittu Akinsanya",
       message: "Application of ₦250,000.00 was approved and disbursed. VSR debt ledger is now active.",
       status: "resolved",
-      created_at: new Date().toISOString()
+      created_at: new Date(Date.now() - 3600000).toISOString()
     },
     {
-      id: "alt-002",
+      id: "alt-004",
       type: "stockout_risk",
       severity: "high",
       title: "Critical Stockout Alert: Ikeja Mega Hub",
       message: "Retail stock depleted below 10% threshold on Royal Prince route.",
       status: "pending",
-      created_at: new Date(Date.now() - 3600000).toISOString()
+      created_at: new Date(Date.now() - 7200000).toISOString()
     }
   ];
 

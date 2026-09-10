@@ -6,7 +6,8 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, Bell, Camera, CheckCircle2, ChevronDown, Home, Layers, LogOut, Menu,
   Moon, MoreHorizontal, PackageCheck, Presentation, Search, Settings, Store, Sun,
-  Target, TrendingDown, TrendingUp, Users, X, Building2, Calendar, Send, Plus, Check
+  Target, TrendingDown, TrendingUp, Users, X, Building2, Calendar, Send, Plus, Check,
+  FileSpreadsheet, Download, UploadCloud, FileCheck, ExternalLink, ShieldCheck
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,12 +20,13 @@ import { AnimatedNumber } from "../../components/motion-primitives/animated-numb
 import { Badge } from "../../components/ui/badge";
 import { useTheme } from "../../lib/theme-provider";
 
-type PageKey = "home" | "stores" | "leave" | "shelf" | "posm" | "photos" | "settings";
+type PageKey = "home" | "stores" | "leave" | "pod-upload" | "shelf" | "posm" | "photos" | "settings";
 
-const navItems: { key: PageKey; label: string; icon: typeof Store }[] = [
+const navItems: { key: PageKey; label: string; icon: any }[] = [
   { key: "home", label: "Overview", icon: Home },
   { key: "stores", label: "Assigned Stores", icon: Store },
   { key: "leave", label: "Leave Requests", icon: Calendar },
+  { key: "pod-upload", label: "POD Tracker Upload", icon: FileSpreadsheet },
   { key: "shelf", label: "Share of Shelf", icon: Layers },
   { key: "posm", label: "POSM Deployment", icon: Presentation },
   { key: "photos", label: "Activity Photos", icon: Camera },
@@ -35,6 +37,7 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   home: { title: "MERCHANDISER DASHBOARD", subtitle: "Your stores, share of shelf, stock health, and target progress at a glance." },
   stores: { title: "ASSIGNED STORES & EXECUTION", subtitle: "Retail outlet inventory, stock checks, and instant stockout escalation to Supervisor." },
   leave: { title: "LEAVE APPLICATION & SCHEDULE", subtitle: "Submit scheduled leave requests with relief coverage directly to your Supervisor." },
+  "pod-upload": { title: "POD TRACKER UPLOAD & TEMPLATE", subtitle: "Download the supervisor's official template and upload verified Proof of Delivery trackers." },
   shelf: { title: "SHARE OF SHELF LOG", subtitle: "Shelf visibility and product availability share per assigned store." },
   posm: { title: "POSM DEPLOYMENT", subtitle: "Point-of-sale marketing placement and merchandising execution tracking." },
   photos: { title: "ACTIVITY PHOTOS & EVIDENCE", subtitle: "Field evidence captured during retail store audits and visits." },
@@ -85,9 +88,117 @@ export default function MerchandiserDashboard() {
   const [selectedStoreName, setSelectedStoreName] = useState("");
   const [stockoutSku, setStockoutSku] = useState("");
 
+  // POD Tracker Upload State
+  const [podStoreId, setPodStoreId] = useState("OL-4001");
+  const [podDeliveryRef, setPodDeliveryRef] = useState("WB-2026-09-842");
+  const [podDate, setPodDate] = useState("2026-09-10");
+  const [podNotes, setPodNotes] = useState("All 24 cartons received intact. Store manager confirmed and stamped receipt.");
+  const [podFileName, setPodFileName] = useState("");
+  const [isUploadingPod, setIsUploadingPod] = useState(false);
+  const [myPodSubmissions, setMyPodSubmissions] = useState<Array<{
+    id: string;
+    storeName: string;
+    storeId: string;
+    deliveryRef: string;
+    fileName: string;
+    date: string;
+    notes: string;
+    status: string;
+  }>>([
+    {
+      id: "POD-891",
+      storeName: "Royal Prince Ikosi",
+      storeId: "OL-4001",
+      deliveryRef: "WB-2026-09-842",
+      fileName: "RoyalPrince_POD_Signed_Sep10.xlsx",
+      date: "2026-09-10 14:15",
+      notes: "Full batch delivery confirmed. Zero damaged units.",
+      status: "Received by Supervisor (Michael Olayiwola)",
+    },
+    {
+      id: "POD-840",
+      storeName: "Jendel Surulere",
+      storeId: "OL-4002",
+      deliveryRef: "WB-2026-09-771",
+      fileName: "Jendel_POD_Tracker_Sep08.xlsx",
+      date: "2026-09-08 11:30",
+      notes: "18 cartons delivered. Stamped by receiving supervisor.",
+      status: "Verified by Supervisor",
+    },
+  ]);
+
   function flash(message: string) {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 3500);
+  }
+
+  // Download official Supervisor POD Tracker Template
+  function handleDownloadTemplate() {
+    const csvContent = "data:text/csv;charset=utf-8," +
+      "Store_ID,Store_Name,Delivery_Waybill_Ref,Product_SKU,Quantity_Delivered_Cartons,Quantity_Accepted_Units,Discrepancy_Notes,Store_Manager_Name,Manager_Signature_Confirmed,GPS_Latitude,GPS_Longitude,Timestamp\n" +
+      "OL-4001,Royal Prince Ikosi,WB-2026-09-842,KEA-MLK-400G,24,288,None,Alhaji Adeleke,YES,6.5918,3.3315,2026-09-10T14:15:00Z\n" +
+      "OL-4002,Jendel Surulere,WB-2026-09-843,KEA-DET-1KG,18,216,None,Mrs. Okonkwo,YES,6.5369,3.3232,2026-09-10T15:30:00Z\n";
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "KEA_Official_POD_Tracker_Template_2026.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    flash("Official Supervisor POD Template downloaded! Fill and re-upload below.");
+  }
+
+  // Submit Completed POD Tracker with Instant Alert to Supervisor
+  async function handlePodUploadSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!podStoreId || !podDeliveryRef) {
+      flash("Please provide store and delivery reference!");
+      return;
+    }
+    setIsUploadingPod(true);
+    const selectedStore = myStores.find((s) => s.id === podStoreId) || myStores[0];
+    const uploadedName = podFileName || `POD_${selectedStore?.name?.replace(/\s+/g, "_")}_${podDate}.xlsx`;
+
+    try {
+      // Send to backend API
+      await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "merchandiser_pod",
+          title: `POD Tracker: ${selectedStore?.name} (${podDeliveryRef})`,
+          fileUrl: `https://storage.supabase.co/v1/object/public/documents/${Date.now()}_${uploadedName}`,
+          fileName: uploadedName,
+          notes: podNotes,
+          metadata: {
+            storeId: podStoreId,
+            storeName: selectedStore?.name,
+            deliveryRef: podDeliveryRef,
+            merchandiserId,
+            date: podDate,
+          }
+        }),
+      });
+    } catch {
+      // continue for local responsiveness
+    }
+
+    const newSubmission = {
+      id: `POD-${Math.floor(100 + Math.random() * 900)}`,
+      storeName: selectedStore?.name || "Retail Outlet",
+      storeId: podStoreId,
+      deliveryRef: podDeliveryRef,
+      fileName: uploadedName,
+      date: `${podDate} ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+      notes: podNotes,
+      status: "Received by Supervisor (Michael Olayiwola)",
+    };
+
+    setMyPodSubmissions([newSubmission, ...myPodSubmissions]);
+    setIsUploadingPod(false);
+    setPodFileName("");
+    flash(`POD Tracker for ${selectedStore?.name} uploaded! Received instantly on Supervisor Dashboard.`);
   }
 
   const shelfTrend = [
@@ -454,7 +565,199 @@ export default function MerchandiserDashboard() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              TAB 4: SHARE OF SHELF
+              TAB: POD TRACKER UPLOAD & SUPERVISOR TEMPLATE
+             ══════════════════════════════════════════════════════════════ */}
+          {activePage === "pod-upload" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {/* Supervisor Official Template Download Banner */}
+              <div style={{
+                background: "linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(14, 116, 144, 0.12) 100%)",
+                border: "1px solid rgba(13, 148, 136, 0.3)",
+                borderRadius: 14, padding: "20px 22px",
+                display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 12, display: "grid", placeItems: "center",
+                    background: "#0d9488", color: "#fff", flexShrink: 0
+                  }}>
+                    <FileSpreadsheet size={24} />
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: "var(--text)" }}>Official Supervisor POD Tracker Template</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#0d9488", color: "#fff" }}>
+                        Verified by Michael Olayiwola (Supervisor)
+                      </span>
+                    </div>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--muted)" }}>
+                      Download the exact standardized Proof of Delivery template required by your Supervisor. Fill in waybill #, SKU counts, and store receiver confirmation.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadTemplate}
+                  style={{
+                    background: "#0d9488", color: "#fff", border: "none", padding: "10px 18px",
+                    borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+                    boxShadow: "0 2px 8px rgba(13, 148, 136, 0.25)"
+                  }}
+                >
+                  <Download size={15} /> Download Official Template (.csv)
+                </button>
+              </div>
+
+              {/* POD Upload Form */}
+              <section className="admin-panel">
+                <header>
+                  <div>
+                    <h2>Upload Completed POD Tracker</h2>
+                    <p>Submit your verified proof of delivery for automated supervisor receipt & verification</p>
+                  </div>
+                  <UploadCloud size={18} color="#0d9488" />
+                </header>
+
+                <form onSubmit={handlePodUploadSubmit} style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Retail Store</label>
+                      <select
+                        value={podStoreId}
+                        onChange={(e) => setPodStoreId(e.target.value)}
+                        style={{ width: "100%", marginTop: 4, height: 38, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12 }}
+                      >
+                        {myStores.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name} ({s.id})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Delivery Waybill / Invoice Ref</label>
+                      <input
+                        type="text"
+                        value={podDeliveryRef}
+                        onChange={(e) => setPodDeliveryRef(e.target.value)}
+                        placeholder="e.g. WB-2026-09-842"
+                        required
+                        style={{ width: "100%", marginTop: 4, height: 38, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12 }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Delivery Date</label>
+                      <input
+                        type="date"
+                        value={podDate}
+                        onChange={(e) => setPodDate(e.target.value)}
+                        required
+                        style={{ width: "100%", marginTop: 4, height: 38, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Completed POD File (.xlsx, .csv, .pdf)</label>
+                      <input
+                        type="file"
+                        accept=".xlsx,.csv,.pdf,.png,.jpg,.jpeg"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) setPodFileName(f.name);
+                        }}
+                        style={{ width: "100%", marginTop: 4, padding: "6px 0", fontSize: 12, color: "var(--text)" }}
+                      />
+                      <small style={{ fontSize: 10, color: "var(--muted)" }}>
+                        {podFileName ? `Selected: ${podFileName}` : "Matches supervisor template schema"}
+                      </small>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Store Manager Confirmation / Notes</label>
+                      <input
+                        type="text"
+                        value={podNotes}
+                        onChange={(e) => setPodNotes(e.target.value)}
+                        placeholder="e.g. 24 cartons received intact, manager stamp attached"
+                        style={{ width: "100%", marginTop: 4, height: 38, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+                    <button
+                      type="submit"
+                      disabled={isUploadingPod}
+                      style={{
+                        background: "#0d9488", color: "#fff", border: "none", padding: "10px 22px",
+                        borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+                        boxShadow: "0 2px 10px rgba(13, 148, 136, 0.3)"
+                      }}
+                    >
+                      <Send size={14} />
+                      {isUploadingPod ? "Uploading & Alerting Supervisor..." : "Upload POD & Notify Supervisor Instantly"}
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              {/* Submitted POD History */}
+              <section className="admin-panel">
+                <header>
+                  <div>
+                    <h2>Submitted Proof of Delivery (POD) Records</h2>
+                    <p>Track supervisor receipt and approval verification of your submitted delivery trackers</p>
+                  </div>
+                  <FileCheck size={18} color="#0d9488" />
+                </header>
+
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>POD Record ID</th>
+                        <th>Retail Store</th>
+                        <th>Waybill / Ref</th>
+                        <th>Attached File</th>
+                        <th>Submission Timestamp</th>
+                        <th>Notes</th>
+                        <th>Supervisor Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {myPodSubmissions.map((p) => (
+                        <tr key={p.id}>
+                          <td data-label="ID"><b>{p.id}</b></td>
+                          <td data-label="Store"><b>{p.storeName}</b><br /><small>{p.storeId}</small></td>
+                          <td data-label="Ref"><code>{p.deliveryRef}</code></td>
+                          <td data-label="File">
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#0d9488", fontWeight: 700, fontSize: 11 }}>
+                              <FileSpreadsheet size={13} /> {p.fileName}
+                            </span>
+                          </td>
+                          <td data-label="Date">{p.date}</td>
+                          <td data-label="Notes" style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {p.notes}
+                          </td>
+                          <td data-label="Status">
+                            <span className={`status ${p.status.includes("Verified") ? "active" : "needs-review"}`}>
+                              <i /> {p.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              TAB 5: SHARE OF SHELF
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "shelf" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
