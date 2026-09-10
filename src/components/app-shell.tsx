@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Bell, CheckCircle2, ChevronRight, Database, FileText, LayoutDashboard, LogOut, Map, Menu, Moon,
   MoreHorizontal, Network, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
+  ShieldAlert, Banknote
 } from "lucide-react";
 import { NAV } from "../app/data";
 import useAuth from "../lib/useAuth";
@@ -28,9 +29,9 @@ export function AppShell({
   const { user, loading, signOut } = useAuth();
   const superAdminNav = [
     { label: "Global Performance", path: "/admin", icon: LayoutDashboard },
+    { label: "Centralized Action Center", path: "/action-center", icon: ShieldAlert },
+    { label: "VSR Credit & Loan Surveillance", path: "/vsr-surveillance", icon: Banknote },
     { label: "Users & Roles", path: "/hierarchy", icon: Users },
-    { label: "Territories and Routes", path: "/live-map", icon: Map },
-    { label: "API Integrations", path: "/reports", icon: Network },
     { label: "Funding & Deployment", path: "/funding-deployment", icon: Store },
     { label: "Audit trail", path: "/audit-trail", icon: FileText },
   ];

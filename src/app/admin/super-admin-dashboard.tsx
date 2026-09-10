@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Building2, Users, Banknote, AlertTriangle, CheckCircle, FileText,
   ShieldAlert, Check, X, Search, RefreshCw, Target,
-  TrendingUp, Layers, PieChart as PieIcon, BarChart3
+  TrendingUp, Layers, PieChart as PieIcon, BarChart3, ExternalLink
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -421,7 +422,7 @@ export default function SuperAdminDashboard() {
         background: "var(--card, #fff)", borderRadius: 12, border: "1px solid var(--line, #e5e7eb)",
         padding: 18, marginBottom: 22, boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 28, height: 28, borderRadius: 6, background: "#fef3c7", color: "#d97706", display: "grid", placeItems: "center" }}>
               <ShieldAlert size={16} />
@@ -435,12 +436,23 @@ export default function SuperAdminDashboard() {
               </p>
             </div>
           </div>
-          <span style={{
-            fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
-            background: "#fef3c7", color: "#d97706"
-          }}>
-            {displayEscalatedLoans.length + alerts.length} Action Items
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
+              background: "#fef3c7", color: "#d97706"
+            }}>
+              {displayEscalatedLoans.length + alerts.length} Action Items
+            </span>
+            <Link
+              href="/action-center"
+              style={{
+                fontSize: 11, fontWeight: 700, color: "#d97706", display: "flex", alignItems: "center",
+                gap: 4, textDecoration: "none", padding: "4px 8px", background: "#fef3c7", borderRadius: 6
+              }}
+            >
+              Open Full Console <ExternalLink size={12} />
+            </Link>
+          </div>
         </div>
 
         <div style={{ display: "grid", gap: 10 }}>
@@ -538,10 +550,21 @@ export default function SuperAdminDashboard() {
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
           <div>
-            <h2 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--text, #111)" }}>
-              VSR Credit & Loan Surveillance
-            </h2>
-            <p style={{ fontSize: 11, color: "var(--muted, #6b7280)", margin: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--text, #111)" }}>
+                VSR Credit & Loan Surveillance
+              </h2>
+              <Link
+                href="/vsr-surveillance"
+                style={{
+                  fontSize: 11, fontWeight: 700, color: "#0e918a", display: "flex", alignItems: "center",
+                  gap: 4, textDecoration: "none", padding: "2px 8px", background: "#ecfdf5", borderRadius: 6
+                }}
+              >
+                Open Full Surveillance Console <ExternalLink size={12} />
+              </Link>
+            </div>
+            <p style={{ fontSize: 11, color: "var(--muted, #6b7280)", margin: "2px 0 0" }}>
               Live debt validation registry & funding eligibility gate
             </p>
           </div>
