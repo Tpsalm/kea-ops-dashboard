@@ -2,18 +2,17 @@
 
 // Shared application chrome (sidebar + topbar + notifications + toast + modals)
 // used by every dedicated tab page so navigation is consistent across routes.
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, CheckCircle2, ChevronRight, Database, FileText, LayoutDashboard, LogOut, Map, Menu, Moon,
-  MoreHorizontal, Network, Search, Settings, ShieldCheck, Store, Sun, UserRound, Users, X,
-  ShieldAlert, Banknote, Laptop, Palette, BellRing, Sliders, Globe, Lock, RefreshCw, Download,
-  Volume2, VolumeX, Sparkles, Check
+  Bell, CheckCircle2, ChevronRight, LayoutDashboard, LogOut, Menu, Moon,
+  MoreHorizontal, Search, Settings, ShieldCheck, Store, Sun, UserRound, X,
+  ShieldAlert, Banknote, Laptop, Camera, Trash2, Check, User
 } from "lucide-react";
 import { NAV } from "../app/data";
 import useAuth from "../lib/useAuth";
-import { useTheme, type ThemeMode, type UiDensity, type AccentColor } from "../lib/theme-provider";
+import { useTheme } from "../lib/theme-provider";
 
 export function AppShell({
   children,
@@ -29,7 +28,7 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
-  const { theme, isDark, setTheme, toggleTheme, preferences, updatePreferences, resetPreferences } = useTheme();
+  const { theme, isDark, setTheme, toggleTheme, preferences, updatePreferences } = useTheme();
 
   const superAdminNav = [
     { label: "Global Performance", path: "/admin", icon: LayoutDashboard },
@@ -43,13 +42,79 @@ export function AppShell({
   const [mobileNav, setMobileNav] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [panel, setPanel] = useState<null | "settings" | "profile" | "manage">(null);
-  const [settingsTab, setSettingsTab] = useState<"appearance" | "notifications" | "surveillance" | "regional" | "security">("appearance");
   const [notice, setNotice] = useState("");
+
+  // Profile avatar & custom info
+  const [avatar, setAvatar] = useState<string>("");
+  const [profileName, setProfileName] = useState<string>("KEA Administrator");
+  const [profileEmail, setProfileEmail] = useState<string>("admin@kea.com");
+
+  useEffect(() => {
+    try {
+      const storedAvatar = localStorage.getItem("kea_user_avatar");
+      if (storedAvatar) setAvatar(storedAvatar);
+
+      const storedName = localStorage.getItem("kea_user_name");
+      if (storedName) setProfileName(storedName);
+      else if (user?.name) setProfileName(user.name);
+
+      const storedEmail = localStorage.getItem("kea_user_email");
+      if (storedEmail) setProfileEmail(storedEmail);
+      else if (user?.email) setProfileEmail(user.email);
+    } catch {}
+  }, [user]);
 
   function flash(message: string) {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 2800);
   }
+
+  function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      flash("Image size exceeds 3MB limit");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const res = reader.result as string;
+      setAvatar(res);
+      try {
+        localStorage.setItem("kea_user_avatar", res);
+      } catch {}
+      flash("Profile photo updated successfully");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleRemoveAvatar() {
+    setAvatar("");
+    try {
+      localStorage.removeItem("kea_user_avatar");
+    } catch {}
+    flash("Profile photo removed");
+  }
+
+  function handleSaveSettings() {
+    try {
+      localStorage.setItem("kea_user_name", profileName);
+      localStorage.setItem("kea_user_email", profileEmail);
+      if (avatar) {
+        localStorage.setItem("kea_user_avatar", avatar);
+      }
+    } catch {}
+    setPanel(null);
+    flash("Settings and profile preferences saved!");
+  }
+
+  const initials = profileName
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "KA";
 
   if (loading || !user) {
     if (!loading && !user) router.replace("/login");
@@ -82,7 +147,20 @@ export function AppShell({
           <button type="button" onClick={() => { setPanel("manage"); setMobileNav(false); }}><ShieldCheck size={18} /><span>Data quality</span></button>
           <button type="button" onClick={() => { setPanel("settings"); setMobileNav(false); }}><Settings size={18} /><span>Settings</span></button>
         </nav>
-        <div className="sidebar-foot"><div className="user-avatar">KA</div><div><b>KEA Administrator</b><span>Operations · Full access</span></div><MoreHorizontal size={18} /></div>
+        <div className="sidebar-foot" onClick={() => setPanel("settings")} style={{ cursor: "pointer" }} title="Click to view profile & settings">
+          <div className="user-avatar">
+            {avatar ? (
+              <img src={avatar} alt="Profile" className="user-avatar-img" />
+            ) : (
+              initials
+            )}
+          </div>
+          <div>
+            <b>{profileName}</b>
+            <span>{user.role === "super-admin" ? "Super Admin · Full access" : "Operations · Full access"}</span>
+          </div>
+          <MoreHorizontal size={18} />
+        </div>
         <button type="button" className="sidebar-signout" onClick={() => void signOut()}><LogOut size={16} /><span>Sign out</span></button>
       </aside>
 
@@ -95,7 +173,19 @@ export function AppShell({
               {isDark ? <Sun size={19} /> : <Moon size={19} />}
             </button>
             <button type="button" className="bell" onClick={() => setNotificationsOpen(!notificationsOpen)} aria-label="Open notifications"><Bell size={19} /><i /></button>
-            <button type="button" className="user-avatar small profile-button" onClick={() => setPanel("profile")} aria-label="Open profile">KA</button>
+            <button
+              type="button"
+              className="user-avatar small profile-button"
+              onClick={() => setPanel("settings")}
+              aria-label="Open settings & profile"
+              title="Open profile & settings"
+            >
+              {avatar ? (
+                <img src={avatar} alt="Profile" className="user-avatar-img" />
+              ) : (
+                initials
+              )}
+            </button>
           </div>
           {notificationsOpen && (
             <div className="notification-popover">
@@ -129,495 +219,188 @@ export function AppShell({
         </div>
       )}
 
-      {/* ─── EXPANDED EXECUTIVE SETTINGS MODAL ─── */}
+      {/* ─── STREAMLINED, NEAT & STRUCTURED SETTINGS & PROFILE MODAL ─── */}
       {panel === "settings" && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setPanel(null); }}>
-          <section className="action-modal settings-modal" role="dialog" aria-modal="true" aria-label="System settings">
+          <section className="action-modal settings-modal-clean" role="dialog" aria-modal="true" aria-label="System settings and profile">
             <div className="modal-head">
               <div>
-                <small>KEA OPERATIONS · EXECUTIVE CONFIGURATION</small>
-                <h2>System Settings & Preferences</h2>
+                <small>KEA OPERATIONS · WORKSPACE PREFERENCES</small>
+                <h2>Settings & Profile</h2>
               </div>
               <button type="button" onClick={() => setPanel(null)} aria-label="Close settings"><X size={19} /></button>
             </div>
 
-            {/* Tab Bar */}
-            <div className="settings-tab-bar">
-              <button
-                type="button"
-                className={`settings-tab-btn ${settingsTab === "appearance" ? "active" : ""}`}
-                onClick={() => setSettingsTab("appearance")}
-              >
-                <Palette size={14} /> Appearance
-              </button>
-              <button
-                type="button"
-                className={`settings-tab-btn ${settingsTab === "notifications" ? "active" : ""}`}
-                onClick={() => setSettingsTab("notifications")}
-              >
-                <BellRing size={14} /> Notifications & Email
-              </button>
-              <button
-                type="button"
-                className={`settings-tab-btn ${settingsTab === "surveillance" ? "active" : ""}`}
-                onClick={() => setSettingsTab("surveillance")}
-              >
-                <Sliders size={14} /> Surveillance & Gates
-              </button>
-              <button
-                type="button"
-                className={`settings-tab-btn ${settingsTab === "regional" ? "active" : ""}`}
-                onClick={() => setSettingsTab("regional")}
-              >
-                <Globe size={14} /> Regional & Currency
-              </button>
-              <button
-                type="button"
-                className={`settings-tab-btn ${settingsTab === "security" ? "active" : ""}`}
-                onClick={() => setSettingsTab("security")}
-              >
-                <Lock size={14} /> Security & System
-              </button>
+            <div className="settings-body-clean">
+              {/* SECTION 1: PROFILE & IDENTITY */}
+              <div className="settings-section-card">
+                <div className="settings-section-header">
+                  <UserRound size={15} />
+                  <span>Profile Settings & Avatar</span>
+                </div>
+
+                <div className="profile-avatar-row">
+                  <div className="profile-avatar-preview">
+                    {avatar ? (
+                      <img src={avatar} alt="Profile preview" />
+                    ) : (
+                      initials
+                    )}
+                  </div>
+
+                  <div className="avatar-upload-actions">
+                    <div className="avatar-upload-btns">
+                      <label className="btn-upload-photo" tabIndex={0}>
+                        <Camera size={13} />
+                        <span>Upload Photo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                      {avatar && (
+                        <button type="button" className="btn-remove-photo" onClick={handleRemoveAvatar}>
+                          <Trash2 size={12} />
+                          <span>Remove</span>
+                        </button>
+                      )}
+                    </div>
+                    <span className="avatar-hint">Supports JPG, PNG, WebP (max 3MB)</span>
+                  </div>
+                </div>
+
+                <div className="profile-fields-grid">
+                  <div className="profile-field-group">
+                    <label>Display Name</label>
+                    <input
+                      type="text"
+                      className="profile-field-input"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      placeholder="e.g. KEA Administrator"
+                    />
+                  </div>
+                  <div className="profile-field-group">
+                    <label>Email Address</label>
+                    <input
+                      type="email"
+                      className="profile-field-input"
+                      value={profileEmail}
+                      onChange={(e) => setProfileEmail(e.target.value)}
+                      placeholder="e.g. admin@kea.com"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4 }}>
+                  <span style={{ fontSize: 11, color: "var(--muted)" }}>Executive Role</span>
+                  <div className="profile-role-badge">
+                    <ShieldAlert size={12} />
+                    <span>{user?.role === "super-admin" ? "Super Admin Executive · Full Access" : `${user?.role?.toUpperCase()} Access`}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: DISPLAY LIGHTING MODE */}
+              <div className="settings-section-card">
+                <div className="settings-section-header">
+                  <Sun size={15} />
+                  <span>Display Lighting & Theme</span>
+                </div>
+                <p style={{ fontSize: 11, color: "var(--muted)", margin: 0 }}>
+                  Adjust workspace lighting. Affects all pages and dashboards seamlessly.
+                </p>
+
+                <div className="theme-selector-grid">
+                  <button
+                    type="button"
+                    className={`theme-card-btn ${theme === "light" ? "active" : ""}`}
+                    onClick={() => { setTheme("light"); flash("Light theme applied across all pages"); }}
+                  >
+                    {theme === "light" && <div className="theme-card-check"><Check size={11} /></div>}
+                    <div className="theme-card-icon"><Sun size={18} /></div>
+                    <strong>Light</strong>
+                    <span>Crisp daylight mode</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`theme-card-btn ${theme === "dark" ? "active" : ""}`}
+                    onClick={() => { setTheme("dark"); flash("Dark theme applied across all pages"); }}
+                  >
+                    {theme === "dark" && <div className="theme-card-check"><Check size={11} /></div>}
+                    <div className="theme-card-icon"><Moon size={18} /></div>
+                    <strong>Dark</strong>
+                    <span>Low-light contrast mode</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`theme-card-btn ${theme === "system" ? "active" : ""}`}
+                    onClick={() => { setTheme("system"); flash("System theme synchronized"); }}
+                  >
+                    {theme === "system" && <div className="theme-card-check"><Check size={11} /></div>}
+                    <div className="theme-card-icon"><Laptop size={18} /></div>
+                    <strong>Auto System</strong>
+                    <span>Matches operating system</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* SECTION 3: CORE PREFERENCES & ALERTS */}
+              <div className="settings-section-card">
+                <div className="settings-section-header">
+                  <Bell size={15} />
+                  <span>Alerts & Notifications</span>
+                </div>
+
+                <div className="settings-toggle-row">
+                  <div className="settings-toggle-row-info">
+                    <b>Instant Email & In-App Decision Alerts</b>
+                    <span>Supervisors immediately receive notifications when requests are Approved or Disapproved.</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={`settings-toggle ${preferences.emailAlertsOnApproval ? "active" : ""}`}
+                    onClick={() => {
+                      updatePreferences({ emailAlertsOnApproval: !preferences.emailAlertsOnApproval });
+                      flash(`Instant email dispatch ${!preferences.emailAlertsOnApproval ? "enabled" : "disabled"}`);
+                    }}
+                    aria-label="Toggle email alerts"
+                  >
+                    <i />
+                  </button>
+                </div>
+
+                <div className="settings-toggle-row" style={{ paddingTop: 8, borderTop: "1px solid var(--line)" }}>
+                  <div className="settings-toggle-row-info">
+                    <b>Audio Chimes on Action</b>
+                    <span>Play subtle audio feedback on high-severity actions and loan status updates.</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={`settings-toggle ${preferences.soundEnabled ? "active" : ""}`}
+                    onClick={() => {
+                      updatePreferences({ soundEnabled: !preferences.soundEnabled });
+                      flash(`Sound alerts ${!preferences.soundEnabled ? "enabled" : "disabled"}`);
+                    }}
+                    aria-label="Toggle sound alerts"
+                  >
+                    <i />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Tab 1: Appearance */}
-            {settingsTab === "appearance" && (
-              <div className="settings-tab-content">
-                <div className="settings-group">
-                  <p className="settings-group-title">Display Lighting & Theme Mode</p>
-                  <div className="theme-pill-grid">
-                    <button
-                      type="button"
-                      className={`theme-pill-btn ${theme === "light" ? "active" : ""}`}
-                      onClick={() => { setTheme("light"); flash("Light theme applied across all pages"); }}
-                    >
-                      <Sun size={20} />
-                      <span>Light</span>
-                      <small style={{ fontSize: 9, opacity: 0.7 }}>Crisp & bright</small>
-                    </button>
-                    <button
-                      type="button"
-                      className={`theme-pill-btn ${theme === "dark" ? "active" : ""}`}
-                      onClick={() => { setTheme("dark"); flash("Dark theme applied across all pages"); }}
-                    >
-                      <Moon size={20} />
-                      <span>Dark</span>
-                      <small style={{ fontSize: 9, opacity: 0.7 }}>Low-light contrast</small>
-                    </button>
-                    <button
-                      type="button"
-                      className={`theme-pill-btn ${theme === "system" ? "active" : ""}`}
-                      onClick={() => { setTheme("system"); flash("System theme synced across all pages"); }}
-                    >
-                      <Laptop size={20} />
-                      <span>System Auto</span>
-                      <small style={{ fontSize: 9, opacity: 0.7 }}>Follows OS setting</small>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="settings-group">
-                  <p className="settings-group-title">UI Layout Density</p>
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Compact Table & KPI Density</strong>
-                      <span>Tighter rows and cards for high-volume field operations monitoring.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.density === "compact" ? "active" : ""}`}
-                      onClick={() => {
-                        const next = preferences.density === "compact" ? "comfortable" : "compact";
-                        updatePreferences({ density: next });
-                        flash(`Layout density set to ${next}`);
-                      }}
-                      aria-label="Toggle compact density"
-                    >
-                      <i />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="settings-group">
-                  <p className="settings-group-title">Accent Palette</p>
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Brand Accent Highlight</strong>
-                      <span>Select primary emphasis color across action buttons and active indicators.</span>
-                    </div>
-                    <div className="accent-swatch-list">
-                      {[
-                        { key: "emerald", label: "Emerald", color: "#0e918a" },
-                        { key: "blue", label: "Blue", color: "#2563eb" },
-                        { key: "amber", label: "Amber", color: "#d97706" },
-                        { key: "violet", label: "Violet", color: "#7c3aed" },
-                      ].map((swatch) => (
-                        <button
-                          key={swatch.key}
-                          type="button"
-                          className={`accent-swatch-btn ${preferences.accent === swatch.key ? "active" : ""}`}
-                          style={{ background: swatch.color }}
-                          onClick={() => {
-                            updatePreferences({ accent: swatch.key as AccentColor });
-                            flash(`${swatch.label} accent applied`);
-                          }}
-                          title={swatch.label}
-                        >
-                          {preferences.accent === swatch.key && <Check size={14} color="#fff" />}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="settings-group">
-                  <p className="settings-group-title">Motion & Micro-interactions</p>
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Smooth UI Transitions & Number Counter Animation</strong>
-                      <span>Enable framer-motion smooth counter ticker and panel entrances.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.motion ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ motion: !preferences.motion });
-                        flash(`Motion animations ${!preferences.motion ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle motion"
-                    >
-                      <i />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 2: Notifications */}
-            {settingsTab === "notifications" && (
-              <div className="settings-tab-content">
-                <div className="settings-group">
-                  <p className="settings-group-title">Super Admin Approval Dispatch Engine</p>
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Instant Email & In-App Alerts on Super Admin Review</strong>
-                      <span>Supervisors immediately receive an email receipt and dashboard alert when loans or escalations are Approved or Rejected.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.emailAlertsOnApproval ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ emailAlertsOnApproval: !preferences.emailAlertsOnApproval });
-                        flash(`Instant email dispatch ${!preferences.emailAlertsOnApproval ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle email alerts"
-                    >
-                      <i />
-                    </button>
-                  </div>
-
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Critical Stockout Warning Triggers</strong>
-                      <span>Generate urgent escalation alerts when retail outlet inventory buffers drop below safe threshold (&lt;15%).</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.stockoutAlerts ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ stockoutAlerts: !preferences.stockoutAlerts });
-                        flash(`Stockout warnings ${!preferences.stockoutAlerts ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle stockout alerts"
-                    >
-                      <i />
-                    </button>
-                  </div>
-
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Daily Regional Operations Digest (8:00 AM)</strong>
-                      <span>Automated morning executive brief with route completion rates, open loan debt, and pending approvals.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.dailyDigest ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ dailyDigest: !preferences.dailyDigest });
-                        flash(`Daily digest ${!preferences.dailyDigest ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle daily digest"
-                    >
-                      <i />
-                    </button>
-                  </div>
-
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Auditory Chimes on High-Severity Alerts</strong>
-                      <span>Play discreet chime for priority 1 emergency route or funding escalations.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.soundEnabled ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ soundEnabled: !preferences.soundEnabled });
-                        flash(`Sound alerts ${!preferences.soundEnabled ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle sound alerts"
-                    >
-                      <i />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 3: Surveillance & Field Controls */}
-            {settingsTab === "surveillance" && (
-              <div className="settings-tab-content">
-                <div className="settings-group">
-                  <p className="settings-group-title">Field Operations Governance</p>
-                  
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>VSR Credit Surveillance Gate</strong>
-                      <span>Auto-lock new funding requests for VSRs with &gt;₦100,000 in unpaid loan balances until executive clearance.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.vsrDebtLimitLock ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ vsrDebtLimitLock: !preferences.vsrDebtLimitLock });
-                        flash(`VSR credit gate ${!preferences.vsrDebtLimitLock ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle VSR credit gate"
-                    >
-                      <i />
-                    </button>
-                  </div>
-
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Mandatory Leave Relief Staff Assignment</strong>
-                      <span>Require supervisors to select an active relief merchandiser before approving field leaves.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.requireLeaveRelief ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ requireLeaveRelief: !preferences.requireLeaveRelief });
-                        flash(`Leave relief rule ${!preferences.requireLeaveRelief ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle leave relief requirement"
-                    >
-                      <i />
-                    </button>
-                  </div>
-
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>GPS Geofence Validation (Strict 50m Radius)</strong>
-                      <span>Enforce strict 50m proximity (vs 150m standard) for store check-ins to prevent off-site GPS spoofing.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.strictGpsRadius ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ strictGpsRadius: !preferences.strictGpsRadius });
-                        flash(`Strict GPS check-in ${!preferences.strictGpsRadius ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle strict GPS"
-                    >
-                      <i />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 4: Regional & Localization */}
-            {settingsTab === "regional" && (
-              <div className="settings-tab-content">
-                <div className="settings-group">
-                  <p className="settings-group-title">Localization & Regional Defaults</p>
-                  
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Default Territory Focus on Login</strong>
-                      <span>Default region filter applied when opening surveillance dashboards.</span>
-                    </div>
-                    <select
-                      value={preferences.defaultRegion}
-                      onChange={(e) => {
-                        updatePreferences({ defaultRegion: e.target.value });
-                        flash(`Default region set to ${e.target.value}`);
-                      }}
-                      style={{
-                        padding: "6px 10px", borderRadius: 6, border: "1px solid var(--line)",
-                        background: "var(--card)", color: "var(--text)", fontSize: 11, fontWeight: 600
-                      }}
-                    >
-                      <option value="all">All Nigeria (Global)</option>
-                      <option value="Lagos">Lagos Metro (Central & West)</option>
-                      <option value="Ogun">Ogun Hub (Abeokuta & Sagamu)</option>
-                      <option value="Delta">Delta Axis (Asaba & Warri)</option>
-                      <option value="Oyo">Oyo Region (Ibadan Metro)</option>
-                      <option value="Enugu">Enugu Metro (North & South)</option>
-                    </select>
-                  </div>
-
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Currency Symbol Format</strong>
-                      <span>Display format for funding amounts, VSR loan surveillance balances, and sales figures.</span>
-                    </div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button
-                        type="button"
-                        className={`secondary ${preferences.currencyFormat === "symbol" ? "primary" : ""}`}
-                        style={{ height: 30, fontSize: 11, padding: "0 10px" }}
-                        onClick={() => {
-                          updatePreferences({ currencyFormat: "symbol" });
-                          flash("Currency format: ₦ (Naira Symbol)");
-                        }}
-                      >
-                        ₦ (Symbol)
-                      </button>
-                      <button
-                        type="button"
-                        className={`secondary ${preferences.currencyFormat === "code" ? "primary" : ""}`}
-                        style={{ height: 30, fontSize: 11, padding: "0 10px" }}
-                        onClick={() => {
-                          updatePreferences({ currencyFormat: "code" });
-                          flash("Currency format: NGN (ISO)");
-                        }}
-                      >
-                        NGN (Code)
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Calendar Date Format</strong>
-                      <span>Standard date formatting across visit logs, audit trails, and leave trackers.</span>
-                    </div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button
-                        type="button"
-                        className={`secondary ${preferences.dateFormat === "DD/MM/YYYY" ? "primary" : ""}`}
-                        style={{ height: 30, fontSize: 11, padding: "0 10px" }}
-                        onClick={() => {
-                          updatePreferences({ dateFormat: "DD/MM/YYYY" });
-                          flash("Date format: DD/MM/YYYY");
-                        }}
-                      >
-                        DD/MM/YYYY
-                      </button>
-                      <button
-                        type="button"
-                        className={`secondary ${preferences.dateFormat === "YYYY-MM-DD" ? "primary" : ""}`}
-                        style={{ height: 30, fontSize: 11, padding: "0 10px" }}
-                        onClick={() => {
-                          updatePreferences({ dateFormat: "YYYY-MM-DD" });
-                          flash("Date format: YYYY-MM-DD");
-                        }}
-                      >
-                        YYYY-MM-DD
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 5: Security & Session */}
-            {settingsTab === "security" && (
-              <div className="settings-tab-content">
-                <div className="settings-group">
-                  <p className="settings-group-title">Authentication & Executive Security</p>
-                  
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>2-Factor Authentication (2FA) for High-Value Capital Approvals</strong>
-                      <span>Require security passkey confirmation for disbursements exceeding ₦200,000.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`settings-toggle ${preferences.twoFactorApprovals ? "active" : ""}`}
-                      onClick={() => {
-                        updatePreferences({ twoFactorApprovals: !preferences.twoFactorApprovals });
-                        flash(`2FA for high-value approvals ${!preferences.twoFactorApprovals ? "enabled" : "disabled"}`);
-                      }}
-                      aria-label="Toggle 2FA"
-                    >
-                      <i />
-                    </button>
-                  </div>
-
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Executive Session Inactivity Timeout</strong>
-                      <span>Automatically locks console after period of administrative inactivity.</span>
-                    </div>
-                    <select
-                      value={preferences.sessionTimeoutMinutes}
-                      onChange={(e) => {
-                        const mins = Number(e.target.value);
-                        updatePreferences({ sessionTimeoutMinutes: mins });
-                        flash(`Session timeout set to ${mins} minutes`);
-                      }}
-                      style={{
-                        padding: "6px 10px", borderRadius: 6, border: "1px solid var(--line)",
-                        background: "var(--card)", color: "var(--text)", fontSize: 11, fontWeight: 600
-                      }}
-                    >
-                      <option value={15}>15 Minutes</option>
-                      <option value={30}>30 Minutes</option>
-                      <option value={60}>1 Hour</option>
-                      <option value={240}>4 Hours</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="settings-group">
-                  <p className="settings-group-title">Diagnostics & Cache</p>
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <strong>Purge Local Offline Cache</strong>
-                      <span>Clear local storage cache and force refresh all real-time field operations datasets.</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="secondary"
-                      style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}
-                      onClick={() => {
-                        resetPreferences();
-                        flash("Local cache cleared & default preferences restored");
-                      }}
-                    >
-                      <RefreshCw size={13} /> Clear Cache
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Footer actions */}
-            <div className="modal-actions" style={{ padding: "12px 18px", borderTop: "1px solid var(--line)" }}>
+            {/* MODAL FOOTER */}
+            <div className="modal-actions" style={{ padding: "12px 20px", borderTop: "1px solid var(--line)", background: "var(--soft)" }}>
               <button type="button" className="secondary" onClick={() => setPanel(null)}>
-                Close Settings
+                Close
               </button>
-              <button
-                type="button"
-                className="primary"
-                onClick={() => {
-                  setPanel(null);
-                  flash("All system settings saved and active");
-                }}
-              >
-                Save & Apply
+              <button type="button" className="primary" onClick={handleSaveSettings}>
+                <Check size={14} /> Save Preferences
               </button>
             </div>
           </section>
@@ -627,11 +410,22 @@ export function AppShell({
       {panel === "profile" && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setPanel(null); }}>
           <section className="action-modal" role="dialog" aria-modal="true" aria-label="Administrator profile">
-            <div className="modal-head"><div><small>KEA OPERATIONS</small><h2>Administrator profile</h2></div><button type="button" onClick={() => setPanel(null)} aria-label="Close panel"><X size={19} /></button></div>
+            <div className="modal-head"><div><small>KEA OPERATIONS</small><h2>Administrator Profile</h2></div><button type="button" onClick={() => setPanel(null)} aria-label="Close panel"><X size={19} /></button></div>
             <div className="modal-body">
-              <div className="profile-summary"><div className="user-avatar">KA</div><div><b>KEA Administrator</b><span>Operations · Full access</span></div></div>
-              <button type="button" className="modal-row" onClick={() => setPanel("settings")}><Settings size={17} /><span><b>Display preferences</b><small>Theme and dashboard appearance</small></span><ChevronRight size={16} /></button>
-              <button type="button" className="modal-row" onClick={() => { setPanel(null); flash("Profile is up to date"); }}><UserRound size={17} /><span><b>Review profile</b><small>Account details and access role</small></span><ChevronRight size={16} /></button>
+              <div className="profile-summary">
+                <div className="user-avatar" style={{ width: 48, height: 48, overflow: "hidden" }}>
+                  {avatar ? (
+                    <img src={avatar} alt="Profile" className="user-avatar-img" />
+                  ) : (
+                    initials
+                  )}
+                </div>
+                <div>
+                  <b>{profileName}</b>
+                  <span>{profileEmail} · Full access</span>
+                </div>
+              </div>
+              <button type="button" className="modal-row" onClick={() => setPanel("settings")}><Settings size={17} /><span><b>Settings & Display Preferences</b><small>Theme lighting, profile photo, and notifications</small></span><ChevronRight size={16} /></button>
               <button type="button" className="modal-row danger" onClick={() => void signOut()}><LogOut size={17} /><span><b>Sign out</b><small>End this session and return to login</small></span><ChevronRight size={16} /></button>
             </div>
           </section>
