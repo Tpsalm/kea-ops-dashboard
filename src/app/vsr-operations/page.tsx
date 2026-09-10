@@ -18,12 +18,12 @@ import { FieldHero } from "../../components/field-hero";
 import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
 import { Badge } from "../../components/ui/badge";
-import { ProfileSettingsPanel } from "../../components/profile-settings-panel";
+import { ProfileSettingsModal } from "../../components/profile-settings-modal";
 import { useTheme } from "../../lib/theme-provider";
 
-type PageKey = "home" | "funding" | "reports" | "routes" | "sales" | "performance" | "settings";
+type PageKey = "home" | "funding" | "reports" | "routes" | "sales" | "performance";
 
-const navItems: { key: PageKey; label: string; icon: any }[] = [
+const navItems: { key: PageKey | "settings"; label: string; icon: any }[] = [
   { key: "home", label: "Overview", icon: Home },
   { key: "funding", label: "Capital & Funding", icon: Banknote },
   { key: "reports", label: "Weekly & Monthly Reports", icon: FileText },
@@ -40,7 +40,6 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   routes: { title: "MY ROUTES & STORES", subtitle: "Route coverage, scheduled visits and real-time completion tracking." },
   sales: { title: "DAILY SALES & COLLECTIONS", subtitle: "Record sales transactions, collection modes and outstanding credit." },
   performance: { title: "PERFORMANCE & TARGETS", subtitle: "Daily, weekly and monthly targets vs actual achievements." },
-  settings: { title: "SETTINGS & PREFERENCES", subtitle: "Display lighting mode, profile details, and account preferences." },
 };
 
 export default function VsrOperationsPage() {
@@ -51,6 +50,7 @@ export default function VsrOperationsPage() {
   const [salesLog, setSalesLog] = useState(dailySales);
   const [period, setPeriod] = useState("Today");
   const [notice, setNotice] = useState("");
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Profile avatar & custom info state
   const [userAvatar, setUserAvatar] = useState<string>("");
@@ -324,8 +324,16 @@ export default function VsrOperationsPage() {
             <button
               type="button"
               key={key}
-              className={activePage === key ? "active" : ""}
-              onClick={() => { setActivePage(key); setMobileNav(false); setSearch(""); }}
+              className={key !== "settings" && activePage === key ? "active" : ""}
+              onClick={() => {
+                if (key === "settings") {
+                  setShowSettingsModal(true);
+                } else {
+                  setActivePage(key as PageKey);
+                  setSearch("");
+                }
+                setMobileNav(false);
+              }}
             >
               <Icon size={15} /> {label}
             </button>
@@ -334,7 +342,7 @@ export default function VsrOperationsPage() {
 
         {/* Profile Card in Sidebar Footer */}
         <div
-          onClick={() => { setActivePage("settings"); setMobileNav(false); }}
+          onClick={() => { setShowSettingsModal(true); setMobileNav(false); }}
           style={{
             display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
             background: "var(--soft)", borderRadius: 10, border: "1px solid var(--line)",
@@ -376,7 +384,7 @@ export default function VsrOperationsPage() {
             <button type="button" aria-label="Notifications" onClick={() => setActivePage("funding")}><Bell size={15} /></button>
             <button
               type="button"
-              onClick={() => setActivePage("settings")}
+              onClick={() => setShowSettingsModal(true)}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
                 background: "linear-gradient(135deg, #2563eb, #0d9488)", color: "#fff",
@@ -1053,22 +1061,6 @@ export default function VsrOperationsPage() {
               </section>
             </div>
           )}
-
-          {/* ══════════════════════════════════════════════════════════════
-              TAB 6: SETTINGS
-             ══════════════════════════════════════════════════════════════ */}
-          {activePage === "settings" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <ProfileSettingsPanel
-                role="vsr"
-                defaultName={userName || "Babatunde Adeleke"}
-                defaultEmail="babatunde.adeleke@kea.com"
-                roleLabel="Van Sales Representative · Fleet Lead"
-                territoryLabel="Route 04 - Lagos Central Axis"
-                onFlash={flash}
-              />
-            </div>
-          )}
         </div>
       </main>
 
@@ -1183,6 +1175,16 @@ export default function VsrOperationsPage() {
           </section>
         </div>
       )}
+      {/* ─── SETTINGS & PROFILE POPUP MODAL ─── */}
+      <ProfileSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        role="vsr"
+        defaultName={userName || "Babatunde Adeleke"}
+        defaultEmail="babatunde.adeleke@kea.com"
+        roleLabel="Van Sales Representative · Fleet Lead"
+        onFlash={flash}
+      />
     </div>
   );
 }

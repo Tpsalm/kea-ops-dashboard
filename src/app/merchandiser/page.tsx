@@ -19,12 +19,12 @@ import { FieldHero } from "../../components/field-hero";
 import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
 import { Badge } from "../../components/ui/badge";
-import { ProfileSettingsPanel } from "../../components/profile-settings-panel";
+import { ProfileSettingsModal } from "../../components/profile-settings-modal";
 import { useTheme } from "../../lib/theme-provider";
 
-type PageKey = "home" | "stores" | "leave" | "pod-upload" | "photos" | "settings";
+type PageKey = "home" | "stores" | "leave" | "pod-upload" | "photos";
 
-const navItems: { key: PageKey; label: string; icon: any }[] = [
+const navItems: { key: PageKey | "settings"; label: string; icon: any }[] = [
   { key: "home", label: "Overview", icon: Home },
   { key: "stores", label: "Assigned Stores", icon: Store },
   { key: "leave", label: "Leave Requests", icon: Calendar },
@@ -39,7 +39,6 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   leave: { title: "LEAVE APPLICATION & SCHEDULE", subtitle: "Submit scheduled leave requests with relief coverage directly to your Supervisor." },
   "pod-upload": { title: "POD TRACKER UPLOAD & TEMPLATE", subtitle: "Download the supervisor's official template and upload verified Proof of Delivery trackers." },
   photos: { title: "ACTIVITY PHOTOS & EVIDENCE", subtitle: "Capture, upload and geotag shelf audits, gondola displays, and retail store evidence." },
-  settings: { title: "SETTINGS & PREFERENCES", subtitle: "Display lighting mode, profile information, and account settings." },
 };
 
 const posmItems = ["Shelf talkers", "Brand posters", "Wobblers", "Standees", "Price cards", "Gondola branding"];
@@ -50,6 +49,7 @@ export default function MerchandiserDashboard() {
   const [mobileNav, setMobileNav] = useState(false);
   const { theme, isDark, setTheme, toggleTheme } = useTheme();
   const [search, setSearch] = useState("");
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Profile avatar & custom info state
   const [userAvatar, setUserAvatar] = useState<string>("");
@@ -428,8 +428,16 @@ export default function MerchandiserDashboard() {
             <button
               type="button"
               key={key}
-              className={activePage === key ? "active" : ""}
-              onClick={() => { setActivePage(key); setMobileNav(false); setSearch(""); }}
+              className={key !== "settings" && activePage === key ? "active" : ""}
+              onClick={() => {
+                if (key === "settings") {
+                  setShowSettingsModal(true);
+                } else {
+                  setActivePage(key as PageKey);
+                  setSearch("");
+                }
+                setMobileNav(false);
+              }}
             >
               <Icon size={15} /> {label}
             </button>
@@ -438,7 +446,7 @@ export default function MerchandiserDashboard() {
 
         {/* Profile Card in Sidebar Footer */}
         <div
-          onClick={() => { setActivePage("settings"); setMobileNav(false); }}
+          onClick={() => { setShowSettingsModal(true); setMobileNav(false); }}
           style={{
             display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
             background: "var(--soft)", borderRadius: 10, border: "1px solid var(--line)",
@@ -480,7 +488,7 @@ export default function MerchandiserDashboard() {
             <button type="button" aria-label="Notifications" onClick={() => setActivePage("leave")}><Bell size={15} /></button>
             <button
               type="button"
-              onClick={() => setActivePage("settings")}
+              onClick={() => setShowSettingsModal(true)}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
                 background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
@@ -1149,22 +1157,6 @@ export default function MerchandiserDashboard() {
               </section>
             </div>
           )}
-
-          {/* ══════════════════════════════════════════════════════════════
-              TAB 7: SETTINGS
-             ══════════════════════════════════════════════════════════════ */}
-          {activePage === "settings" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <ProfileSettingsPanel
-                role="merchandiser"
-                defaultName={userName || "Maria Uchechukwu"}
-                defaultEmail="maria.uchechukwu@kea.com"
-                roleLabel="Merchandiser Specialist · Field Execution"
-                territoryLabel="Victoria Island Retail Outlets"
-                onFlash={flash}
-              />
-            </div>
-          )}
         </div>
       </main>
 
@@ -1474,6 +1466,16 @@ export default function MerchandiserDashboard() {
           </section>
         </div>
       )}
+      {/* ─── SETTINGS & PROFILE POPUP MODAL ─── */}
+      <ProfileSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        role="merchandiser"
+        defaultName={userName || "Maria Uchechukwu"}
+        defaultEmail="maria.uchechukwu@kea.com"
+        roleLabel="Merchandiser Specialist · Field Execution"
+        onFlash={flash}
+      />
     </div>
   );
 }

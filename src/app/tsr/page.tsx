@@ -19,13 +19,13 @@ import { FieldHero } from "../../components/field-hero";
 import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
 import { Badge } from "../../components/ui/badge";
-import { ProfileSettingsPanel } from "../../components/profile-settings-panel";
+import { ProfileSettingsModal } from "../../components/profile-settings-modal";
 
 import { useTheme } from "../../lib/theme-provider";
 
-type PageKey = "home" | "territory" | "pipeline" | "accounts" | "outlets" | "map" | "supervisors" | "settings";
+type PageKey = "home" | "territory" | "pipeline" | "accounts" | "outlets" | "map" | "supervisors";
 
-const navItems: { key: PageKey; label: string; icon: typeof Gauge }[] = [
+const navItems: { key: PageKey | "settings"; label: string; icon: typeof Gauge }[] = [
   { key: "home", label: "Dashboard", icon: Home },
   { key: "territory", label: "Territory performance", icon: Gauge },
   { key: "pipeline", label: "Pipeline funnel", icon: Layers },
@@ -44,7 +44,6 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   outlets: { title: "NEW OUTLETS ACQUIRED", subtitle: "Retail outlets under your territory coverage." },
   map: { title: "TERRITORY MAP", subtitle: "Field staff and coverage across your assigned territory." },
   supervisors: { title: "SUPERVISOR PERFORMANCE", subtitle: "Your supervisors' field output against targets." },
-  settings: { title: "SETTINGS & PREFERENCES", subtitle: "Display lighting mode, profile details, and account preferences." },
 };
 
 export default function TsrDashboard() {
@@ -60,6 +59,7 @@ export default function TsrDashboard() {
   const [newTerritory, setNewTerritory] = useState("Lagos Central");
   const [period, setPeriod] = useState("Last 30 days");
   const [notice, setNotice] = useState("");
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   function flash(message: string) {
     setNotice(message);
@@ -181,7 +181,20 @@ export default function TsrDashboard() {
         </div>
         <nav>
           {navItems.map(({ key, label, icon: Icon }) => (
-            <button type="button" key={key} className={activePage === key ? "active" : ""} onClick={() => { setActivePage(key); setMobileNav(false); setSearch(""); }}>
+            <button
+              type="button"
+              key={key}
+              className={key !== "settings" && activePage === key ? "active" : ""}
+              onClick={() => {
+                if (key === "settings") {
+                  setShowSettingsModal(true);
+                } else {
+                  setActivePage(key as PageKey);
+                  setSearch("");
+                }
+                setMobileNav(false);
+              }}
+            >
               <Icon size={15} /> {label}
             </button>
           ))}
@@ -189,7 +202,7 @@ export default function TsrDashboard() {
 
         {/* Profile Card in Sidebar Footer */}
         <div
-          onClick={() => { setActivePage("settings"); setMobileNav(false); }}
+          onClick={() => { setShowSettingsModal(true); setMobileNav(false); }}
           style={{
             display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
             background: "var(--soft)", borderRadius: 10, border: "1px solid var(--line)",
@@ -231,7 +244,7 @@ export default function TsrDashboard() {
             <button type="button" aria-label="Notifications"><Bell size={15} /></button>
             <button
               type="button"
-              onClick={() => setActivePage("settings")}
+              onClick={() => setShowSettingsModal(true)}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
                 background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
@@ -599,21 +612,19 @@ export default function TsrDashboard() {
               </section>
             </>
           )}
-
-          {activePage === "settings" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <ProfileSettingsPanel
-                role="tsr"
-                defaultName={tsr?.name || "TSR Lead"}
-                defaultEmail="tsr.lead@kea.com"
-                roleLabel="Territory Sales Representative · Regional Lead"
-                territoryLabel={`${tsr?.region || "Lagos"} · ${tsr?.route || "Territory"}`}
-                onFlash={flash}
-              />
-            </div>
-          )}
         </div>
       </main>
+
+      {/* ─── SETTINGS & PROFILE POPUP MODAL ─── */}
+      <ProfileSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        role="tsr"
+        defaultName={userName || tsr?.name || "TSR Lead"}
+        defaultEmail="tsr.lead@kea.com"
+        roleLabel="Territory Sales Representative · Regional Lead"
+        onFlash={flash}
+      />
     </div>
   );
 }

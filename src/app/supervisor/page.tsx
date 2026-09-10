@@ -25,7 +25,7 @@ import { UserOnboarding } from "./user-onboarding";
 import { LeaveManagement } from "./leave-management";
 import { DocumentVault } from "./document-vault";
 import { SupervisorAlertInbox } from "./alert-inbox";
-import { ProfileSettingsPanel } from "../../components/profile-settings-panel";
+import { ProfileSettingsModal } from "../../components/profile-settings-modal";
 import { useTheme } from "../../lib/theme-provider";
 
 type PageKey =
@@ -35,10 +35,9 @@ type PageKey =
   | "leave-management"
   | "document-vault"
   | "user-onboarding"
-  | "alert-inbox"
-  | "settings";
+  | "alert-inbox";
 
-const navItems: { key: PageKey; label: string; icon: typeof Users }[] = [
+const navItems: { key: PageKey | "settings"; label: string; icon: typeof Users }[] = [
   { key: "home", label: "Operations Overview", icon: Home },
   { key: "merchandisers-outlets", label: "Merchandisers & Outlets", icon: Store },
   { key: "vsr-surveillance", label: "VSR Surveillance & Loans", icon: Banknote },
@@ -57,7 +56,6 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   "document-vault": { title: "DOCUMENT VAULT & POD TRACKER", subtitle: "Upload POD Tracker Templates & VSR Monthly Performance Reports with instant Super Admin alert dispatch." },
   "user-onboarding": { title: "USER ONBOARDING CENTER", subtitle: "Provision and configure new Merchandiser and VSR profiles under your direct supervision." },
   "alert-inbox": { title: "ALERT TRIAGE & ESCALATION", subtitle: "Review and route field events through the hierarchical chain to the Super Admin Dashboard." },
-  settings: { title: "SETTINGS & PREFERENCES", subtitle: "Display lighting mode, profile settings, and workspace preferences." },
 };
 
 function SupervisorSelect({
@@ -93,6 +91,7 @@ export default function SupervisorDashboard() {
   const [merchFilter, setMerchFilter] = useState<"all" | "active" | "on_leave" | "inactive">("all");
   const [vsrFilter, setVsrFilter] = useState<"all" | "funded" | "non_funded" | "on_loan" | "due_funding">("all");
   const [notice, setNotice] = useState("");
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Profile avatar & custom info state
   const [userAvatar, setUserAvatar] = useState<string>("");
@@ -196,8 +195,16 @@ export default function SupervisorDashboard() {
             <button
               type="button"
               key={key}
-              className={activePage === key ? "active" : ""}
-              onClick={() => { setActivePage(key); setMobileNav(false); setSearch(""); }}
+              className={key !== "settings" && activePage === key ? "active" : ""}
+              onClick={() => {
+                if (key === "settings") {
+                  setShowSettingsModal(true);
+                } else {
+                  setActivePage(key as PageKey);
+                  setSearch("");
+                }
+                setMobileNav(false);
+              }}
             >
               <Icon size={15} /> {label}
             </button>
@@ -206,7 +213,7 @@ export default function SupervisorDashboard() {
 
         {/* Profile Card in Sidebar Footer */}
         <div
-          onClick={() => { setActivePage("settings"); setMobileNav(false); }}
+          onClick={() => { setShowSettingsModal(true); setMobileNav(false); }}
           style={{
             display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
             background: "var(--soft)", borderRadius: 10, border: "1px solid var(--line)",
@@ -250,7 +257,7 @@ export default function SupervisorDashboard() {
             </button>
             <button
               type="button"
-              onClick={() => setActivePage("settings")}
+              onClick={() => setShowSettingsModal(true)}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
                 background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
@@ -801,24 +808,19 @@ export default function SupervisorDashboard() {
               <SupervisorAlertInbox />
             </div>
           )}
-
-          {/* ══════════════════════════════════════════════════════════════
-              TAB 8: SETTINGS & DISPLAY PREFERENCES
-             ══════════════════════════════════════════════════════════════ */}
-          {activePage === "settings" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <ProfileSettingsPanel
-                role="supervisor"
-                defaultName={supervisor.name}
-                defaultEmail="michael.olayiwola@kea.com"
-                roleLabel="Field Supervisor · Operations Control"
-                territoryLabel={`${supervisor.territory}, ${supervisor.region}`}
-                onFlash={flash}
-              />
-            </div>
-          )}
         </div>
       </main>
+
+      {/* ─── SETTINGS & PROFILE POPUP MODAL ─── */}
+      <ProfileSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        role="supervisor"
+        defaultName={userName || supervisor.name}
+        defaultEmail="michael.olayiwola@kea.com"
+        roleLabel="Field Supervisor · Operations Control"
+        onFlash={flash}
+      />
     </div>
   );
 }
