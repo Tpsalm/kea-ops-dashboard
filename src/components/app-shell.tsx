@@ -32,7 +32,6 @@ export function AppShell({
     { label: "Territories and Routes", path: "/live-map", icon: Map },
     { label: "API Integrations", path: "/reports", icon: Network },
     { label: "Funding & Deployment", path: "/funding-deployment", icon: Store },
-    { label: "System Logs", path: "/system-logs", icon: Database },
     { label: "Audit trail", path: "/audit-trail", icon: FileText },
   ];
   const shellNav = user?.role === "super-admin" ? superAdminNav : NAV;
