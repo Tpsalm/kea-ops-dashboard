@@ -31,9 +31,7 @@ export function AppShell({
     { label: "Global Performance", path: "/admin", icon: LayoutDashboard },
     { label: "Centralized Action Center", path: "/action-center", icon: ShieldAlert },
     { label: "VSR Credit & Loan Surveillance", path: "/vsr-surveillance", icon: Banknote },
-    { label: "Users & Roles", path: "/hierarchy", icon: Users },
-    { label: "Funding & Deployment", path: "/funding-deployment", icon: Store },
-    { label: "Audit trail", path: "/audit-trail", icon: FileText },
+    { label: "Merchandiser Activity & Outlets", path: "/merchandiser-outlets", icon: Store },
   ];
   const shellNav = user?.role === "super-admin" ? superAdminNav : NAV;
   const activeNav = shellNav.find((item) => item.path === pathname)?.label ?? "Overview";
