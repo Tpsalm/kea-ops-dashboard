@@ -20,26 +20,22 @@ import { AnimatedNumber } from "../../components/motion-primitives/animated-numb
 import { Badge } from "../../components/ui/badge";
 import { useTheme } from "../../lib/theme-provider";
 
-type PageKey = "home" | "stores" | "leave" | "pod-upload" | "shelf" | "posm" | "photos" | "settings";
+type PageKey = "home" | "stores" | "leave" | "pod-upload" | "photos" | "settings";
 
 const navItems: { key: PageKey; label: string; icon: any }[] = [
   { key: "home", label: "Overview", icon: Home },
   { key: "stores", label: "Assigned Stores", icon: Store },
   { key: "leave", label: "Leave Requests", icon: Calendar },
   { key: "pod-upload", label: "POD Tracker Upload", icon: FileSpreadsheet },
-  { key: "shelf", label: "Share of Shelf", icon: Layers },
-  { key: "posm", label: "POSM Deployment", icon: Presentation },
   { key: "photos", label: "Activity Photos", icon: Camera },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
-  home: { title: "MERCHANDISER DASHBOARD", subtitle: "Your stores, share of shelf, stock health, and target progress at a glance." },
+  home: { title: "MERCHANDISER DASHBOARD", subtitle: "Your stores, stock health, and target progress at a glance." },
   stores: { title: "ASSIGNED STORES & EXECUTION", subtitle: "Retail outlet inventory, stock checks, and instant stockout escalation to Supervisor." },
   leave: { title: "LEAVE APPLICATION & SCHEDULE", subtitle: "Submit scheduled leave requests with relief coverage directly to your Supervisor." },
   "pod-upload": { title: "POD TRACKER UPLOAD & TEMPLATE", subtitle: "Download the supervisor's official template and upload verified Proof of Delivery trackers." },
-  shelf: { title: "SHARE OF SHELF LOG", subtitle: "Shelf visibility and product availability share per assigned store." },
-  posm: { title: "POSM DEPLOYMENT", subtitle: "Point-of-sale marketing placement and merchandising execution tracking." },
   photos: { title: "ACTIVITY PHOTOS & EVIDENCE", subtitle: "Field evidence captured during retail store audits and visits." },
   settings: { title: "SETTINGS & PREFERENCES", subtitle: "Display lighting mode, profile information, and account settings." },
 };
@@ -382,17 +378,10 @@ export default function MerchandiserDashboard() {
                 </div>
 
                 <div className="kx-kpi">
-                  <div className="kx-kpi-iconwrap tone-blue"><Layers size={18} /></div>
-                  <span className="kx-kpi-label">Avg Share of Shelf</span>
-                  <strong className="kx-kpi-value">88%</strong>
-                  <div className="kx-kpi-trend up"><b>+4.2%</b> <small>vs last week</small></div>
-                </div>
-
-                <div className="kx-kpi">
-                  <div className="kx-kpi-iconwrap tone-amber"><Presentation size={18} /></div>
-                  <span className="kx-kpi-label">POSM Deployed</span>
-                  <strong className="kx-kpi-value">{posmPct}%</strong>
-                  <div className="kx-kpi-trend up"><b>{posmDone}/{posmItems.length}</b> <small>materials active</small></div>
+                  <div className="kx-kpi-iconwrap tone-blue"><FileSpreadsheet size={18} /></div>
+                  <span className="kx-kpi-label">POD Trackers Submitted</span>
+                  <strong className="kx-kpi-value">{myPodSubmissions.length}</strong>
+                  <div className="kx-kpi-trend up"><b>100%</b> <small>verified by supervisor</small></div>
                 </div>
 
                 <div className="kx-kpi">
@@ -401,12 +390,19 @@ export default function MerchandiserDashboard() {
                   <strong className="kx-kpi-value">{photosCount || 18}</strong>
                   <div className="kx-kpi-trend up"><b>Geotagged</b> <small>store evidence</small></div>
                 </div>
+
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-emerald"><Calendar size={18} /></div>
+                  <span className="kx-kpi-label">Scheduled Leave</span>
+                  <strong className="kx-kpi-value">Sep 20</strong>
+                  <div className="kx-kpi-trend up"><b>Relief:</b> <small>Arorundade A.</small></div>
+                </div>
               </div>
 
               {/* CHARTS */}
               <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
                 <div className="card">
-                  <div className="card-head"><div><h3>Share of shelf trajectory</h3><p>Weekly average brand visibility across assigned outlets</p></div></div>
+                  <div className="card-head"><div><h3>Store Visit & Audit Execution Rate</h3><p>Weekly on-time visit completion percentage across assigned outlets</p></div></div>
                   <div style={{ height: 220, marginTop: 8 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={shelfTrend}>
@@ -419,21 +415,21 @@ export default function MerchandiserDashboard() {
                         <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={32} />
                         <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid var(--line)", background: "var(--card)", fontSize: 12 }} />
-                        <Area type="monotone" dataKey="share" name="Share %" stroke="#0d9488" strokeWidth={2.5} fill="url(#gShelf)" />
+                        <Area type="monotone" dataKey="share" name="Execution %" stroke="#0d9488" strokeWidth={2.5} fill="url(#gShelf)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
                 <div className="card">
-                  <div className="card-head"><div><h3>POSM completion</h3><p>Marketing deployment status</p></div></div>
+                  <div className="card-head"><div><h3>POD Ingestion Status</h3><p>Supervisor Verification Rate</p></div></div>
                   <div style={{ padding: 16 }}>
-                    <div style={{ fontSize: 28, fontWeight: 800, color: "#0d9488" }}>{posmPct}%</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: "#0d9488" }}>100%</div>
                     <div style={{ height: 10, background: "var(--bar-muted)", borderRadius: 5, overflow: "hidden", margin: "10px 0" }}>
-                      <div style={{ height: "100%", width: `${posmPct}%`, background: "#0d9488", borderRadius: 5 }} />
+                      <div style={{ height: "100%", width: "100%", background: "#0d9488", borderRadius: 5 }} />
                     </div>
                     <div style={{ fontSize: 11, color: "var(--muted)" }}>
-                      {posmDone} of {posmItems.length} materials deployed in VI territory.
+                      All {myPodSubmissions.length} delivery trackers verified & ingested by Supervisor Michael Olayiwola.
                     </div>
                   </div>
                 </div>
@@ -757,62 +753,7 @@ export default function MerchandiserDashboard() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              TAB 5: SHARE OF SHELF
-             ══════════════════════════════════════════════════════════════ */}
-          {activePage === "shelf" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <section className="admin-panel">
-                <header><div><h2>Shelf share log per store</h2><p>Product visibility compared to competing brands</p></div><Layers size={16} color="#0d9488" /></header>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr><th>Store</th><th>Category</th><th>SKUs in stock</th><th>Share of shelf</th><th>Health</th></tr></thead>
-                    <tbody>
-                      {myStores.map((store, idx) => (
-                        <tr key={store.id}>
-                          <td data-label="Store"><b>{store.name}</b></td>
-                          <td data-label="Category">{store.territory || "Retail Store"}</td>
-                          <td data-label="SKUs"><b>14 / 16 SKUs</b></td>
-                          <td data-label="Share"><b>{78 + (idx * 4) % 15}%</b></td>
-                          <td data-label="Health"><span className={`status ${store.status === "Healthy" ? "active" : "needs-review"}`}><i />{store.status}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════
-              TAB 5: POSM DEPLOYMENT
-             ══════════════════════════════════════════════════════════════ */}
-          {activePage === "posm" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <section className="admin-panel">
-                <header><div><h2>Point of Sale Materials Checklist</h2><p>Toggle materials placed across your assigned VI stores</p></div><Presentation size={16} color="#0d9488" /></header>
-                <div style={{ padding: 18, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
-                  {posmItems.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => togglePosm(item)}
-                      style={{
-                        padding: 14, borderRadius: 10, border: `2px solid ${posm[item] ? "#0d9488" : "var(--line)"}`,
-                        background: posm[item] ? "rgba(13, 148, 136, 0.08)" : "var(--card)",
-                        color: "var(--text)", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between"
-                      }}
-                    >
-                      <span>{item}</span>
-                      {posm[item] ? <CheckCircle2 size={18} color="#0d9488" /> : <div style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid var(--line)" }} />}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════
-              TAB 6: PHOTOS
+              TAB: PHOTOS
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "photos" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
