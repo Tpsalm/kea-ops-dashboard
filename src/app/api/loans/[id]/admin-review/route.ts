@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
-import { updateLoan, getLoanById, createAlert } from "@/lib/db";
+import { updateLoan, getLoanById, createAlert, getUserById } from "@/lib/db";
+import { sendSupervisorLoanDecisionEmail } from "@/lib/email-service";
 
 /**
  * PATCH /api/loans/[id]/admin-review
  * Super Admin makes the final decision: approve (disburse) or reject.
+ * Dispatches instant in-app alerts and email notifications to the assigned Supervisor.
  */
 export async function PATCH(
   request: Request,
@@ -33,10 +35,15 @@ export async function PATCH(
     }
 
     const now = new Date().toISOString();
+    const amount = parseFloat(loan.amount);
+
+    // Look up VSR and Supervisor profiles for notifications
+    const vsr = await getUserById(loan.vsrId);
+    const supervisorId = loan.supervisorId || vsr?.supervisorId;
+    const supervisor = supervisorId ? await getUserById(supervisorId) : null;
 
     if (approved) {
       // APPROVE → disburse
-      const amount = parseFloat(loan.amount);
       const updated = await updateLoan(id, {
         status: "approved",
         admin_id: user.id,
@@ -62,7 +69,7 @@ export async function PATCH(
           .eq("id", loan.vsrId);
       }
 
-      // Alert the VSR
+      // 1. Alert the VSR (In-app)
       await createAlert({
         type: "funding_request",
         severity: "info",
@@ -74,7 +81,41 @@ export async function PATCH(
         relatedEntityId: id,
       });
 
-      return NextResponse.json({ loan: updated, action: "approved" });
+      // 2. Alert the Supervisor (In-app dashboard notification)
+      if (supervisorId) {
+        await createAlert({
+          type: "funding_request",
+          severity: "info",
+          title: `Super Admin Approved Funding for ${vsr?.name || "VSR"}`,
+          message: `Application of ₦${amount.toLocaleString()} was approved and disbursed. VSR debt ledger is now active.`,
+          fromUserId: user.id,
+          toUserId: supervisorId,
+          relatedEntityType: "loan",
+          relatedEntityId: id,
+        });
+      }
+
+      // 3. Dispatch Instant Email to the Supervisor
+      try {
+        await sendSupervisorLoanDecisionEmail({
+          supervisorEmail: supervisor?.email || "supervisor@kea.com",
+          supervisorName: supervisor?.name || "Field Operations Supervisor",
+          vsrName: vsr?.name || "Van Sales Representative",
+          vsrId: loan.vsrId,
+          amount,
+          approved: true,
+          notes,
+          loanId: id,
+        });
+      } catch (emailErr) {
+        console.error("Failed to send supervisor email:", emailErr);
+      }
+
+      return NextResponse.json({
+        loan: updated,
+        action: "approved",
+        notifiedSupervisor: supervisor?.email || "supervisor@kea.com",
+      });
     } else {
       // REJECT
       const updated = await updateLoan(id, {
@@ -84,7 +125,7 @@ export async function PATCH(
         admin_notes: notes,
       });
 
-      // Alert the VSR
+      // 1. Alert the VSR (In-app)
       await createAlert({
         type: "funding_request",
         severity: "info",
@@ -96,7 +137,41 @@ export async function PATCH(
         relatedEntityId: id,
       });
 
-      return NextResponse.json({ loan: updated, action: "rejected" });
+      // 2. Alert the Supervisor (In-app dashboard notification)
+      if (supervisorId) {
+        await createAlert({
+          type: "funding_request",
+          severity: "warning",
+          title: `Super Admin Declined Funding for ${vsr?.name || "VSR"}`,
+          message: `Application of ₦${amount.toLocaleString()} was rejected by Super Admin Executive. Notes: ${notes || "Declined."}`,
+          fromUserId: user.id,
+          toUserId: supervisorId,
+          relatedEntityType: "loan",
+          relatedEntityId: id,
+        });
+      }
+
+      // 3. Dispatch Instant Email to the Supervisor
+      try {
+        await sendSupervisorLoanDecisionEmail({
+          supervisorEmail: supervisor?.email || "supervisor@kea.com",
+          supervisorName: supervisor?.name || "Field Operations Supervisor",
+          vsrName: vsr?.name || "Van Sales Representative",
+          vsrId: loan.vsrId,
+          amount,
+          approved: false,
+          notes,
+          loanId: id,
+        });
+      } catch (emailErr) {
+        console.error("Failed to send supervisor email:", emailErr);
+      }
+
+      return NextResponse.json({
+        loan: updated,
+        action: "rejected",
+        notifiedSupervisor: supervisor?.email || "supervisor@kea.com",
+      });
     }
   } catch (err) {
     return NextResponse.json(

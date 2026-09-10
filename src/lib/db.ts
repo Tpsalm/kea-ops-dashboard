@@ -338,6 +338,13 @@ export async function createAlert(alertData: {
   return data as Alert;
 }
 
+export async function getAlertById(id: string): Promise<Alert | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("alerts").select("*").eq("id", id).single();
+  if (error) return null;
+  return data as Alert;
+}
+
 export async function updateAlert(
   id: string,
   updates: Partial<{
