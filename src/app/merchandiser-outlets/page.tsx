@@ -219,13 +219,13 @@ export default function MerchandiserOutletsPage() {
       }}>
         {/* Navigation Tabs & Search Controls */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
-          <div style={{ display: "flex", background: "#f3f4f6", padding: 3, borderRadius: 8, flexWrap: "wrap", gap: 2 }}>
+          <div style={{ display: "flex", background: "var(--soft, #f3f4f6)", border: "1px solid var(--line)", padding: 3, borderRadius: 8, flexWrap: "wrap", gap: 2 }}>
             <button
               onClick={() => { setActiveTab("merchandisers"); setStatusFilter("all"); }}
               style={{
                 padding: "6px 14px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 700,
-                cursor: "pointer", background: activeTab === "merchandisers" ? "#fff" : "transparent",
-                color: activeTab === "merchandisers" ? "#0e918a" : "#6b7280",
+                cursor: "pointer", background: activeTab === "merchandisers" ? "var(--card, #fff)" : "transparent",
+                color: activeTab === "merchandisers" ? "#0e918a" : "var(--muted, #6b7280)",
                 boxShadow: activeTab === "merchandisers" ? "0 1px 3px rgba(0,0,0,0.08)" : "none"
               }}
             >
@@ -235,8 +235,8 @@ export default function MerchandiserOutletsPage() {
               onClick={() => { setActiveTab("outlets"); setStatusFilter("all"); }}
               style={{
                 padding: "6px 14px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 700,
-                cursor: "pointer", background: activeTab === "outlets" ? "#fff" : "transparent",
-                color: activeTab === "outlets" ? "#2563eb" : "#6b7280",
+                cursor: "pointer", background: activeTab === "outlets" ? "var(--card, #fff)" : "transparent",
+                color: activeTab === "outlets" ? "#2563eb" : "var(--muted, #6b7280)",
                 boxShadow: activeTab === "outlets" ? "0 1px 3px rgba(0,0,0,0.08)" : "none"
               }}
             >
@@ -246,8 +246,8 @@ export default function MerchandiserOutletsPage() {
               onClick={() => { setActiveTab("leaves"); setStatusFilter("all"); }}
               style={{
                 padding: "6px 14px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 700,
-                cursor: "pointer", background: activeTab === "leaves" ? "#fff" : "transparent",
-                color: activeTab === "leaves" ? "#d97706" : "#6b7280",
+                cursor: "pointer", background: activeTab === "leaves" ? "var(--card, #fff)" : "transparent",
+                color: activeTab === "leaves" ? "#d97706" : "var(--muted, #6b7280)",
                 boxShadow: activeTab === "leaves" ? "0 1px 3px rgba(0,0,0,0.08)" : "none"
               }}
             >
@@ -273,7 +273,7 @@ export default function MerchandiserOutletsPage() {
             </select>
 
             <div style={{ position: "relative" }}>
-              <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }} />
+              <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted, #9ca3af)" }} />
               <input
                 type="text"
                 placeholder={
@@ -285,6 +285,7 @@ export default function MerchandiserOutletsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
                   padding: "7px 12px 7px 30px", borderRadius: 8, border: "1px solid var(--line, #e5e7eb)",
+                  background: "var(--card, #fff)", color: "var(--text, #111)",
                   fontSize: 12, outline: "none", width: 240
                 }}
               />
@@ -297,7 +298,7 @@ export default function MerchandiserOutletsPage() {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--line, #e5e7eb)", background: "#f9fafb" }}>
+                <tr style={{ borderBottom: "1px solid var(--line, #e5e7eb)", background: "var(--soft, #f9fafb)" }}>
                   <th style={{ textAlign: "left", padding: "10px 14px", color: "var(--muted, #6b7280)", fontWeight: 700, fontSize: 11 }}>Merchandiser Name</th>
                   <th style={{ textAlign: "left", padding: "10px 14px", color: "var(--muted, #6b7280)", fontWeight: 700, fontSize: 11 }}>Region & Territory</th>
                   <th style={{ textAlign: "left", padding: "10px 14px", color: "var(--muted, #6b7280)", fontWeight: 700, fontSize: 11 }}>Supervisor in Charge</th>
@@ -362,7 +363,7 @@ export default function MerchandiserOutletsPage() {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--line, #e5e7eb)", background: "#f9fafb" }}>
+                <tr style={{ borderBottom: "1px solid var(--line, #e5e7eb)", background: "var(--soft, #f9fafb)" }}>
                   <th style={{ textAlign: "left", padding: "10px 14px", color: "var(--muted, #6b7280)", fontWeight: 700, fontSize: 11 }}>Retail Outlet</th>
                   <th style={{ textAlign: "left", padding: "10px 14px", color: "var(--muted, #6b7280)", fontWeight: 700, fontSize: 11 }}>Account Tier</th>
                   <th style={{ textAlign: "left", padding: "10px 14px", color: "var(--muted, #6b7280)", fontWeight: 700, fontSize: 11 }}>Territory / State</th>

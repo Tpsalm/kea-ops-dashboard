@@ -6,7 +6,7 @@ import { useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, Bell, ClipboardList, CreditCard, Home, LogOut, MapPin, Menu, Moon,
   MoreHorizontal, Phone, Route, Search, Settings, Sun, Target,
-  TrendingDown, TrendingUp, Users, Wallet, X, Building2, CheckCircle2,
+  TrendingDown, TrendingUp, Users, Wallet, X, Building2, CheckCircle2, DollarSign,
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { dailySales, dailyTarget, staff } from "../data";
@@ -17,28 +17,30 @@ import { ScrollProgress } from "../../components/motion-primitives/scroll-progre
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
 import { Badge } from "../../components/ui/badge";
 
+import { useTheme } from "../../lib/theme-provider";
+
 type PageKey = "home" | "routes" | "sales" | "performance" | "settings";
 
-const navItems: { key: PageKey; label: string; icon: typeof Route }[] = [
-  { key: "home", label: "Dashboard", icon: Home },
+const navItems: { key: PageKey; label: string; icon: typeof Home }[] = [
+  { key: "home", label: "Overview", icon: Home },
   { key: "routes", label: "My Routes", icon: Route },
-  { key: "sales", label: "Daily Sales Log", icon: ClipboardList },
-  { key: "performance", label: "Performance (My Target)", icon: Target },
+  { key: "sales", label: "Daily Sales", icon: DollarSign },
+  { key: "performance", label: "Performance", icon: Target },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
-  home: { title: "DASHBOARD", subtitle: "Your daily field snapshot, targets and alerts." },
-  routes: { title: "MY ROUTES", subtitle: "Assigned territories, route coverage and field completion." },
-  sales: { title: "DAILY SALES LOG", subtitle: "Record paid and credit sales against your daily target." },
-  performance: { title: "PERFORMANCE (MY TARGET)", subtitle: "Your visit and completion progress against targets." },
+  home: { title: "VSR OPERATIONS DASHBOARD", subtitle: "Daily route execution, sales tracking, vehicle health and store visits." },
+  routes: { title: "MY ROUTES & STORES", subtitle: "Route coverage, scheduled visits and real-time completion tracking." },
+  sales: { title: "DAILY SALES & COLLECTIONS", subtitle: "Record sales transactions, collection modes and outstanding credit." },
+  performance: { title: "PERFORMANCE & TARGETS", subtitle: "Daily, weekly and monthly targets vs actual achievements." },
   settings: { title: "SETTINGS", subtitle: "Profile, preferences, theme and security for your workspace." },
 };
 
 export default function VsrOperationsPage() {
   const [activePage, setActivePage] = useState<PageKey>("home");
   const [mobileNav, setMobileNav] = useState(false);
-  const [dark, setDark] = useState(false);
+  const { theme, isDark, toggleTheme } = useTheme();
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
   const [search, setSearch] = useState("");
   const [salesLog, setSalesLog] = useState(dailySales);
@@ -98,7 +100,7 @@ export default function VsrOperationsPage() {
   }, [search, vsrStaff]);
 
   return (
-    <div className={dark ? "vsr-reference dark" : "vsr-reference"}>
+    <div className={isDark ? "vsr-reference dark" : "vsr-reference"}>
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
@@ -402,8 +404,8 @@ export default function VsrOperationsPage() {
                 <header><div><h2>Preferences</h2><p>Theme and notifications</p></div></header>
                 <div className="vsr-settings-list">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>{dark ? <Moon size={15} /> : <Sun size={15} />} Dark mode</span>
-                    <button type="button" className={dark ? "vsr-toggle on" : "vsr-toggle"} onClick={() => setDark(!dark)} aria-label="Toggle dark mode"><i /></button>
+                    <span>{isDark ? <Moon size={15} /> : <Sun size={15} />} Dark mode</span>
+                    <button type="button" className={isDark ? "vsr-toggle on" : "vsr-toggle"} onClick={toggleTheme} aria-label="Toggle dark mode"><i /></button>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span><Bell size={15} /> Daily route reminders</span>

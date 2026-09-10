@@ -20,6 +20,8 @@ import { ScrollProgress } from "../../components/motion-primitives/scroll-progre
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
 import { Badge } from "../../components/ui/badge";
 
+import { useTheme } from "../../lib/theme-provider";
+
 type PageKey = "home" | "territory" | "pipeline" | "accounts" | "outlets" | "map" | "supervisors" | "settings";
 
 const navItems: { key: PageKey; label: string; icon: typeof Gauge }[] = [
@@ -48,7 +50,7 @@ export default function TsrDashboard() {
   const [activePage, setActivePage] = useState<PageKey>("home");
   const [tsrId, setTsrId] = useState("KEA-TSR-001");
   const [mobileNav, setMobileNav] = useState(false);
-  const [dark, setDark] = useState(false);
+  const { theme, isDark, toggleTheme } = useTheme();
   const [search, setSearch] = useState("");
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
   const [requests, setRequests] = useState(outletData.filter((o) => o.status === "Pending"));
@@ -128,7 +130,7 @@ export default function TsrDashboard() {
   }
 
   return (
-    <div className={dark ? "tsr-reference dark" : "tsr-reference"}>
+    <div className={isDark ? "tsr-reference dark" : "tsr-reference"}>
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
@@ -519,8 +521,8 @@ export default function TsrDashboard() {
                 <header><div><h2>Preferences</h2><p>Theme and notifications</p></div></header>
                 <div className="vsr-settings-list">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>{dark ? <Moon size={15} /> : <Sun size={15} />} Dark mode</span>
-                    <button type="button" className={dark ? "vsr-toggle on" : "vsr-toggle"} onClick={() => setDark(!dark)} aria-label="Toggle dark mode"><i /></button>
+                    <span>{isDark ? <Moon size={15} /> : <Sun size={15} />} Dark mode</span>
+                    <button type="button" className={isDark ? "vsr-toggle on" : "vsr-toggle"} onClick={toggleTheme} aria-label="Toggle dark mode"><i /></button>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span><Bell size={15} /> Daily territory reminders</span>

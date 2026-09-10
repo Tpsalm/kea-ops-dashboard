@@ -24,6 +24,7 @@ import { UserOnboarding } from "./user-onboarding";
 import { LeaveManagement } from "./leave-management";
 import { DocumentVault } from "./document-vault";
 import { SupervisorAlertInbox } from "./alert-inbox";
+import { useTheme } from "../../lib/theme-provider";
 
 type PageKey =
   | "home"
@@ -76,7 +77,7 @@ export default function SupervisorDashboard() {
   const [activePage, setActivePage] = useState<PageKey>("home");
   const [supervisorId, setSupervisorId] = useState("KEA-SUP-001");
   const [mobileNav, setMobileNav] = useState(false);
-  const [dark, setDark] = useState(false);
+  const { theme, isDark, setTheme, toggleTheme, preferences, updatePreferences } = useTheme();
   const [search, setSearch] = useState("");
   const [notifications, setNotifications] = useState({ daily: true, alerts: true });
   const [pendingOutlets, setPendingOutlets] = useState(outletData.filter((o) => o.status === "Pending"));
@@ -226,7 +227,7 @@ export default function SupervisorDashboard() {
   }
 
   return (
-    <div className={dark ? "tsr-reference dark" : "tsr-reference"}>
+    <div className={isDark ? "tsr-reference dark" : "tsr-reference"}>
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
@@ -249,8 +250,11 @@ export default function SupervisorDashboard() {
           <button className="reference-menu" type="button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu size={19} /></button>
           <span className="vsr-page-title">{pageTitles[activePage].title}</span>
           <div className="reference-actions">
-            <button type="button" aria-label="Notifications"><Bell size={15} /></button>
-            <span>SV</span>
+            <button type="button" onClick={toggleTheme} aria-label="Toggle dark mode" title={`Switch to ${isDark ? "Light" : "Dark"} mode`}>
+              {isDark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+            <button type="button" aria-label="Notifications" onClick={() => setActivePage("alert-inbox")}><Bell size={15} /></button>
+            <span style={{ cursor: "pointer" }} onClick={() => setActivePage("settings")}>SV</span>
           </div>
         </header>
 
@@ -1056,6 +1060,97 @@ export default function SupervisorDashboard() {
           {activePage === "alert-inbox" && (
             <section style={{ display: "grid", gap: 16 }}>
               <SupervisorAlertInbox />
+            </section>
+          )}
+
+          {activePage === "settings" && (
+            <section style={{ display: "grid", gap: 16 }}>
+              <section className="admin-panel" style={{ padding: 18 }}>
+                <header style={{ height: "auto", padding: "0 0 14px", borderBottom: "1px solid var(--line)", marginBottom: 16 }}>
+                  <div>
+                    <h2 style={{ fontSize: 14 }}>Supervisor Profile & Territory Authority</h2>
+                    <p style={{ fontSize: 11, color: "var(--muted)" }}>Manage your account credentials, regional jurisdiction, and display settings.</p>
+                  </div>
+                </header>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+                  <div style={{ padding: 16, background: "var(--soft)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                    <ProfileImageUpload name={supervisor.name} role={`Supervisor · ${supervisor.region} Region`} />
+                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)", fontSize: 11, display: "flex", flexDirection: "column", gap: 6, color: "var(--muted)" }}>
+                      <div><b>Supervisor ID:</b> <span style={{ color: "var(--text)" }}>{supervisor.id}</span></div>
+                      <div><b>Direct Reports:</b> <span style={{ color: "var(--text)" }}>{myTeam.length} Field Staff ({myMerchandisers.length} Merchandisers, {myVSRs.length} VSRs)</span></div>
+                      <div><b>Assigned Stores:</b> <span style={{ color: "var(--text)" }}>{myStores.length} Retail Accounts</span></div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ padding: 14, background: "var(--soft)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                      <b style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Display & Theme Mode</b>
+                      <span style={{ fontSize: 10, color: "var(--muted)", display: "block", marginBottom: 10 }}>
+                        Switch lighting preference across the entire application workspace.
+                      </span>
+                      <div className="theme-pill-grid">
+                        <button
+                          type="button"
+                          className={`theme-pill-btn ${theme === "light" ? "active" : ""}`}
+                          onClick={() => setTheme("light")}
+                        >
+                          <Sun size={18} />
+                          <span>Light</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`theme-pill-btn ${theme === "dark" ? "active" : ""}`}
+                          onClick={() => setTheme("dark")}
+                        >
+                          <Moon size={18} />
+                          <span>Dark</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`theme-pill-btn ${theme === "system" ? "active" : ""}`}
+                          onClick={() => setTheme("system")}
+                        >
+                          <span>System</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ padding: 14, background: "var(--soft)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                      <b style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Notification Channels</b>
+                      <span style={{ fontSize: 10, color: "var(--muted)", display: "block", marginBottom: 10 }}>
+                        Real-time alerts for Super Admin approvals, reject decisions, and stockouts.
+                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, cursor: "pointer" }}>
+                          <span>Instant Super Admin Decision Emails</span>
+                          <input
+                            type="checkbox"
+                            checked={preferences.emailAlertsOnApproval}
+                            onChange={(e) => updatePreferences({ emailAlertsOnApproval: e.target.checked })}
+                          />
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, cursor: "pointer" }}>
+                          <span>Emergency Stockout Warnings (&lt;15%)</span>
+                          <input
+                            type="checkbox"
+                            checked={preferences.stockoutAlerts}
+                            onChange={(e) => updatePreferences({ stockoutAlerts: e.target.checked })}
+                          />
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, cursor: "pointer" }}>
+                          <span>Daily Morning Briefing (8:00 AM)</span>
+                          <input
+                            type="checkbox"
+                            checked={preferences.dailyDigest}
+                            onChange={(e) => updatePreferences({ dailyDigest: e.target.checked })}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
             </section>
           )}
         </div>
