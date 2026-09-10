@@ -909,17 +909,58 @@ export default function VsrOperationsPage() {
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "routes" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <div className="reference-search" style={{ marginBottom: 10 }}>
-                <Search size={13} /><input placeholder="Search routes, territories..." value={search} onChange={(event) => setSearch(event.target.value)} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 8, padding: "8px 12px", minWidth: 260, flex: "0 1 340px" }}>
+                  <Search size={14} style={{ color: "var(--muted)" }} />
+                  <input
+                    placeholder="Search routes, territories, regions..."
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    style={{ border: "none", background: "transparent", outline: "none", fontSize: 12, color: "var(--text)", width: "100%" }}
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 6, background: "rgba(13, 148, 136, 0.1)", color: "#0d9488" }}>
+                    <Route size={12} style={{ display: "inline", marginRight: 4 }} /> {filteredRoutes.length} Assigned Routes
+                  </span>
+                </div>
               </div>
-              <section className="reference-kpis">
-                <article><span>Active routes <MoreHorizontal size={14} /></span><b>{activeRoutes}</b><small>{vsrStaff.length} total assigned</small></article>
-                <article><span>Visits completed <MoreHorizontal size={14} /></span><b>{completedVisits}</b><small>across all routes</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>94%</b><small>Ikeja North A1</small></article>
-                <article><span>Route stops <MoreHorizontal size={14} /></span><b>6 stops</b><small>scheduled today</small></article>
-              </section>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-teal"><Route size={18} /></div>
+                  <span className="kx-kpi-label">Active Routes</span>
+                  <strong className="kx-kpi-value">{activeRoutes}</strong>
+                  <div className="kx-kpi-trend up"><b>{vsrStaff.length} total</b> <small>assigned</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-blue"><MapPin size={18} /></div>
+                  <span className="kx-kpi-label">Visits Completed</span>
+                  <strong className="kx-kpi-value">{completedVisits}</strong>
+                  <div className="kx-kpi-trend up"><b>Across</b> <small>all routes</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-emerald"><CheckCircle2 size={18} /></div>
+                  <span className="kx-kpi-label">Avg Completion</span>
+                  <strong className="kx-kpi-value">94%</strong>
+                  <div className="kx-kpi-trend up"><b>Ikeja North A1</b> <small>on track</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-violet"><Building2 size={18} /></div>
+                  <span className="kx-kpi-label">Route Stops</span>
+                  <strong className="kx-kpi-value">6 stops</strong>
+                  <div className="kx-kpi-trend up"><b>Scheduled</b> <small>today</small></div>
+                </div>
+              </div>
+
               <section className="admin-panel">
-                <header><div><h2>Route board</h2><p>Your assigned territories and field coverage</p></div><MapPin size={16} /></header>
+                <header>
+                  <div>
+                    <h2>Route Board & Field Coverage</h2>
+                    <p>Your assigned territories, schedule adherence and completion metrics</p>
+                  </div>
+                  <MapPin size={16} color="#0d9488" />
+                </header>
                 <div className="table-scroll">
                   <table>
                     <thead><tr><th>Route</th><th>Territory</th><th>Region</th><th>Status</th><th>Stops</th><th>Visits</th><th>Completion</th></tr></thead>
@@ -949,17 +990,58 @@ export default function VsrOperationsPage() {
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "sales" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <div className="reference-search" style={{ marginBottom: 10 }}>
-                <Search size={13} /><input placeholder="Search outlets, products, mode..." value={search} onChange={(event) => setSearch(event.target.value)} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 8, padding: "8px 12px", minWidth: 260, flex: "0 1 340px" }}>
+                  <Search size={14} style={{ color: "var(--muted)" }} />
+                  <input
+                    placeholder="Search outlets, products, payment mode..."
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    style={{ border: "none", background: "transparent", outline: "none", fontSize: 12, color: "var(--text)", width: "100%" }}
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 6, background: "rgba(16, 185, 129, 0.1)", color: "#10b981" }}>
+                    <DollarSign size={12} style={{ display: "inline", marginRight: 2 }} /> {filteredSales.length} Sales Transactions
+                  </span>
+                </div>
               </div>
-              <section className="reference-kpis">
-                <article><span>Today&apos;s sales <MoreHorizontal size={14} /></span><b>₦{(totalValue / 1000000).toFixed(1)}M</b><small>paid + credit</small></article>
-                <article><span>Paid / collected <MoreHorizontal size={14} /></span><b>₦{(paidValue / 1000000).toFixed(1)}M</b><small>cash & transfer</small></article>
-                <article><span>On credit <MoreHorizontal size={14} /></span><b>₦{(creditValue / 1000000).toFixed(1)}M</b><small>{salesLog.filter((s) => s.mode === "Credit").length} invoices</small></article>
-                <article><span>Vs target <MoreHorizontal size={14} /></span><b>{targetPct}%</b><small>of ₦{(dailyTarget / 1000000).toFixed(0)}M</small></article>
-              </section>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-teal"><Wallet size={18} /></div>
+                  <span className="kx-kpi-label">Today&apos;s Sales</span>
+                  <strong className="kx-kpi-value">₦{(totalValue / 1000000).toFixed(1)}M</strong>
+                  <div className="kx-kpi-trend up"><b>Paid + Credit</b> <small>combined</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-blue"><CreditCard size={18} /></div>
+                  <span className="kx-kpi-label">Paid / Collected</span>
+                  <strong className="kx-kpi-value">₦{(paidValue / 1000000).toFixed(1)}M</strong>
+                  <div className="kx-kpi-trend up"><b>Cash & POS</b> <small>received</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-amber"><Building2 size={18} /></div>
+                  <span className="kx-kpi-label">Pending Credit</span>
+                  <strong className="kx-kpi-value">₦{(creditValue / 1000000).toFixed(1)}M</strong>
+                  <div className="kx-kpi-trend down"><b>{salesLog.filter((s) => s.mode === "Credit").length}</b> <small>invoices</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-violet"><Target size={18} /></div>
+                  <span className="kx-kpi-label">Target Progress</span>
+                  <strong className="kx-kpi-value">{targetPct}%</strong>
+                  <div className="kx-kpi-trend up"><b>₦{(dailyTarget / 1000000).toFixed(0)}M</b> <small>daily quota</small></div>
+                </div>
+              </div>
+
               <section className="admin-panel">
-                <header><div><h2>Daily sales log</h2><p>Record paid and credit sales. Phone number is verified for credit purchases.</p></div><ClipboardList size={16} /></header>
+                <header>
+                  <div>
+                    <h2>Daily Sales & Collections Log</h2>
+                    <p>Record paid and credit sales. Customer phone number is verified for credit transactions.</p>
+                  </div>
+                  <ClipboardList size={16} color="#0d9488" />
+                </header>
                 <div className="table-scroll">
                   <table>
                     <thead><tr><th>Outlet</th><th>Product line</th><th>Qty</th><th>Value</th><th>Mode</th><th>Phone (credit)</th><th>Collected</th><th>Actions</th></tr></thead>
@@ -971,7 +1053,7 @@ export default function VsrOperationsPage() {
                           <td data-label="Qty">{sale.quantity}</td>
                           <td data-label="Value">₦{(sale.value / 1000000).toFixed(2)}M</td>
                           <td data-label="Mode">
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, borderRadius: 5, padding: "3px 9px", fontWeight: 700, fontSize: 10, color: sale.mode === "Paid" ? "#0b3b2c" : "#7a4a00", background: sale.mode === "Paid" ? "#c8f3d1" : "#f6d7a5" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, borderRadius: 5, padding: "3px 9px", fontWeight: 700, fontSize: 10, color: sale.mode === "Paid" ? "#065f46" : "#92400e", background: sale.mode === "Paid" ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)" }}>
                               {sale.mode === "Paid" ? <Wallet size={12} /> : <CreditCard size={12} />}
                               {sale.mode}
                             </span>
@@ -997,14 +1079,41 @@ export default function VsrOperationsPage() {
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "performance" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <section className="reference-kpis">
-                <article><span>Visit target <MoreHorizontal size={14} /></span><b>{visitTarget}</b><small>per month</small></article>
-                <article><span>Completion target <MoreHorizontal size={14} /></span><b>{completionTarget}%</b><small>minimum</small></article>
-                <article><span>Visits completed <MoreHorizontal size={14} /></span><b>{completedVisits}</b><small>this window</small></article>
-                <article><span>Avg completion <MoreHorizontal size={14} /></span><b>94%</b><small>all routes</small></article>
-              </section>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-teal"><Target size={18} /></div>
+                  <span className="kx-kpi-label">Visit Target</span>
+                  <strong className="kx-kpi-value">{visitTarget}</strong>
+                  <div className="kx-kpi-trend up"><b>Per month</b> <small>quota</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-blue"><CheckCircle2 size={18} /></div>
+                  <span className="kx-kpi-label">Completion Target</span>
+                  <strong className="kx-kpi-value">{completionTarget}%</strong>
+                  <div className="kx-kpi-trend up"><b>Minimum</b> <small>standard</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-emerald"><Route size={18} /></div>
+                  <span className="kx-kpi-label">Visits Completed</span>
+                  <strong className="kx-kpi-value">{completedVisits}</strong>
+                  <div className="kx-kpi-trend up"><b>This</b> <small>window</small></div>
+                </div>
+                <div className="kx-kpi">
+                  <div className="kx-kpi-iconwrap tone-violet"><TrendingUp size={18} /></div>
+                  <span className="kx-kpi-label">Avg Completion</span>
+                  <strong className="kx-kpi-value">94%</strong>
+                  <div className="kx-kpi-trend up"><b>All</b> <small>routes</small></div>
+                </div>
+              </div>
+
               <section className="admin-panel">
-                <header><div><h2>My target progress</h2><p>Individual route performance against targets</p></div><Target size={16} /></header>
+                <header>
+                  <div>
+                    <h2>My Target Progress</h2>
+                    <p>Individual route performance against targets</p>
+                  </div>
+                  <Target size={16} color="#0d9488" />
+                </header>
                 <div className="vsr-target-list">
                   {vsrStaff.map((person) => {
                     const visitPct = Math.min(100, Math.round((person.visits / visitTarget) * 100));
@@ -1016,7 +1125,7 @@ export default function VsrOperationsPage() {
                             <b style={{ fontSize: 12 }}>{person.route}</b>
                             <span style={{ fontSize: 11, color: "var(--muted)" }}>{person.visits}/{visitTarget} visits · {person.completion}%</span>
                           </div>
-                          <div style={{ height: 9, background: "#eef1ef", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
+                          <div style={{ height: 9, background: "var(--bar-muted, #eef1ef)", borderRadius: 5, overflow: "hidden", marginTop: 6 }}>
                             <div style={{ height: "100%", width: `${visitPct}%`, background: completionOk ? "#12a472" : "#f59e0b", borderRadius: 5 }} />
                           </div>
                         </div>
