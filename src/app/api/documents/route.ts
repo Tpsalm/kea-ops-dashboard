@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
-import { createDocument, getDocuments, createAlert } from "@/lib/db";
+import { createDocument, getDocuments, createAlert, getUserById } from "@/lib/db";
 
 /**
  * GET /api/documents
  * - Supervisor: sees their uploaded documents
- * - Super Admin: sees all documents pending review
+ * - Super Admin: sees all documents
  */
 export async function GET(request: Request) {
   try {
     const user = await requireRole("super_admin", "supervisor", "admin");
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") ?? undefined;
+    const type = searchParams.get("type") ?? undefined;
 
     const filters: Record<string, string> = {};
     if (status) filters.status = status;
+    if (type) filters.type = type;
     if (user.role === "supervisor") {
       filters.uploaderId = user.id;
     }
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
   try {
     const user = await requireRole("super_admin", "supervisor", "admin");
     const body = await request.json();
-    const { type, title, fileUrl, fileName, notes } = body;
+    const { type, title, fileUrl, fileName, notes, targetUserId } = body;
 
     if (!type || !title || !fileUrl) {
       return NextResponse.json({ error: "type, title, and fileUrl are required" }, { status: 400 });
@@ -48,9 +50,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "type must be 'pod_tracker' or 'performance_report'" }, { status: 400 });
     }
 
+    const uploaderProfile = await getUserById(user.id);
+
     const doc = await createDocument({
       uploaderId: user.id,
       supervisorId: user.id,
+      targetUserId: targetUserId ?? undefined,
+      clientId: uploaderProfile?.clientId ?? undefined,
       type,
       title,
       fileUrl,
@@ -58,7 +64,7 @@ export async function POST(request: Request) {
       notes,
     });
 
-    // Alert the Super Admin
+    // Alert the Super Admin (Instant alert trigger upon upload)
     const { createClient } = await import("@/lib/supabase-server");
     const supabase = await createClient();
     const { data: adminUser } = await supabase
@@ -69,20 +75,23 @@ export async function POST(request: Request) {
       .single();
 
     if (adminUser) {
-      const typeLabel = type === "pod_tracker" ? "POD Tracker" : "Monthly Performance Report";
+      const typeLabel = type === "pod_tracker" ? "POD Tracker Template" : "Monthly Performance Report";
       await createAlert({
         type: "document_upload",
         severity: "info",
-        title: `${typeLabel} uploaded by ${user.name}`,
-        message: title,
+        title: `${typeLabel} Uploaded: ${title}`,
+        message: `Supervisor ${user.name} uploaded ${typeLabel} for review. Notes: ${notes || "None"}`,
         fromUserId: user.id,
         toUserId: adminUser.id,
-        relatedEntityType: "document",
+        supervisorId: user.id,
+        clientId: uploaderProfile?.clientId ?? undefined,
+        relatedEntityType: "documents",
         relatedEntityId: doc.id,
+        status: "pending_admin",
       });
     }
 
-    return NextResponse.json({ document: doc }, { status: 201 });
+    return NextResponse.json({ document: doc, message: "Document uploaded and Super Admin alerted." }, { status: 201 });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Upload failed" },

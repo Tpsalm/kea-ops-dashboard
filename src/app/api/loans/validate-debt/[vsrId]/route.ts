@@ -12,21 +12,18 @@ export async function GET(
   { params }: { params: Promise<{ vsrId: string }> }
 ) {
   try {
-    const user = await requireRole("vsr");
+    const user = await requireRole("vsr", "supervisor", "super_admin", "admin");
     const { vsrId } = await params;
-
-    if (user.id !== vsrId && user.role !== "super_admin") {
-      return NextResponse.json({ error: "Cannot check another user's debt" }, { status: 403 });
-    }
 
     const vsr = await getUserById(vsrId);
     if (!vsr) {
       return NextResponse.json({ error: "VSR not found" }, { status: 404 });
     }
 
-    const debt = parseFloat(vsr.loanDebt ?? "0");
-    const activeLoans = await getLoans({ vsrId, status: "pending_supervisor" });
-    const pendingCount = activeLoans.length;
+    const debt = parseFloat(String(vsr.loanDebt ?? "0"));
+    const pendingLoans = await getLoans({ vsrId, status: "pending_supervisor" });
+    const escalatedLoans = await getLoans({ vsrId, status: "pending_admin" });
+    const pendingCount = pendingLoans.length + escalatedLoans.length;
 
     return NextResponse.json({
       vsrId,
@@ -34,7 +31,7 @@ export async function GET(
       isEligible: debt === 0,
       pendingApplications: pendingCount,
       detail: debt > 0
-        ? `Ineligible due to active loan debt (₦${debt.toLocaleString()} outstanding)`
+        ? `Ineligible due to active loan debt (₦${debt.toLocaleString('en-NG', { minimumFractionDigits: 2 })} outstanding)`
         : "Eligible — no active loan debt",
     });
   } catch (err) {

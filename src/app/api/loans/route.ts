@@ -5,8 +5,8 @@ import { createLoan, getLoans, createAlert, getUserById } from "@/lib/db";
 /**
  * GET /api/loans
  * - VSR: sees own loans
- * - Supervisor: sees loans from their supervised VSRs (pending_supervisor)
- * - Super Admin: sees all pending_admin + approved + rejected loans
+ * - Supervisor: sees loans from their supervised VSRs
+ * - Super Admin: sees all loans
  */
 export async function GET(request: Request) {
   try {
@@ -20,10 +20,8 @@ export async function GET(request: Request) {
     if (user.role === "vsr") {
       filters.vsrId = user.id;
     } else if (user.role === "supervisor") {
-      // Supervisor sees loans from their team that are pending their review
       filters.supervisorId = user.id;
     }
-    // Super Admin sees all (no extra filter)
 
     const loans = await getLoans(filters);
     return NextResponse.json({ loans, count: loans.length });
@@ -38,7 +36,7 @@ export async function GET(request: Request) {
 /**
  * POST /api/loans
  * VSR applies for funding.
- * VALIDATION GATE: blocks if loan_debt > 0.
+ * STRICT VALIDATION GATE: blocks if loan_debt > 0.
  */
 export async function POST(request: Request) {
   try {
@@ -46,47 +44,58 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { amount, purpose } = body;
 
-    if (!amount || amount <= 0) {
+    if (!amount || Number(amount) <= 0) {
       return NextResponse.json({ error: "Amount must be greater than zero" }, { status: 400 });
     }
+    if (!purpose || !purpose.trim()) {
+      return NextResponse.json({ error: "Business purpose is required" }, { status: 400 });
+    }
 
-    // ──── DEBT VALIDATION GATE ────
+    // ──── STRICT DEBT VALIDATION GATE ────
     const vsrProfile = await getUserById(user.id);
     if (!vsrProfile) {
       return NextResponse.json({ error: "VSR profile not found" }, { status: 404 });
     }
 
-    const currentDebt = parseFloat(vsrProfile.loanDebt ?? "0");
+    const currentDebt = parseFloat(String(vsrProfile.loanDebt ?? "0"));
     if (currentDebt > 0) {
       return NextResponse.json(
         {
-          error: "Ineligible due to active loan debt",
+          error: "Ineligible due to active loan debt.",
           currentDebt,
-          detail: `You have an outstanding balance of ₦${currentDebt.toLocaleString()}. Please settle your existing loan before applying for new funding.`,
+          detail: `You have an active loan debt balance of ₦${currentDebt.toLocaleString('en-NG', { minimumFractionDigits: 2 })}. Ineligible due to active loan debt.`,
         },
         { status: 403 }
       );
     }
 
-    // ──── CREATE LOAN ────
-    const loan = await createLoan({ vsrId: user.id, amount, purpose });
+    // ──── CREATE LOAN (pending_supervisor) ────
+    const loan = await createLoan({
+      vsrId: user.id,
+      amount: Number(amount),
+      purpose: purpose.trim(),
+      supervisorId: vsrProfile.supervisorId ?? undefined,
+      clientId: vsrProfile.clientId ?? undefined,
+    });
 
-    // ──── CREATE ALERT for Supervisor ────
+    // ──── CREATE ALERT for Assigned Supervisor (Zero-bypass rule) ────
     if (vsrProfile.supervisorId) {
       await createAlert({
         type: "funding_request",
         severity: "warning",
-        title: `Funding request from ${user.name}`,
-        message: `₦${Number(amount).toLocaleString()} requested — awaiting supervisor review`,
+        title: `Funding Request: ${user.name}`,
+        message: `₦${Number(amount).toLocaleString()} requested for "${purpose.trim()}" — awaiting supervisor review`,
         fromUserId: user.id,
         toUserId: vsrProfile.supervisorId,
         supervisorId: vsrProfile.supervisorId,
-        relatedEntityType: "loan",
+        clientId: vsrProfile.clientId ?? undefined,
+        relatedEntityType: "loans",
         relatedEntityId: loan.id,
+        status: "pending_supervisor",
       });
     }
 
-    return NextResponse.json({ loan }, { status: 201 });
+    return NextResponse.json({ loan, message: "Application submitted and routed to assigned Supervisor." }, { status: 201 });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Failed to submit application" },

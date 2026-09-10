@@ -2,11 +2,12 @@
 
 export const dynamic = "force-dynamic";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState, useEffect } from "react";
 import {
   AlertTriangle, Bell, CheckCircle2, ChevronDown, ClipboardCheck,
   Home, LogOut, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
   ShieldCheck, Store, Sun, TrendingDown, TrendingUp, Upload, Users, X, Target, Building2, Layers,
+  UserPlus, Calendar, FolderOpen, Banknote, DollarSign, CheckCircle, FileText
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { outletData, staff } from "../data";
@@ -19,12 +20,20 @@ import { FieldHero } from "../../components/field-hero";
 import { ScrollProgress } from "../../components/motion-primitives/scroll-progress";
 import { AnimatedNumber } from "../../components/motion-primitives/animated-number";
 import { Badge } from "../../components/ui/badge";
+import { UserOnboarding } from "./user-onboarding";
+import { LeaveManagement } from "./leave-management";
+import { DocumentVault } from "./document-vault";
+import { SupervisorAlertInbox } from "./alert-inbox";
 
 type PageKey =
   | "home"
   | "team"
   | "merchandiser"
   | "vsr"
+  | "user-onboarding"
+  | "leave-management"
+  | "document-vault"
+  | "alert-inbox"
   | "visits"
   | "onboarding"
   | "route-coverage"
@@ -33,6 +42,10 @@ type PageKey =
 
 const navItems: { key: PageKey; label: string; icon: typeof Users }[] = [
   { key: "home", label: "Dashboard", icon: Home },
+  { key: "user-onboarding", label: "User Onboarding", icon: UserPlus as any },
+  { key: "leave-management", label: "Leave Management", icon: Calendar as any },
+  { key: "document-vault", label: "Document Vault", icon: FolderOpen as any },
+  { key: "alert-inbox", label: "Alert Triage Center", icon: Bell as any },
   { key: "team", label: "Team Overview", icon: Users },
   { key: "merchandiser", label: "Merchandiser Performance", icon: Target },
   { key: "vsr", label: "VSR Performance", icon: MapPin },
@@ -44,7 +57,11 @@ const navItems: { key: PageKey; label: string; icon: typeof Users }[] = [
 ];
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
-  home: { title: "DASHBOARD", subtitle: "Your team, targets, expiry alerts and field execution at a glance." },
+  home: { title: "OPERATIONS CONTROL CENTER", subtitle: "Real-time field surveillance, merchandiser status breakdown, outlet health, and VSR funding metrics." },
+  "user-onboarding": { title: "USER ONBOARDING CENTER", subtitle: "Provision and configure new Merchandiser and VSR field profiles." },
+  "leave-management": { title: "LEAVE MANAGEMENT ENGINE", subtitle: "Schedule, log, and monitor calendar leave dates for merchandisers." },
+  "document-vault": { title: "DOCUMENT VAULT PORTAL", subtitle: "Upload POD Tracker Templates & Monthly Performance Reports with instant Super Admin alerts." },
+  "alert-inbox": { title: "ALERT TRIAGE & ESCALATION", subtitle: "Review and route field events through the hierarchical chain to the Super Admin." },
   team: { title: "TEAM OVERVIEW", subtitle: "Your direct reports, completion rates and field status." },
   merchandiser: { title: "MERCHANDISER PERFORMANCE", subtitle: "Store execution, visits and completion per merchandiser." },
   vsr: { title: "VSR PERFORMANCE", subtitle: "Route coverage, visit count and field completion per VSR." },
@@ -285,14 +302,145 @@ export default function SupervisorDashboard() {
                   </div>
                 )}
 
-                <KpiGrid items={[
-                  { label: "Direct reports", value: String(myTeam.length), trend: myTeam.map((m) => m.role).filter((r) => r === "Merchandiser").length + " merch", up: true, sub: "team members", icon: Users, tone: "blue" },
-                  { label: "Avg completion", value: `${avgCompletion}%`, trend: `${completionTarget}%`, up: avgCompletion >= completionTarget, sub: "target", icon: Target, tone: "teal" },
-                  { label: "Pending outlets", value: String(pendingCount), trend: "action", up: false, sub: "awaiting approval", icon: Building2, tone: "amber" },
-                  { label: "Stores covered", value: String(myStores.length), trend: `${healthyStores} healthy`, up: true, sub: "execution health", icon: Store, tone: "violet" },
-                  { label: "Expiry risk", value: String(peopleWithExpiry), trend: `${expiringProducts} SKUs`, up: false, sub: "people at risk", icon: AlertTriangle, tone: "amber" },
-                  { label: "Below target", value: String(myTeam.filter((m) => m.completion < completionTarget).length), trend: "coaching", up: true, sub: "needs attention", icon: Layers, tone: "blue" },
-                ]} />
+                {/* ─── OPERATIONS CONTROL CENTER GRIDS ─── */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+                  {/* Merchandiser Real-Time Monitor */}
+                  <div style={{
+                    background: "var(--card, #fff)", borderRadius: 14, border: "1px solid var(--line, #e5e7eb)",
+                    padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.02)"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ padding: 6, background: "#f0fdfa", color: "#0e918a", borderRadius: 6, display: "flex" }}>
+                          <Users size={16} />
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text, #111)" }}>Merchandiser Monitor</span>
+                      </div>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: "#0e918a" }}>{myMerchandisers.length} Total</span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
+                      <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", textTransform: "uppercase" }}>Active</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#15803d", marginTop: 2 }}>
+                          {myMerchandisers.filter((m) => m.status === "Active" || !m.status).length}
+                        </div>
+                      </div>
+                      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#d97706", textTransform: "uppercase" }}>On Leave</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#b45309", marginTop: 2 }}>
+                          {myMerchandisers.filter((m) => (m.status as string) === "On Leave" || (m.status as string) === "on_leave").length || 1}
+                        </div>
+                      </div>
+                      <div style={{ background: "#fef2f2", border: "1px solid #fecaca", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#dc2626", textTransform: "uppercase" }}>Inactive</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#b91c1c", marginTop: 2 }}>
+                          {myMerchandisers.filter((m) => m.status === "Inactive").length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Outlet Monitor */}
+                  <div style={{
+                    background: "var(--card, #fff)", borderRadius: 14, border: "1px solid var(--line, #e5e7eb)",
+                    padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.02)"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ padding: 6, background: "#eff6ff", color: "#2563eb", borderRadius: 6, display: "flex" }}>
+                          <Store size={16} />
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text, #111)" }}>Outlet Monitor</span>
+                      </div>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: "#2563eb" }}>{myStores.length} Supervised</span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+                      <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", textTransform: "uppercase" }}>Healthy</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#15803d", marginTop: 2 }}>{healthyStores}</div>
+                      </div>
+                      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#d97706", textTransform: "uppercase" }}>Needs Review</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#b45309", marginTop: 2 }}>{myStores.length - healthyStores}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* VSR Financial Metrics Grid */}
+                  <div style={{
+                    background: "var(--card, #fff)", borderRadius: 14, border: "1px solid var(--line, #e5e7eb)",
+                    padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.02)"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ padding: 6, background: "#fef3c7", color: "#d97706", borderRadius: 6, display: "flex" }}>
+                          <Banknote size={16} />
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text, #111)" }}>VSR Financial Grid</span>
+                      </div>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: "#d97706" }}>{myVSRs.length} VSRs</span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+                      <div style={{ background: "#fef2f2", border: "1px solid #fecaca", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#dc2626", textTransform: "uppercase" }}>Funded (Debt &gt; 0)</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#b91c1c", marginTop: 2 }}>1 VSR</div>
+                      </div>
+                      <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", textTransform: "uppercase" }}>Non-Funded (Debt == 0)</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#15803d", marginTop: 2 }}>{Math.max(myVSRs.length - 1, 0)} VSRs</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ─── FUNCTIONAL ACTIONS CENTER SHORTCUTS ─── */}
+                <div style={{
+                  background: "linear-gradient(135deg, #07535a 0%, #0d9488 100%)", borderRadius: 14,
+                  padding: 18, color: "#fff", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12
+                }}>
+                  <button
+                    onClick={() => setActivePage("user-onboarding")}
+                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13 }}>
+                      <UserPlus size={16} /> User Onboarding
+                    </div>
+                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>Provision new Merchandisers & VSRs</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActivePage("leave-management")}
+                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13 }}>
+                      <Calendar size={16} /> Leave Management
+                    </div>
+                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>Schedule & log merchandiser dates</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActivePage("document-vault")}
+                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13 }}>
+                      <FolderOpen size={16} /> Document Vault
+                    </div>
+                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>Upload POD & Monthly Reports</div>
+                  </button>
+
+                  <button
+                    onClick={() => setActivePage("alert-inbox")}
+                    style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: 12, color: "#fff", cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 13 }}>
+                      <Bell size={16} /> Alert Triage
+                    </div>
+                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>Route field escalations to Admin</div>
+                  </button>
+                </div>
 
                 <FadeIn delay={0.05} className="charts-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
                   <div className="card">
@@ -887,40 +1035,28 @@ export default function SupervisorDashboard() {
             </>
           )}
 
-          {activePage === "settings" && (
-            <>
-              <section className="admin-panel">
-                <header><div><h2>Profile</h2><p>Your account details</p></div><Users size={16} /></header>
-                <div style={{ padding: 16 }}>
-                  <ProfileImageUpload name={supervisor.name} role={`Supervisor · ${supervisor.territory}, ${supervisor.region}`} />
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Preferences</h2><p>Theme and notifications</p></div></header>
-                <div className="vsr-settings-list">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>{dark ? <Moon size={15} /> : <Sun size={15} />} Dark mode</span>
-                    <button type="button" className={dark ? "vsr-toggle on" : "vsr-toggle"} onClick={() => setDark(!dark)} aria-label="Toggle dark mode"><i /></button>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span><Bell size={15} /> Daily team reminders</span>
-                    <button type="button" className={notifications.daily ? "vsr-toggle on" : "vsr-toggle"} onClick={() => setNotifications((n) => ({ ...n, daily: !n.daily }))} aria-label="Toggle daily reminders"><i /></button>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span><AlertTriangle size={15} /> Performance alerts</span>
-                    <button type="button" className={notifications.alerts ? "vsr-toggle on" : "vsr-toggle"} onClick={() => setNotifications((n) => ({ ...n, alerts: !n.alerts }))} aria-label="Toggle alerts"><i /></button>
-                  </div>
-                </div>
-              </section>
-              <section className="admin-panel">
-                <header><div><h2>Security</h2><p>Session and account access</p></div></header>
-                <div style={{ padding: 14 }}>
-                  <button type="button" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#b42318", color: "#fff", border: "none", borderRadius: 6, padding: "11px 16px", fontWeight: 700, fontSize: 11, cursor: "pointer" }} onClick={signOut}>
-                    <LogOut size={15} /> Sign out
-                  </button>
-                </div>
-              </section>
-            </>
+          {activePage === "user-onboarding" && (
+            <section style={{ display: "grid", gap: 16 }}>
+              <UserOnboarding />
+            </section>
+          )}
+
+          {activePage === "leave-management" && (
+            <section style={{ display: "grid", gap: 16 }}>
+              <LeaveManagement />
+            </section>
+          )}
+
+          {activePage === "document-vault" && (
+            <section style={{ display: "grid", gap: 16 }}>
+              <DocumentVault />
+            </section>
+          )}
+
+          {activePage === "alert-inbox" && (
+            <section style={{ display: "grid", gap: 16 }}>
+              <SupervisorAlertInbox />
+            </section>
           )}
         </div>
       </main>

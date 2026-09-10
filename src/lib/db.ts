@@ -3,8 +3,6 @@ import type {
   User, Outlet, Loan, Leave, Alert, Document, Client,
 } from "@/db/schema";
 
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
-
 /**
  * Database query layer — all API routes go through here.
  * Uses the Supabase JS client (authenticated via the user's JWT).
@@ -39,6 +37,13 @@ export async function getUserById(id: string): Promise<User | null> {
   return data as User;
 }
 
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("users").select("*").eq("email", email).single();
+  if (error) return null;
+  return data as User;
+}
+
 export async function createUser(userData: {
   email: string;
   name: string;
@@ -51,6 +56,7 @@ export async function createUser(userData: {
   supervisorId?: string;
   tsrId?: string;
   clientId?: string;
+  status?: string;
 }): Promise<User> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -67,6 +73,8 @@ export async function createUser(userData: {
       supervisor_id: userData.supervisorId,
       tsr_id: userData.tsrId,
       client_id: userData.clientId,
+      status: userData.status ?? "active",
+      loan_debt: 0,
     })
     .select()
     .single();
@@ -91,6 +99,43 @@ export async function getOutlets(filters?: {
   const { data, error } = await query.order("name");
   if (error) throw new Error(error.message);
   return (data ?? []) as Outlet[];
+}
+
+export async function createOutlet(outletData: {
+  name: string;
+  address?: string;
+  region?: string;
+  state?: string;
+  lga?: string;
+  territory?: string;
+  type?: string;
+  tier?: string;
+  status?: string;
+  merchandiserId?: string;
+  supervisorId?: string;
+  clientId?: string;
+}): Promise<Outlet> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("outlets")
+    .insert({
+      name: outletData.name,
+      address: outletData.address,
+      region: outletData.region,
+      state: outletData.state,
+      lga: outletData.lga,
+      territory: outletData.territory,
+      type: outletData.type ?? "wholesale",
+      tier: outletData.tier ?? "silver",
+      status: outletData.status ?? "healthy",
+      merchandiser_id: outletData.merchandiserId,
+      supervisor_id: outletData.supervisorId,
+      client_id: outletData.clientId,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Outlet;
 }
 
 /* ──────────────── Loans ──────────────── */
@@ -120,13 +165,17 @@ export async function getLoanById(id: string): Promise<Loan | null> {
 export async function createLoan(loanData: {
   vsrId: string;
   amount: number;
-  purpose?: string;
+  purpose: string;
+  supervisorId?: string;
+  clientId?: string;
 }): Promise<Loan> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("loans")
     .insert({
       vsr_id: loanData.vsrId,
+      supervisor_id: loanData.supervisorId,
+      client_id: loanData.clientId,
       amount: loanData.amount,
       purpose: loanData.purpose,
       status: "pending_supervisor",
@@ -143,9 +192,11 @@ export async function updateLoan(
     status: string;
     supervisor_id: string;
     supervisor_review_date: string;
+    supervisor_decision: string;
     supervisor_notes: string;
     admin_id: string;
     admin_review_date: string;
+    admin_decision: string;
     admin_notes: string;
     disbursement_date: string;
     repayment_status: string;
@@ -167,11 +218,13 @@ export async function updateLoan(
 
 export async function getLeaves(filters?: {
   staffId?: string;
+  supervisorId?: string;
   status?: string;
 }): Promise<Leave[]> {
   const supabase = await createClient();
   let query = supabase.from("leaves").select("*");
   if (filters?.staffId) query = query.eq("staff_id", filters.staffId);
+  if (filters?.supervisorId) query = query.eq("supervisor_id", filters.supervisorId);
   if (filters?.status) query = query.eq("status", filters.status);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -180,23 +233,35 @@ export async function getLeaves(filters?: {
 
 export async function createLeave(leaveData: {
   staffId: string;
+  supervisorId?: string;
+  clientId?: string;
   startDate: string;
   endDate: string;
-  reason?: string;
+  reason: string;
+  status?: string;
 }): Promise<Leave> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("leaves")
     .insert({
       staff_id: leaveData.staffId,
+      supervisor_id: leaveData.supervisorId,
+      client_id: leaveData.clientId,
       start_date: leaveData.startDate,
       end_date: leaveData.endDate,
       reason: leaveData.reason,
-      status: "pending",
+      status: leaveData.status ?? "approved",
     })
     .select()
     .single();
   if (error) throw new Error(error.message);
+
+  // Update staff status to on_leave if current date is within range
+  await supabase
+    .from("users")
+    .update({ status: "on_leave" })
+    .eq("id", leaveData.staffId);
+
   return data as Leave;
 }
 
@@ -211,7 +276,7 @@ export async function updateLeave(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("leaves")
-    .update(updates)
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select()
     .single();
@@ -242,12 +307,14 @@ export async function createAlert(alertData: {
   type: string;
   severity?: string;
   title: string;
-  message?: string;
+  message: string;
   fromUserId: string;
   toUserId: string;
   supervisorId?: string;
+  clientId?: string;
   relatedEntityType?: string;
   relatedEntityId?: string;
+  status?: string;
 }): Promise<Alert> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -260,6 +327,8 @@ export async function createAlert(alertData: {
       from_user_id: alertData.fromUserId,
       to_user_id: alertData.toUserId,
       supervisor_id: alertData.supervisorId,
+      client_id: alertData.clientId,
+      status: alertData.status ?? "pending_supervisor",
       related_entity_type: alertData.relatedEntityType,
       related_entity_id: alertData.relatedEntityId,
     })
@@ -295,12 +364,14 @@ export async function getDocuments(filters?: {
   uploaderId?: string;
   supervisorId?: string;
   status?: string;
+  type?: string;
 }): Promise<Document[]> {
   const supabase = await createClient();
   let query = supabase.from("documents").select("*");
   if (filters?.uploaderId) query = query.eq("uploader_id", filters.uploaderId);
   if (filters?.supervisorId) query = query.eq("supervisor_id", filters.supervisorId);
   if (filters?.status) query = query.eq("status", filters.status);
+  if (filters?.type) query = query.eq("type", filters.type);
   const { data, error } = await query.order("uploaded_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as Document[];
@@ -309,6 +380,8 @@ export async function getDocuments(filters?: {
 export async function createDocument(docData: {
   uploaderId: string;
   supervisorId?: string;
+  targetUserId?: string;
+  clientId?: string;
   type: string;
   title: string;
   fileUrl: string;
@@ -321,11 +394,14 @@ export async function createDocument(docData: {
     .insert({
       uploader_id: docData.uploaderId,
       supervisor_id: docData.supervisorId,
+      target_user_id: docData.targetUserId,
+      client_id: docData.clientId,
       type: docData.type,
       title: docData.title,
       file_url: docData.fileUrl,
       file_name: docData.fileName,
       notes: docData.notes,
+      status: "pending_review",
     })
     .select()
     .single();
@@ -338,11 +414,10 @@ export async function createDocument(docData: {
 export async function getAdminKPIs() {
   const supabase = await createClient();
 
-  const [merchCount, outletCount, fundedCount, loanPendingCount, loanActiveCount, loanFreeCount] = await Promise.all([
+  const [merchCount, outletCount, loanPendingAdminCount, loanActiveCount, loanFreeCount] = await Promise.all([
     supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "merchandiser"),
     supabase.from("outlets").select("id", { count: "exact", head: true }),
-    supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "vsr").gt("loan_debt", "0"),
-    supabase.from("loans").select("id", { count: "exact", head: true }).eq("status", "pending_supervisor"),
+    supabase.from("loans").select("id", { count: "exact", head: true }).eq("status", "pending_admin"),
     supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "vsr").gt("loan_debt", "0"),
     supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "vsr").eq("loan_debt", "0"),
   ]);
@@ -350,7 +425,7 @@ export async function getAdminKPIs() {
   return {
     totalMerchandisers: merchCount.count ?? 0,
     totalOutlets: outletCount.count ?? 0,
-    dueForFunding: loanPendingCount.count ?? 0,
+    dueForFunding: loanPendingAdminCount.count ?? 0,
     activeLoans: loanActiveCount.count ?? 0,
     noActiveLoans: loanFreeCount.count ?? 0,
   };
