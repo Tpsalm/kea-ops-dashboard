@@ -340,36 +340,6 @@ export default function VsrOperationsPage() {
           ))}
         </nav>
 
-        {/* Profile Card in Sidebar Footer */}
-        <div
-          onClick={() => { setShowSettingsModal(true); setMobileNav(false); }}
-          style={{
-            display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-            background: "var(--soft)", borderRadius: 10, border: "1px solid var(--line)",
-            cursor: "pointer", marginTop: "auto", marginBottom: 6, transition: "background 0.2s"
-          }}
-          title="Click to view Profile & Settings"
-        >
-          <div style={{
-            width: 32, height: 32, borderRadius: "50%", border: "1.5px solid var(--line)",
-            background: "linear-gradient(135deg, #2563eb, #0d9488)", color: "#fff",
-            display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
-            overflow: "hidden", flexShrink: 0
-          }}>
-            {userAvatar ? (
-              <img src={userAvatar} alt="VSR profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              initials
-            )}
-          </div>
-          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-            <b style={{ display: "block", fontSize: 11, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {userName || "Babatunde Adeleke"}
-            </b>
-            <span style={{ display: "block", fontSize: 9, color: "var(--muted)" }}>VSR · Route 04</span>
-          </div>
-        </div>
-
         <button className="reference-settings" type="button" onClick={signOut}><LogOut size={15} /> Sign out</button>
       </aside>
 
