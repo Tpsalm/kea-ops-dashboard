@@ -22,6 +22,11 @@ import { Badge } from "../../components/ui/badge";
 import { ProfileSettingsModal } from "../../components/profile-settings-modal";
 import { UrgentLoginModal } from "../../components/urgent-login-modal";
 import { useTheme } from "../../lib/theme-provider";
+import {
+  getSharedMerchandiserPods, saveSharedMerchandiserPod,
+  getSupervisorBroadcasts, acknowledgeSupervisorBroadcast,
+  type SharedMerchandiserPod, type SupervisorBroadcast
+} from "../../lib/shared-communications";
 
 type PageKey = "home" | "stores" | "leave" | "pod-upload" | "photos";
 
@@ -86,6 +91,44 @@ export default function MerchandiserDashboard() {
     window.addEventListener("kea-avatar-updated", loadProfile);
     return () => window.removeEventListener("kea-avatar-updated", loadProfile);
   }, []);
+
+  // Shared communications and supervisor directives state
+  const [myPodSubmissions, setMyPodSubmissions] = useState<SharedMerchandiserPod[]>([]);
+  const [supervisorDirectives, setSupervisorDirectives] = useState<SupervisorBroadcast[]>([]);
+
+  useEffect(() => {
+    function loadData() {
+      const allPods = getSharedMerchandiserPods();
+      setMyPodSubmissions(allPods);
+      const allDirectives = getSupervisorBroadcasts();
+      setSupervisorDirectives(allDirectives.filter((b) => b.targetRole === "all" || b.targetRole === "merchandiser"));
+    }
+
+    loadData();
+
+    const handleDocSubmitted = () => loadData();
+    const handleDocReconciled = () => loadData();
+    const handleDirectiveDispatched = (e: any) => {
+      loadData();
+      flash(`🚨 New Supervisor Directive Received: "${e.detail?.title || "Field Notice"}"`);
+    };
+    const handleDirectiveAck = () => loadData();
+
+    window.addEventListener("kea-document-submitted", handleDocSubmitted);
+    window.addEventListener("kea-document-reconciled", handleDocReconciled);
+    window.addEventListener("kea-directive-dispatched", handleDirectiveDispatched);
+    window.addEventListener("kea-directive-acknowledged", handleDirectiveAck);
+    window.addEventListener("storage", loadData);
+
+    return () => {
+      window.removeEventListener("kea-document-submitted", handleDocSubmitted);
+      window.removeEventListener("kea-document-reconciled", handleDocReconciled);
+      window.removeEventListener("kea-directive-dispatched", handleDirectiveDispatched);
+      window.removeEventListener("kea-directive-acknowledged", handleDirectiveAck);
+      window.removeEventListener("storage", loadData);
+    };
+  }, []);
+
   const [posm, setPosm] = useState<Record<string, boolean>>({
     "Shelf talkers": true,
     "Brand posters": true,
@@ -129,37 +172,6 @@ export default function MerchandiserDashboard() {
   const [podNotes, setPodNotes] = useState("All 24 cartons received intact. Store manager confirmed and stamped receipt.");
   const [podFileName, setPodFileName] = useState("");
   const [isUploadingPod, setIsUploadingPod] = useState(false);
-  const [myPodSubmissions, setMyPodSubmissions] = useState<Array<{
-    id: string;
-    storeName: string;
-    storeId: string;
-    deliveryRef: string;
-    fileName: string;
-    date: string;
-    notes: string;
-    status: string;
-  }>>([
-    {
-      id: "POD-891",
-      storeName: "Royal Prince Ikosi",
-      storeId: "OL-4001",
-      deliveryRef: "WB-2026-09-842",
-      fileName: "RoyalPrince_POD_Signed_Sep10.xlsx",
-      date: "2026-09-10 14:15",
-      notes: "Full batch delivery confirmed. Zero damaged units.",
-      status: "Received by Supervisor (Michael Olayiwola)",
-    },
-    {
-      id: "POD-840",
-      storeName: "Jendel Surulere",
-      storeId: "OL-4002",
-      deliveryRef: "WB-2026-09-771",
-      fileName: "Jendel_POD_Tracker_Sep08.xlsx",
-      date: "2026-09-08 11:30",
-      notes: "18 cartons delivered. Stamped by receiving supervisor.",
-      status: "Verified by Supervisor",
-    },
-  ]);
 
   // Activity Photos Upload & Gallery State
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -353,18 +365,22 @@ export default function MerchandiserDashboard() {
       // continue for local responsiveness
     }
 
-    const newSubmission = {
+    const newSubmission: SharedMerchandiserPod = {
       id: `POD-${Math.floor(100 + Math.random() * 900)}`,
+      merchandiserName: userName || "Maria Uchechukwu",
+      merchandiserId,
       storeName: selectedStore?.name || "Retail Outlet",
       storeId: podStoreId,
       deliveryRef: podDeliveryRef,
       fileName: uploadedName,
-      date: `${podDate} ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+      uploadedAt: "Just now",
       notes: podNotes,
-      status: "Received by Supervisor (Michael Olayiwola)",
+      status: "Received - Instant Delivery to Supervisor (Michael Olayiwola)",
+      isNew: true,
     };
 
-    setMyPodSubmissions([newSubmission, ...myPodSubmissions]);
+    saveSharedMerchandiserPod(newSubmission);
+    setMyPodSubmissions(getSharedMerchandiserPods());
     setIsUploadingPod(false);
     setPodFileName("");
     flash(`POD Tracker for ${selectedStore?.name} uploaded! Received instantly on Supervisor Dashboard.`);
@@ -544,6 +560,83 @@ export default function MerchandiserDashboard() {
                   </div>
                 }
               />
+
+              {/* SUPERVISOR LIVE DIRECTIVES & BROADCAST FEED */}
+              {supervisorDirectives.length > 0 && (
+                <div style={{
+                  background: "linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(243, 112, 33, 0.08) 100%)",
+                  border: "1.5px solid rgba(13, 148, 136, 0.35)", borderRadius: 14, padding: "16px 20px",
+                  display: "flex", flexDirection: "column", gap: 12
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{
+                        width: 8, height: 8, borderRadius: "50%", background: "#0d9488",
+                        boxShadow: "0 0 0 4px rgba(13, 148, 136, 0.25)"
+                      }} />
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                        Incoming Supervisor Directives ({supervisorDirectives.length})
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#0d9488", background: "rgba(13, 148, 136, 0.15)", padding: "3px 8px", borderRadius: 4 }}>
+                      Live Hub Broadcast · Michael Olayiwola
+                    </span>
+                  </div>
+
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {supervisorDirectives.slice(0, 2).map((dir) => {
+                      const isAck = dir.acknowledgedBy.includes(userName || "Maria Uchechukwu");
+                      return (
+                        <div key={dir.id} style={{
+                          background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: "12px 16px",
+                          display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, flexWrap: "wrap"
+                        }}>
+                          <div style={{ flex: 1, minWidth: 260 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                              <span style={{
+                                fontSize: 9, fontWeight: 800, textTransform: "uppercase", padding: "2px 6px", borderRadius: 4,
+                                background: dir.priority === "urgent" ? "rgba(243, 112, 33, 0.15)" : "rgba(13, 148, 136, 0.15)",
+                                color: dir.priority === "urgent" ? "#F37021" : "#0d9488"
+                              }}>
+                                {dir.priority.toUpperCase()} DIRECTIVE
+                              </span>
+                              <strong style={{ fontSize: 12, color: "var(--text)" }}>{dir.title}</strong>
+                            </div>
+                            <p style={{ margin: "2px 0 6px", fontSize: 11, color: "var(--muted)", lineHeight: 1.4 }}>
+                              {dir.message}
+                            </p>
+                            {dir.fileName && (
+                              <span style={{ fontSize: 10, fontWeight: 700, color: "#0d9488", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                <FileSpreadsheet size={12} /> Attachment: {dir.fileName}
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <small style={{ fontSize: 9, color: "var(--muted)" }}>{dir.timestamp}</small>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                acknowledgeSupervisorBroadcast(dir.id, userName || "Maria Uchechukwu");
+                                setSupervisorDirectives(getSupervisorBroadcasts().filter((b) => b.targetRole === "all" || b.targetRole === "merchandiser"));
+                                flash("Directive receipt acknowledged to Supervisor Michael Olayiwola!");
+                              }}
+                              disabled={isAck}
+                              style={{
+                                padding: "5px 12px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: "none", cursor: isAck ? "default" : "pointer",
+                                background: isAck ? "rgba(16, 185, 129, 0.12)" : "#0d9488",
+                                color: isAck ? "#16a34a" : "#fff", display: "inline-flex", alignItems: "center", gap: 4
+                              }}
+                            >
+                              {isAck ? <><Check size={12} /> Acknowledged</> : "Acknowledge"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* QUICK ACTION BANNER */}
               <div style={{
@@ -957,7 +1050,7 @@ export default function MerchandiserDashboard() {
                               <FileSpreadsheet size={13} /> {p.fileName}
                             </span>
                           </td>
-                          <td data-label="Date">{p.date}</td>
+                          <td data-label="Date">{p.uploadedAt || (p as any).date || "Today"}</td>
                           <td data-label="Notes" style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {p.notes}
                           </td>

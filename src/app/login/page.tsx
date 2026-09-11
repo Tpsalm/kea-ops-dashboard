@@ -25,7 +25,11 @@ export default function LoginPage() {
       if (typeof window !== "undefined") {
         sessionStorage.setItem("kea_urgent_login_alert", "true");
         sessionStorage.setItem("kea_last_login_role", signedInUser.role);
+        sessionStorage.setItem("kea_last_login_name", signedInUser.name);
         sessionStorage.setItem("kea_last_login_time", Date.now().toString());
+        localStorage.setItem("kea_user_name", signedInUser.name);
+        localStorage.setItem("kea_user_email", signedInUser.email);
+        localStorage.setItem("kea_user_role", signedInUser.role);
       }
       const defaultPath = roleHome(signedInUser.role);
       const nextPath = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null;

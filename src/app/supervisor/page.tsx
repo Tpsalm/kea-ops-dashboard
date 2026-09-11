@@ -8,7 +8,7 @@ import {
   Home, LogOut, MapPin, Menu, Moon, MoreHorizontal, Search, Settings,
   ShieldCheck, Store, Sun, TrendingDown, TrendingUp, Upload, Users, X, Target, Building2, Layers,
   UserPlus, Calendar, FolderOpen, Banknote, DollarSign, CheckCircle, FileText, ArrowRight,
-  ShieldAlert, Send, Eye, RefreshCw, Check
+  ShieldAlert, Send, Eye, RefreshCw, Check, Clock
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { outletData, staff } from "../data";
@@ -28,6 +28,9 @@ import { SupervisorAlertInbox } from "./alert-inbox";
 import { ProfileSettingsModal } from "../../components/profile-settings-modal";
 import { UrgentLoginModal } from "../../components/urgent-login-modal";
 import { useTheme } from "../../lib/theme-provider";
+import {
+  getSupervisorBroadcasts, publishSupervisorBroadcast, type SupervisorBroadcast
+} from "../../lib/shared-communications";
 
 type PageKey =
   | "home"
@@ -35,6 +38,7 @@ type PageKey =
   | "vsr-surveillance"
   | "leave-management"
   | "document-vault"
+  | "field-broadcasts"
   | "user-onboarding"
   | "alert-inbox";
 
@@ -42,6 +46,7 @@ const navItems: { key: PageKey | "settings"; label: string; icon: typeof Users }
   { key: "home", label: "Operations Overview", icon: Home },
   { key: "merchandisers-outlets", label: "Merchandisers & Outlets", icon: Store },
   { key: "vsr-surveillance", label: "VSR Surveillance & Loans", icon: Banknote },
+  { key: "field-broadcasts", label: "Directives & Broadcasts", icon: Send as any },
   { key: "leave-management", label: "Leave Management", icon: Calendar as any },
   { key: "document-vault", label: "Document Vault & POD", icon: FolderOpen as any },
   { key: "user-onboarding", label: "User Onboarding", icon: UserPlus as any },
@@ -53,6 +58,7 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   home: { title: "SUPERVISOR OPERATIONS CONTROL", subtitle: "Real-time field surveillance, merchandiser status breakdown, outlet health, and VSR funding surveillance." },
   "merchandisers-outlets": { title: "MERCHANDISER ACTIVITY & OUTLETS", subtitle: "Supervised retail outlets, merchandiser status breakdown (Active, Inactive, On Leave), and store health." },
   "vsr-surveillance": { title: "VSR CREDIT & FUNDING SURVEILLANCE", subtitle: "Track VSR funding tranches, active loan debt balances, repayment schedules, and funding eligibility." },
+  "field-broadcasts": { title: "FIELD DIRECTIVES & BROADCAST DISPATCH", subtitle: "Broadcast instant instructions, route directives, and document guidelines to VSRs and Merchandisers." },
   "leave-management": { title: "MERCHANDISER LEAVE ENGINE", subtitle: "Schedule, log, and monitor calendar leave dates for field merchandisers with relief coverage." },
   "document-vault": { title: "DOCUMENT VAULT & POD TRACKER", subtitle: "Upload POD Tracker Templates & VSR Monthly Performance Reports with instant Super Admin alert dispatch." },
   "user-onboarding": { title: "USER ONBOARDING CENTER", subtitle: "Provision and configure new Merchandiser and VSR profiles under your direct supervision." },
@@ -178,6 +184,58 @@ export default function SupervisorDashboard() {
   const onLeaveMerchCount = 6;
   const inactiveMerchCount = Math.max(0, (myMerchandisers.length || 182) - activeMerchCount - onLeaveMerchCount) || 8;
   const totalMerchCount = activeMerchCount + onLeaveMerchCount + inactiveMerchCount;
+
+  // Real-time Field Directives & Broadcast Dispatch State
+  const [broadcasts, setBroadcasts] = useState<SupervisorBroadcast[]>([]);
+  const [bTitle, setBTitle] = useState("");
+  const [bMessage, setBMessage] = useState("");
+  const [bTargetRole, setBTargetRole] = useState<"all" | "vsr" | "merchandiser">("all");
+  const [bPriority, setBPriority] = useState<"urgent" | "guideline" | "target" | "info">("urgent");
+  const [bFileName, setBFileName] = useState("");
+  const [isPublishingBroadcast, setIsPublishingBroadcast] = useState(false);
+
+  useEffect(() => {
+    function loadBroadcasts() {
+      setBroadcasts(getSupervisorBroadcasts());
+    }
+    loadBroadcasts();
+    window.addEventListener("kea-directive-dispatched", loadBroadcasts);
+    window.addEventListener("kea-directive-acknowledged", loadBroadcasts);
+    window.addEventListener("storage", loadBroadcasts);
+    return () => {
+      window.removeEventListener("kea-directive-dispatched", loadBroadcasts);
+      window.removeEventListener("kea-directive-acknowledged", loadBroadcasts);
+      window.removeEventListener("storage", loadBroadcasts);
+    };
+  }, []);
+
+  function handlePublishBroadcast(e: React.FormEvent) {
+    e.preventDefault();
+    if (!bTitle || !bMessage) {
+      flash("Please fill in directive title and message!");
+      return;
+    }
+    setIsPublishingBroadcast(true);
+    const newBroadcast: SupervisorBroadcast = {
+      id: `DIR-${Math.floor(100 + Math.random() * 900)}`,
+      supervisorName: userName || supervisor.name || "Michael Olayiwola",
+      supervisorId,
+      title: bTitle,
+      message: bMessage,
+      targetRole: bTargetRole,
+      priority: bPriority,
+      timestamp: "Today, " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      fileName: bFileName || undefined,
+      acknowledgedBy: [],
+    };
+    publishSupervisorBroadcast(newBroadcast);
+    setBroadcasts(getSupervisorBroadcasts());
+    setIsPublishingBroadcast(false);
+    setBTitle("");
+    setBMessage("");
+    setBFileName("");
+    flash(`Directive "${newBroadcast.title}" broadcasted live to all ${bTargetRole === "all" ? "field staff" : bTargetRole.toUpperCase() + "s"}!`);
+  }
 
   function signOut() {
     try { localStorage.removeItem("kea_user"); } catch { /* ignore */ }
@@ -320,6 +378,55 @@ export default function SupervisorDashboard() {
                   </div>
                 }
               />
+
+              {/* QUICK DISPATCH & FIELD DIRECTIVES BANNER */}
+              <div style={{
+                background: "linear-gradient(135deg, rgba(243, 112, 33, 0.09) 0%, rgba(148, 200, 61, 0.09) 100%)",
+                border: "1px solid rgba(243, 112, 33, 0.35)", borderRadius: 14, padding: "14px 18px",
+                display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10, display: "grid", placeItems: "center",
+                    background: "linear-gradient(135deg, #F37021, #d95f17)", color: "#fff", flexShrink: 0
+                  }}>
+                    <Send size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text)" }}>
+                      Field Team Directives & Real-Time Bulletins
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                      {broadcasts.length} active directives published · Push updates directly to VSR & Merchandiser screens
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setActivePage("field-broadcasts")}
+                    style={{
+                      background: "linear-gradient(135deg, #F37021, #d95f17)", color: "#fff", border: "none",
+                      padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                      display: "inline-flex", alignItems: "center", gap: 6, boxShadow: "0 2px 8px rgba(243, 112, 33, 0.3)"
+                    }}
+                  >
+                    <Send size={13} /> Dispatch New Directive
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActivePage("document-vault")}
+                    style={{
+                      background: "var(--card)", color: "var(--text)", border: "1px solid var(--line)",
+                      padding: "8px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                      display: "inline-flex", alignItems: "center", gap: 6
+                    }}
+                  >
+                    <FolderOpen size={13} /> Ingestion Vault
+                  </button>
+                </div>
+              </div>
 
               {/* SECTION 1: MERCHANDISERS & OUTLETS BOLD KPI CARD CLUSTER */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -767,6 +874,213 @@ export default function SupervisorDashboard() {
                             ) : (
                               <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 600 }}>
                                 {v.debt > 0 ? "Repayment Ongoing" : "No Open Request"}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              TAB: FIELD DIRECTIVES & BROADCAST DISPATCH CENTER
+             ══════════════════════════════════════════════════════════════ */}
+          {activePage === "field-broadcasts" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {/* Header Hero Banner */}
+              <div style={{
+                background: "linear-gradient(135deg, rgba(243, 112, 33, 0.1) 0%, rgba(148, 200, 61, 0.12) 100%)",
+                border: "1.5px solid rgba(243, 112, 33, 0.35)", borderRadius: 14, padding: "18px 22px",
+                display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 12, display: "grid", placeItems: "center",
+                    background: "linear-gradient(135deg, #F37021, #d95f17)", color: "#fff", flexShrink: 0
+                  }}>
+                    <Send size={22} />
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: "var(--text)" }}>Instant Field Directives & Information Dispatch</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#F37021", color: "#fff" }}>
+                        Real-Time Push to VSR & Merchandiser Dashboards
+                      </span>
+                    </div>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--muted)" }}>
+                      Post urgent notices, route guidelines, or template documents. Your team receives them instantly on their dashboards with receipt tracking.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Compose Directive Form */}
+              <section className="admin-panel">
+                <header>
+                  <div>
+                    <h2>Compose & Broadcast New Field Directive</h2>
+                    <p>Select target audience, priority level, and attach instructions or route guidelines</p>
+                  </div>
+                  <Send size={18} color="#F37021" />
+                </header>
+
+                <form onSubmit={handlePublishBroadcast} style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Directive Title</label>
+                      <input
+                        type="text"
+                        value={bTitle}
+                        onChange={(e) => setBTitle(e.target.value)}
+                        placeholder="e.g. Mandatory Weekend Route Cash Reconciliation Deadline"
+                        required
+                        style={{ width: "100%", marginTop: 4, height: 38, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12, fontWeight: 700 }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Target Audience</label>
+                      <select
+                        value={bTargetRole}
+                        onChange={(e) => setBTargetRole(e.target.value as any)}
+                        style={{ width: "100%", marginTop: 4, height: 38, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12, fontWeight: 700 }}
+                      >
+                        <option value="all">All Field Staff (VSRs & Merchandisers)</option>
+                        <option value="vsr">Van Sales Representatives (VSRs Only)</option>
+                        <option value="merchandiser">Retail Merchandisers Only</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Priority Level</label>
+                      <select
+                        value={bPriority}
+                        onChange={(e) => setBPriority(e.target.value as any)}
+                        style={{ width: "100%", marginTop: 4, height: 38, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12, fontWeight: 700 }}
+                      >
+                        <option value="urgent">🚨 Urgent Attention Required</option>
+                        <option value="guideline">📋 Standard Field Guideline</option>
+                        <option value="target">🎯 Route Sales Target Update</option>
+                        <option value="info">ℹ️ General Notice</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Directive Message / Detailed Instructions</label>
+                    <textarea
+                      value={bMessage}
+                      onChange={(e) => setBMessage(e.target.value)}
+                      rows={3}
+                      placeholder="Type the full operational directive, route expectations, or audit compliance rules..."
+                      required
+                      style={{ width: "100%", marginTop: 4, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12, fontFamily: "inherit" }}
+                    />
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "center" }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Attach Document Name or File Guideline (Optional)</label>
+                      <input
+                        type="text"
+                        value={bFileName}
+                        onChange={(e) => setBFileName(e.target.value)}
+                        placeholder="e.g. KEA_Retail_Visibility_Planogram_2026.pdf"
+                        style={{ width: "100%", marginTop: 4, height: 38, padding: "0 10px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--card)", color: "var(--text)", fontSize: 12 }}
+                      />
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "flex-end", height: "100%" }}>
+                      <button
+                        type="submit"
+                        disabled={isPublishingBroadcast}
+                        style={{
+                          background: "linear-gradient(135deg, #F37021, #d95f17)", color: "#fff", border: "none", padding: "10px 24px",
+                          borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+                          boxShadow: "0 2px 10px rgba(243, 112, 33, 0.35)", height: 38
+                        }}
+                      >
+                        <Send size={14} />
+                        {isPublishingBroadcast ? "Broadcasting..." : "Broadcast Live to Field Dashboards"}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </section>
+
+              {/* Active Broadcasts History & Staff Acknowledgment */}
+              <section className="admin-panel">
+                <header>
+                  <div>
+                    <h2>Active Field Directives & Acknowledgment Log</h2>
+                    <p>Monitor real-time confirmation receipts from VSRs and Merchandisers across territories</p>
+                  </div>
+                  <Clock size={16} color="#F37021" />
+                </header>
+
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Directive ID & Title</th>
+                        <th>Target Role</th>
+                        <th>Priority</th>
+                        <th>Broadcast Time</th>
+                        <th>Attached File</th>
+                        <th>Acknowledged Staff Receipts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {broadcasts.map((b) => (
+                        <tr key={b.id}>
+                          <td data-label="Title" style={{ maxWidth: 280 }}>
+                            <b style={{ color: "var(--text)" }}>{b.title}</b>
+                            <br /><small style={{ color: "var(--muted)", fontSize: 11 }}>{b.message}</small>
+                          </td>
+                          <td data-label="Target">
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "var(--soft)", color: "var(--text)" }}>
+                              {b.targetRole === "all" ? "ALL FIELD TEAM" : b.targetRole.toUpperCase() + "S ONLY"}
+                            </span>
+                          </td>
+                          <td data-label="Priority">
+                            <span style={{
+                              fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 4,
+                              background: b.priority === "urgent" ? "rgba(243, 112, 33, 0.15)" : "rgba(148, 200, 61, 0.15)",
+                              color: b.priority === "urgent" ? "#F37021" : "#7da830"
+                            }}>
+                              {b.priority.toUpperCase()}
+                            </span>
+                          </td>
+                          <td data-label="Time">{b.timestamp}</td>
+                          <td data-label="File">
+                            {b.fileName ? (
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "#94C83D", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                <FileText size={12} /> {b.fileName}
+                              </span>
+                            ) : (
+                              <span style={{ color: "var(--muted)", fontSize: 11 }}>None</span>
+                            )}
+                          </td>
+                          <td data-label="Receipts">
+                            {b.acknowledgedBy && b.acknowledgedBy.length > 0 ? (
+                              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                                {b.acknowledgedBy.map((staffName) => (
+                                  <span key={staffName} style={{
+                                    fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12,
+                                    background: "#f0fdf4", color: "#16a34a", border: "1px solid rgba(22, 163, 74, 0.3)",
+                                    display: "inline-flex", alignItems: "center", gap: 4
+                                  }}>
+                                    <Check size={10} /> {staffName}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: 10, color: "#d97706", fontWeight: 700 }}>
+                                ⏳ Pending field acknowledgments
                               </span>
                             )}
                           </td>

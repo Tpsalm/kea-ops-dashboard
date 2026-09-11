@@ -21,6 +21,10 @@ import { Badge } from "../../components/ui/badge";
 import { ProfileSettingsModal } from "../../components/profile-settings-modal";
 import { UrgentLoginModal } from "../../components/urgent-login-modal";
 import { useTheme } from "../../lib/theme-provider";
+import {
+  getSharedVsrReports, saveSharedVsrReport, getSupervisorBroadcasts,
+  acknowledgeSupervisorBroadcast, type SharedVsrReport, type SupervisorBroadcast
+} from "../../lib/shared-communications";
 
 type PageKey = "home" | "funding" | "reports" | "routes" | "sales" | "performance";
 
@@ -132,49 +136,42 @@ export default function VsrOperationsPage() {
   const [fieldNotes, setFieldNotes] = useState("All scheduled route supermarkets supplied. Royal Prince store requested +10 cartons for next cycle.");
   const [reportFileName, setReportFileName] = useState("");
   const [isUploadingReport, setIsUploadingReport] = useState(false);
-  const [myReportSubmissions, setMyReportSubmissions] = useState<Array<{
-    id: string;
-    type: string;
-    period: string;
-    grossSales: number;
-    cash: number;
-    transfer: number;
-    credit: number;
-    fileName: string;
-    date: string;
-    notes: string;
-    status: string;
-    feedback: string;
-  }>>([
-    {
-      id: "REP-902",
-      type: "Weekly Summary",
-      period: "Week 36 (Sep 01 - Sep 07, 2026)",
-      grossSales: 1850000,
-      cash: 1420000,
-      transfer: 330000,
-      credit: 100000,
-      fileName: "VSR_Shittu_Wk36_RouteReport.xlsx",
-      date: "2026-09-08 17:40",
-      notes: "Route completed at 94% on-time rate.",
-      status: "Received by Supervisor (Michael Olayiwola)",
-      feedback: "Under review for weekly route reconciliation.",
-    },
-    {
-      id: "REP-850",
-      type: "Monthly Reconciliation",
-      period: "August 2026",
-      grossSales: 7420000,
-      cash: 5800000,
-      transfer: 1420000,
-      credit: 200000,
-      fileName: "VSR_Shittu_August_Reconciliation.pdf",
-      date: "2026-09-01 10:20",
-      notes: "Full month reconciliation with verified bank deposits.",
-      status: "Approved & Reconciled by Supervisor",
-      feedback: "Full audit reconciled. Clean credit record maintained.",
-    },
-  ]);
+  const [myReportSubmissions, setMyReportSubmissions] = useState<SharedVsrReport[]>([]);
+  const [supervisorDirectives, setSupervisorDirectives] = useState<SupervisorBroadcast[]>([]);
+
+  // Synchronize reports and incoming supervisor directives in real-time
+  useEffect(() => {
+    function loadData() {
+      const allReports = getSharedVsrReports();
+      setMyReportSubmissions(allReports);
+      const allDirectives = getSupervisorBroadcasts();
+      setSupervisorDirectives(allDirectives.filter((b) => b.targetRole === "all" || b.targetRole === "vsr"));
+    }
+
+    loadData();
+
+    const handleDocSubmitted = () => loadData();
+    const handleDocReconciled = () => loadData();
+    const handleDirectiveDispatched = (e: any) => {
+      loadData();
+      flash(`🚨 New Supervisor Directive Received: "${e.detail?.title || "Field Update"}"`);
+    };
+    const handleDirectiveAck = () => loadData();
+
+    window.addEventListener("kea-document-submitted", handleDocSubmitted);
+    window.addEventListener("kea-document-reconciled", handleDocReconciled);
+    window.addEventListener("kea-directive-dispatched", handleDirectiveDispatched);
+    window.addEventListener("kea-directive-acknowledged", handleDirectiveAck);
+    window.addEventListener("storage", loadData);
+
+    return () => {
+      window.removeEventListener("kea-document-submitted", handleDocSubmitted);
+      window.removeEventListener("kea-document-reconciled", handleDocReconciled);
+      window.removeEventListener("kea-directive-dispatched", handleDirectiveDispatched);
+      window.removeEventListener("kea-directive-acknowledged", handleDirectiveAck);
+      window.removeEventListener("storage", loadData);
+    };
+  }, []);
 
   function flash(message: string) {
     setNotice(message);
@@ -218,8 +215,11 @@ export default function VsrOperationsPage() {
       // continue for local responsiveness
     }
 
-    const newReport = {
+    const newReport: SharedVsrReport = {
       id: `REP-${Math.floor(100 + Math.random() * 900)}`,
+      vsrName: userName || "Babatunde Adeleke",
+      vsrId: "KEA-VSR-002",
+      route: "Route Ikeja North A1",
       type: reportFrequency === "weekly" ? "Weekly Summary" : "Monthly Reconciliation",
       period: reportPeriod,
       grossSales: Number(grossSalesAmount) || 0,
@@ -227,16 +227,18 @@ export default function VsrOperationsPage() {
       transfer: Number(transferCollectedAmount) || 0,
       credit: Number(creditIssuedAmount) || 0,
       fileName: uploadedName,
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      uploadedAt: "Just now",
       notes: fieldNotes,
-      status: "Received by Supervisor (Michael Olayiwola)",
-      feedback: "Supervisor alerted instantly. Review in progress.",
+      status: "Received - Instant Delivery to Supervisor (Michael Olayiwola)",
+      feedback: "Supervisor alerted instantly. Document placed in Supervisor Vault.",
+      isNew: true,
     };
 
-    setMyReportSubmissions([newReport, ...myReportSubmissions]);
+    saveSharedVsrReport(newReport);
+    setMyReportSubmissions(getSharedVsrReports());
     setIsUploadingReport(false);
     setReportFileName("");
-    flash(`${reportFrequency === "weekly" ? "Weekly" : "Monthly"} Report submitted! Received directly by Supervisor Michael Olayiwola.`);
+    flash(`${reportFrequency === "weekly" ? "Weekly" : "Monthly"} Report submitted! Delivered instantly to Supervisor Michael Olayiwola.`);
   }
 
   const salesTrend = [
@@ -443,6 +445,83 @@ export default function VsrOperationsPage() {
                   </div>
                 }
               />
+
+              {/* SUPERVISOR LIVE DIRECTIVES & BROADCAST FEED */}
+              {supervisorDirectives.length > 0 && (
+                <div style={{
+                  background: "linear-gradient(135deg, rgba(243, 112, 33, 0.08) 0%, rgba(148, 200, 61, 0.08) 100%)",
+                  border: "1.5px solid rgba(243, 112, 33, 0.35)", borderRadius: 14, padding: "16px 20px",
+                  display: "flex", flexDirection: "column", gap: 12
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{
+                        width: 8, height: 8, borderRadius: "50%", background: "#F37021",
+                        boxShadow: "0 0 0 4px rgba(243, 112, 33, 0.25)"
+                      }} />
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                        Incoming Supervisor Directives ({supervisorDirectives.length})
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#94C83D", background: "rgba(148, 200, 61, 0.15)", padding: "3px 8px", borderRadius: 4 }}>
+                      Live Hub Broadcast · Michael Olayiwola
+                    </span>
+                  </div>
+
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {supervisorDirectives.slice(0, 2).map((dir) => {
+                      const isAck = dir.acknowledgedBy.includes(userName || "Babatunde Adeleke");
+                      return (
+                        <div key={dir.id} style={{
+                          background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: "12px 16px",
+                          display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, flexWrap: "wrap"
+                        }}>
+                          <div style={{ flex: 1, minWidth: 260 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                              <span style={{
+                                fontSize: 9, fontWeight: 800, textTransform: "uppercase", padding: "2px 6px", borderRadius: 4,
+                                background: dir.priority === "urgent" ? "rgba(243, 112, 33, 0.15)" : "rgba(148, 200, 61, 0.15)",
+                                color: dir.priority === "urgent" ? "#F37021" : "#7da830"
+                              }}>
+                                {dir.priority.toUpperCase()} DIRECTIVE
+                              </span>
+                              <strong style={{ fontSize: 12, color: "var(--text)" }}>{dir.title}</strong>
+                            </div>
+                            <p style={{ margin: "2px 0 6px", fontSize: 11, color: "var(--muted)", lineHeight: 1.4 }}>
+                              {dir.message}
+                            </p>
+                            {dir.fileName && (
+                              <span style={{ fontSize: 10, fontWeight: 700, color: "#94C83D", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                <FileText size={12} /> Attachment: {dir.fileName}
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <small style={{ fontSize: 9, color: "var(--muted)" }}>{dir.timestamp}</small>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                acknowledgeSupervisorBroadcast(dir.id, userName || "Babatunde Adeleke");
+                                setSupervisorDirectives(getSupervisorBroadcasts().filter((b) => b.targetRole === "all" || b.targetRole === "vsr"));
+                                flash("Directive receipt acknowledged to Supervisor Michael Olayiwola!");
+                              }}
+                              disabled={isAck}
+                              style={{
+                                padding: "5px 12px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: "none", cursor: isAck ? "default" : "pointer",
+                                background: isAck ? "rgba(16, 185, 129, 0.12)" : "linear-gradient(135deg, #94C83D, #7da830)",
+                                color: isAck ? "#16a34a" : "#0A0E17", display: "inline-flex", alignItems: "center", gap: 4
+                              }}
+                            >
+                              {isAck ? <><Check size={12} /> Acknowledged</> : "Acknowledge"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* CAPITAL & LOAN CALLOUT CARD */}
               <div style={{
@@ -924,12 +1003,12 @@ export default function VsrOperationsPage() {
                               <FileText size={13} /> {r.fileName}
                             </span>
                           </td>
-                          <td data-label="Date">{r.date}</td>
+                          <td data-label="Date">{r.uploadedAt || (r as any).date || "Today"}</td>
                           <td data-label="Status">
-                            <span className={`status ${r.status.includes("Approved") ? "active" : "needs-review"}`}>
+                            <span className={`status ${r.status.includes("Approved") || r.status.includes("Reconciled") ? "active" : "needs-review"}`}>
                               <i /> {r.status}
                             </span>
-                            <br /><small style={{ color: "var(--muted)", fontSize: 9 }}>{r.feedback}</small>
+                            {r.feedback && <><br /><small style={{ color: "var(--muted)", fontSize: 9 }}>{r.feedback}</small></>}
                           </td>
                         </tr>
                       ))}

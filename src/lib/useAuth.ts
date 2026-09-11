@@ -25,13 +25,13 @@ export function roleHome(role: AppRole): string {
 }
 
 export const demoUsers: Record<string, User> = {
-  "superadmin@kea.com": { email: "superadmin@kea.com", name: "Super Admin", role: "super-admin", allowedClientIds: ["client-a", "client-b"] },
+  "superadmin@kea.com": { email: "superadmin@kea.com", name: "Super Admin Executive", role: "super-admin", allowedClientIds: ["client-a", "client-b"] },
   "admin@kea.com": { email: "admin@kea.com", name: "KEA Administrator", role: "admin", allowedClientIds: ["client-a", "client-b"] },
-  "vsr@kea.com": { email: "vsr@kea.com", name: "VSR", role: "vsr", allowedClientIds: ["client-a"] },
-  "supervisor@kea.com": { email: "supervisor@kea.com", name: "Supervisor", role: "supervisor", allowedClientIds: ["client-a"] },
-  "merchandiser@kea.com": { email: "merchandiser@kea.com", name: "Merchandiser", role: "merchandiser", allowedClientIds: ["client-a"] },
-  "tsr@kea.com": { email: "tsr@kea.com", name: "TSR", role: "tsr", allowedClientIds: ["client-a"] },
-  "fieldteam@kea.com": { email: "fieldteam@kea.com", name: "Field Team", role: "field-team", allowedClientIds: ["client-a"] },
+  "vsr@kea.com": { email: "vsr@kea.com", name: "Babatunde Adeleke", role: "vsr", allowedClientIds: ["client-a"] },
+  "supervisor@kea.com": { email: "supervisor@kea.com", name: "Michael Olayiwola", role: "supervisor", allowedClientIds: ["client-a"] },
+  "merchandiser@kea.com": { email: "merchandiser@kea.com", name: "Maria Uchechukwu", role: "merchandiser", allowedClientIds: ["client-a"] },
+  "tsr@kea.com": { email: "tsr@kea.com", name: "Emeka Nwosu", role: "tsr", allowedClientIds: ["client-a"] },
+  "fieldteam@kea.com": { email: "fieldteam@kea.com", name: "Field Operations Specialist", role: "field-team", allowedClientIds: ["client-a"] },
 };
 
 function mapProfile(profile: { id: string; email: string; name: string; role: string; client_id?: string | null }): User {

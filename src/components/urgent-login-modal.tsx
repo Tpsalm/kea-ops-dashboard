@@ -260,7 +260,7 @@ const DASHBOARD_ALERTS: Record<string, {
 
 export function UrgentLoginModal({
   role = "super-admin",
-  userName = "User",
+  userName,
   isOpen,
   onClose,
 }: {
@@ -273,8 +273,40 @@ export function UrgentLoginModal({
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [animating, setAnimating] = useState(false);
+  const [displayName, setDisplayName] = useState<string>("Field Specialist");
 
   const alertData = DASHBOARD_ALERTS[role] || DASHBOARD_ALERTS["super-admin"];
+
+  // Dynamically resolve actual profile owner name from storage or canonical role
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const storedName =
+        localStorage.getItem("kea_user_name") ||
+        sessionStorage.getItem("kea_last_login_name") ||
+        (role === "supervisor" ? localStorage.getItem("kea_supervisor_name") : null) ||
+        (role === "vsr" ? localStorage.getItem("kea_vsr_name") : null) ||
+        (role === "merchandiser" ? localStorage.getItem("kea_merchandiser_name") : null) ||
+        (role === "tsr" ? localStorage.getItem("kea_tsr_name") : null);
+
+      if (userName && userName !== "User" && userName.trim().length > 0) {
+        setDisplayName(userName);
+      } else if (storedName && storedName.trim().length > 0) {
+        setDisplayName(storedName);
+      } else {
+        const canonicalRoleNames: Record<string, string> = {
+          "super-admin": "Super Admin Executive",
+          admin: "KEA Administrator",
+          supervisor: "Michael Olayiwola",
+          vsr: "Babatunde Adeleke",
+          merchandiser: "Maria Uchechukwu",
+          tsr: "Emeka Nwosu",
+          "field-team": "Field Operations Specialist",
+        };
+        setDisplayName(canonicalRoleNames[role] || "Operations Specialist");
+      }
+    } catch {}
+  }, [role, userName, isOpen]);
 
   // Play subtle high-frequency attention chime on open
   useEffect(() => {
@@ -457,7 +489,7 @@ export function UrgentLoginModal({
                   letterSpacing: "-0.02em",
                 }}
               >
-                Welcome back, {userName}
+                Welcome back, {displayName}
               </h2>
               <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0, lineHeight: 1.4 }}>
                 {alertData.subtitle}

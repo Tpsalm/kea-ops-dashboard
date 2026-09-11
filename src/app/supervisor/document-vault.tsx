@@ -3,10 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   FolderOpen, Upload, FileSpreadsheet, FileText, CheckCircle2, User, Send,
-  Download, Eye, Check, X, Clock, ShieldCheck, AlertTriangle, Layers, Building2
+  Download, Eye, Check, X, Clock, ShieldCheck, AlertTriangle, Layers, Building2, Sparkles
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
+import {
+  getSharedMerchandiserPods, getSharedVsrReports,
+  updateMerchandiserPodStatus, updateVsrReportStatus,
+  type SharedMerchandiserPod, type SharedVsrReport
+} from "@/lib/shared-communications";
 
 interface Document {
   id: string;
@@ -39,119 +44,41 @@ export function DocumentVault() {
   const [notes, setNotes] = useState("");
   const [showForm, setShowForm] = useState(false);
 
-  // Incoming Merchandiser POD Submissions state
-  const [merchandiserPods, setMerchandiserPods] = useState<Array<{
-    id: string;
-    merchandiserName: string;
-    merchandiserId: string;
-    storeName: string;
-    deliveryRef: string;
-    fileName: string;
-    uploadedAt: string;
-    notes: string;
-    status: string;
-  }>>([
-    {
-      id: "POD-891",
-      merchandiserName: "Toluwaleni Adio",
-      merchandiserId: "KEA-MER-001",
-      storeName: "Royal Prince Ikosi",
-      deliveryRef: "WB-2026-09-842",
-      fileName: "RoyalPrince_POD_Signed_Sep10.xlsx",
-      uploadedAt: "Today, 14:15",
-      notes: "Full batch delivery confirmed. Store manager stamp attached.",
-      status: "Received - Pending Verification",
-    },
-    {
-      id: "POD-840",
-      merchandiserName: "Terapb Chioma",
-      merchandiserId: "KEA-MER-002",
-      storeName: "Jendel Surulere",
-      deliveryRef: "WB-2026-09-771",
-      fileName: "Jendel_POD_Tracker_Sep08.xlsx",
-      uploadedAt: "Sep 08, 11:30",
-      notes: "18 cartons delivered. Stamped by receiving supervisor.",
-      status: "Verified & Approved",
-    },
-    {
-      id: "POD-812",
-      merchandiserName: "Mopelola Sebilau",
-      merchandiserId: "KEA-MER-003",
-      storeName: "Justrite Dopemu",
-      deliveryRef: "WB-2026-09-640",
-      fileName: "Justrite_POD_Signed_Sep06.xlsx",
-      uploadedAt: "Sep 06, 16:45",
-      notes: "22 cartons delivered. Quantity fully matched invoice.",
-      status: "Verified & Approved",
-    },
-  ]);
+  // Incoming Merchandiser POD Submissions state connected to real-time shared communication
+  const [merchandiserPods, setMerchandiserPods] = useState<SharedMerchandiserPod[]>([]);
 
-  // Incoming VSR Weekly & Monthly Reports state
-  const [vsrReports, setVsrReports] = useState<Array<{
-    id: string;
-    vsrName: string;
-    vsrId: string;
-    route: string;
-    type: string;
-    period: string;
-    grossSales: number;
-    cash: number;
-    transfer: number;
-    credit: number;
-    fileName: string;
-    uploadedAt: string;
-    notes: string;
-    status: string;
-  }>>([
-    {
-      id: "REP-902",
-      vsrName: "Shittu Akinsanya",
-      vsrId: "KEA-VSR-001",
-      route: "Route Ikeja North A1",
-      type: "Weekly Summary",
-      period: "Week 36 (Sep 01 - Sep 07, 2026)",
-      grossSales: 1850000,
-      cash: 1420000,
-      transfer: 330000,
-      credit: 100000,
-      fileName: "VSR_Shittu_Wk36_RouteReport.xlsx",
-      uploadedAt: "Today, 17:40",
-      notes: "Route completed at 94% on-time delivery rate.",
-      status: "Received - Under Review",
-    },
-    {
-      id: "REP-850",
-      vsrName: "Shittu Akinsanya",
-      vsrId: "KEA-VSR-001",
-      route: "Route Ikeja North A1",
-      type: "Monthly Reconciliation",
-      period: "August 2026",
-      grossSales: 7420000,
-      cash: 5800000,
-      transfer: 1420000,
-      credit: 200000,
-      fileName: "VSR_Shittu_August_Reconciliation.pdf",
-      uploadedAt: "Sep 01, 10:20",
-      notes: "Full month reconciliation with verified bank deposits.",
-      status: "Reconciled & Approved",
-    },
-    {
-      id: "REP-810",
-      vsrName: "Babatunde Adeyemi",
-      vsrId: "KEA-VSR-002",
-      route: "Route Surulere Central B2",
-      type: "Weekly Summary",
-      period: "Week 35 (Aug 25 - Aug 31, 2026)",
-      grossSales: 1620000,
-      cash: 1300000,
-      transfer: 220000,
-      credit: 100000,
-      fileName: "Babatunde_Wk35_RouteSummary.xlsx",
-      uploadedAt: "Aug 31, 18:10",
-      notes: "100% route stops completed on time.",
-      status: "Reconciled & Approved",
-    },
-  ]);
+  // Incoming VSR Weekly & Monthly Reports state connected to real-time shared communication
+  const [vsrReports, setVsrReports] = useState<SharedVsrReport[]>([]);
+
+  const loadSharedData = useCallback(() => {
+    setMerchandiserPods(getSharedMerchandiserPods());
+    setVsrReports(getSharedVsrReports());
+  }, []);
+
+  useEffect(() => {
+    loadSharedData();
+    const handleDocSubmitted = (e: any) => {
+      loadSharedData();
+      if (e.detail?.type === "vsr_report") {
+        toast(`New Field Report received from VSR: ${e.detail.data.vsrName} (${e.detail.data.period})`);
+      } else if (e.detail?.type === "merchandiser_pod") {
+        toast(`New POD Tracker received from Merchandiser: ${e.detail.data.merchandiserName} (${e.detail.data.storeName})`);
+      }
+    };
+    const handleDocReconciled = () => {
+      loadSharedData();
+    };
+
+    window.addEventListener("kea-document-submitted", handleDocSubmitted);
+    window.addEventListener("kea-document-reconciled", handleDocReconciled);
+    window.addEventListener("storage", loadSharedData);
+
+    return () => {
+      window.removeEventListener("kea-document-submitted", handleDocSubmitted);
+      window.removeEventListener("kea-document-reconciled", handleDocReconciled);
+      window.removeEventListener("storage", loadSharedData);
+    };
+  }, [loadSharedData, toast]);
 
   const fetchDocsAndVSRs = useCallback(async () => {
     try {
@@ -238,13 +165,15 @@ export function DocumentVault() {
   }
 
   function verifyPod(id: string) {
-    setMerchandiserPods(prev => prev.map(p => p.id === id ? { ...p, status: "Verified & Approved" } : p));
-    toast(`POD ${id} verified and approved successfully!`);
+    updateMerchandiserPodStatus(id, "Verified & Approved by Supervisor");
+    loadSharedData();
+    toast(`POD ${id} verified and approved successfully! Merchandiser notified.`);
   }
 
   function reconcileReport(id: string) {
-    setVsrReports(prev => prev.map(r => r.id === id ? { ...r, status: "Reconciled & Approved" } : r));
-    toast(`VSR Report ${id} audited & reconciled!`);
+    updateVsrReportStatus(id, "Reconciled & Approved by Supervisor", "Supervisor verified banking & route reconciliation.");
+    loadSharedData();
+    toast(`VSR Report ${id} audited & reconciled! VSR notified.`);
   }
 
   return (
