@@ -68,7 +68,7 @@ export default function TsrDashboard() {
 
   // Profile avatar & custom info state
   const [userAvatar, setUserAvatar] = useState<string>("");
-  const [userName, setUserName] = useState<string>("TSR Lead");
+  const [userName, setUserName] = useState<string>("Emeka Nwosu");
   const [urgentModalOpen, setUrgentModalOpen] = useState(false);
 
   useEffect(() => {
@@ -634,7 +634,7 @@ export default function TsrDashboard() {
       {/* ─── URGENT ATTENTION NOTIFICATION MODAL ─── */}
       <UrgentLoginModal
         role="tsr"
-        userName={userName || "TSR Lead"}
+        userName={userName || "Emeka Nwosu"}
         isOpen={urgentModalOpen}
         onClose={() => setUrgentModalOpen(false)}
       />

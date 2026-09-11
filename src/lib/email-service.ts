@@ -2,7 +2,22 @@
  * KEA Operations Transactional Email Service
  * Handles instant email notifications dispatched to Supervisors and VSRs
  * upon Super Admin executive decisions (Approvals, Rejections, Escalation resolutions).
+ *
+ * Uses the official Resend SDK (installed via `npm install resend`).
+ * In SANDBOX mode (RESEND_FROM_EMAIL not set, or set to onboarding@resend.dev),
+ * the `from` address is hardcoded to `onboarding@resend.dev` and all emails are
+ * redirected to the validated sandbox Gmail address (RESEND_SANDBOX_TO_EMAIL).
  */
+
+import {
+  resend,
+  FROM_NAME,
+  FROM_ADDRESS,
+  SANDBOX_FROM_ADDRESS,
+  SANDBOX_TO_ADDRESS,
+  isSandboxMode,
+  isResendConfigured,
+} from "@/lib/resend-client";
 
 export interface EmailPayload {
   to: string;
@@ -30,52 +45,66 @@ export interface DispatchedEmailRecord {
 export const recentDispatchedEmails: DispatchedEmailRecord[] = [];
 
 /**
- * Send an email notification (dispatches via Resend REST API if RESEND_API_KEY is present, with fallback to instant in-memory audit trail)
+ * Send an email notification (dispatches via official Resend SDK if RESEND_API_KEY is present,
+ * with fallback to instant in-memory audit trail).
+ *
+ * SANDBOX COMPLIANCE: When running in sandbox mode (FROM_ADDRESS === onboarding@resend.dev),
+ * the `from` is hardcoded to onboarding@resend.dev and the `to` is overridden to
+ * SANDBOX_TO_ADDRESS so that Resend sandbox validation always passes.
  */
 export async function sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId: string }> {
   let messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const timestamp = new Date().toISOString();
   let status: "delivered" | "sent" = "delivered";
+  const sandbox = isSandboxMode();
 
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (resendApiKey) {
+  const fromEmail = sandbox ? SANDBOX_FROM_ADDRESS : FROM_ADDRESS;
+  const from = `${FROM_NAME} <${fromEmail}>`;
+  const to = sandbox ? SANDBOX_TO_ADDRESS : payload.to;
+
+  if (isResendConfigured() && resend) {
     try {
-      const fromEmail = process.env.RESEND_FROM || "onboarding@resend.dev";
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: `KEA Operations <${fromEmail}>`,
-          to: [payload.to],
-          subject: payload.subject,
-          html: payload.html,
-          text: payload.text,
-        }),
+      const res = await resend.emails.send({
+        from,
+        to: [to],
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        messageId = data.id || messageId;
+      if (res?.error) {
+        throw res.error;
+      }
+
+      if (res?.data?.id) {
+        messageId = res.data.id;
         status = "delivered";
-        console.log(`[KEA Resend API] ✓ Email delivered to ${payload.to} via Resend. ID: ${messageId}`);
+        console.log(
+          `[KEA Resend SDK] ✓ Email delivered to ${to} (payload originally for ${payload.to}) via Resend. ID: ${messageId} | sandbox=${sandbox}`
+        );
       } else {
-        const errText = await res.text();
-        console.warn(`[KEA Resend API] Warning: Resend API returned ${res.status}: ${errText}`);
+        console.warn(`[KEA Resend SDK] Warning: Resend returned no message id in data.`);
       }
     } catch (apiErr) {
-      console.error("[KEA Resend API] Network dispatch error:", apiErr);
+      status = "sent";
+      console.error(
+        `[KEA Resend SDK] Dispatch error (sandbox=${sandbox}, from=${from}, to=${to}):`,
+        apiErr
+      );
     }
+  } else {
+    console.warn(
+      "[KEA Email Service] RESEND_API_KEY not set. Emails will be logged in memory only — no real dispatch occurs."
+    );
+    status = "sent";
   }
 
   const record: DispatchedEmailRecord = {
     id: messageId,
-    to: payload.to,
+    to,
     recipientName: payload.recipientName,
     subject: payload.subject,
-    summary: payload.text.slice(0, 140) + "...",
+    summary: payload.text.slice(0, 140) + (payload.text.length > 140 ? "..." : ""),
     category: payload.category,
     timestamp,
     status,
@@ -85,7 +114,9 @@ export async function sendEmail(payload: EmailPayload): Promise<{ success: boole
   recentDispatchedEmails.unshift(record);
   if (recentDispatchedEmails.length > 50) recentDispatchedEmails.pop();
 
-  console.log(`[KEA Email Service] ✉️ INSTANT EMAIL LOGGED to ${payload.to} (${payload.subject})`);
+  console.log(
+    `[KEA Email Service] ✉️ INSTANT EMAIL LOGGED to ${to} (${payload.subject}) | sandbox=${sandbox} | status=${status}`
+  );
 
   return { success: true, messageId };
 }
