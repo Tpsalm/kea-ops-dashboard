@@ -314,8 +314,8 @@ export function DocumentVault() {
           onClick={() => setActiveTab("vsr_reports")}
           style={{
             padding: "8px 16px", borderRadius: 8, border: "none",
-            background: activeTab === "vsr_reports" ? "#2563eb" : "var(--soft, #f3f4f6)",
-            color: activeTab === "vsr_reports" ? "#fff" : "var(--text, #333)",
+            background: activeTab === "vsr_reports" ? "#94C83D" : "var(--soft, #f3f4f6)",
+            color: activeTab === "vsr_reports" ? "#0A0E17" : "var(--text, #333)",
             fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6
           }}
         >
@@ -543,7 +543,7 @@ export function DocumentVault() {
                     <div style={{ color: "var(--muted, #6b7280)" }}>Transfer: ₦{r.transfer.toLocaleString()}</div>
                   </td>
                   <td style={{ padding: "12px 14px" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#2563eb", fontWeight: 700, fontSize: 11 }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#94C83D", fontWeight: 700, fontSize: 11 }}>
                       <FileText size={14} /> {r.fileName}
                     </span>
                   </td>
@@ -561,7 +561,7 @@ export function DocumentVault() {
                           type="button"
                           onClick={() => reconcileReport(r.id)}
                           style={{
-                            background: "#2563eb", color: "#fff", border: "none", padding: "4px 8px",
+                            background: "#94C83D", color: "#0A0E17", border: "none", padding: "4px 8px",
                             borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4
                           }}
                         >

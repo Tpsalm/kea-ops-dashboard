@@ -357,7 +357,7 @@ export default function VsrOperationsPage() {
               onClick={() => setShowSettingsModal(true)}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
-                background: "linear-gradient(135deg, #2563eb, #0d9488)", color: "#fff",
+                background: "linear-gradient(135deg, #94C83D, #F37021)", color: "#0A0E17",
                 display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
                 cursor: "pointer", overflow: "hidden", padding: 0
               }}
@@ -602,15 +602,15 @@ export default function VsrOperationsPage() {
                   <Route size={15} color="#0d9488" /> End-to-End Hierarchical Review Chain
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontSize: 11 }}>
-                  <div style={{ padding: "6px 12px", background: "#0d9488", color: "#fff", borderRadius: 6, fontWeight: 700 }}>
+                  <div style={{ padding: "6px 12px", background: "#7da830", color: "#fff", borderRadius: 6, fontWeight: 700 }}>
                     1. VSR Submits Request
                   </div>
                   <ArrowRight size={14} color="var(--muted)" />
-                  <div style={{ padding: "6px 12px", background: "#2563eb", color: "#fff", borderRadius: 6, fontWeight: 700 }}>
+                  <div style={{ padding: "6px 12px", background: "#94C83D", color: "#0A0E17", borderRadius: 6, fontWeight: 700 }}>
                     2. Supervisor Endorses / Triages
                   </div>
                   <ArrowRight size={14} color="var(--muted)" />
-                  <div style={{ padding: "6px 12px", background: "#f58220", color: "#fff", borderRadius: 6, fontWeight: 700 }}>
+                  <div style={{ padding: "6px 12px", background: "#F37021", color: "#fff", borderRadius: 6, fontWeight: 700 }}>
                     3. Super Admin Disburses & Approves
                   </div>
                 </div>
@@ -665,22 +665,22 @@ export default function VsrOperationsPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {/* Supervisor Receipt Callout Banner */}
               <div style={{
-                background: "linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(13, 148, 136, 0.12) 100%)",
-                border: "1px solid rgba(37, 99, 235, 0.25)",
+                background: "linear-gradient(135deg, rgba(148, 200, 61, 0.08) 0%, rgba(243, 112, 33, 0.1) 100%)",
+                border: "1px solid rgba(148, 200, 61, 0.35)",
                 borderRadius: 14, padding: "18px 22px",
                 display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{
                     width: 46, height: 46, borderRadius: 12, display: "grid", placeItems: "center",
-                    background: "#2563eb", color: "#fff", flexShrink: 0
+                    background: "linear-gradient(135deg, #94C83D, #7da830)", color: "#0A0E17", flexShrink: 0
                   }}>
                     <FileText size={22} />
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 14, fontWeight: 800, color: "var(--text)" }}>Official VSR Route & Reconciliation Reporting</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#2563eb", color: "#fff" }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#94C83D", color: "#0A0E17" }}>
                         Direct Supervisor Ingestion
                       </span>
                     </div>
@@ -695,9 +695,9 @@ export default function VsrOperationsPage() {
                     type="button"
                     onClick={() => setReportFrequency("weekly")}
                     style={{
-                      background: reportFrequency === "weekly" ? "#2563eb" : "var(--card)",
-                      color: reportFrequency === "weekly" ? "#fff" : "var(--text)",
-                      border: "1px solid rgba(37, 99, 235, 0.4)", padding: "7px 14px",
+                      background: reportFrequency === "weekly" ? "#94C83D" : "var(--card)",
+                      color: reportFrequency === "weekly" ? "#0A0E17" : "var(--text)",
+                      border: "1px solid rgba(148, 200, 61, 0.5)", padding: "7px 14px",
                       borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer"
                     }}
                   >
@@ -707,9 +707,9 @@ export default function VsrOperationsPage() {
                     type="button"
                     onClick={() => setReportFrequency("monthly")}
                     style={{
-                      background: reportFrequency === "monthly" ? "#2563eb" : "var(--card)",
+                      background: reportFrequency === "monthly" ? "#F37021" : "var(--card)",
                       color: reportFrequency === "monthly" ? "#fff" : "var(--text)",
-                      border: "1px solid rgba(37, 99, 235, 0.4)", padding: "7px 14px",
+                      border: "1px solid rgba(243, 112, 33, 0.5)", padding: "7px 14px",
                       borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer"
                     }}
                   >
@@ -725,7 +725,7 @@ export default function VsrOperationsPage() {
                     <h2>Submit {reportFrequency === "weekly" ? "Weekly Route Sales Summary" : "Monthly Performance & Reconciliation Report"}</h2>
                     <p>Enter collected revenue figures, fuel expenditure, and attach detailed breakdown spreadsheet</p>
                   </div>
-                  <UploadCloud size={18} color="#2563eb" />
+                  <UploadCloud size={18} color="#94C83D" />
                 </header>
 
                 <form onSubmit={handleReportSubmit} style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -833,9 +833,9 @@ export default function VsrOperationsPage() {
                       type="submit"
                       disabled={isUploadingReport}
                       style={{
-                        background: "#2563eb", color: "#fff", border: "none", padding: "10px 22px",
+                        background: "linear-gradient(135deg, #94C83D, #7da830)", color: "#0A0E17", border: "none", padding: "10px 22px",
                         borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
-                        boxShadow: "0 2px 10px rgba(37, 99, 235, 0.3)"
+                        boxShadow: "0 2px 10px rgba(148, 200, 61, 0.35)"
                       }}
                     >
                       <Send size={14} />
@@ -852,7 +852,7 @@ export default function VsrOperationsPage() {
                     <h2>Submitted Field Reports History</h2>
                     <p>Track supervisor receipt, route audit verification, and reconciliation comments</p>
                   </div>
-                  <FileCheck size={18} color="#2563eb" />
+                  <FileCheck size={18} color="#94C83D" />
                 </header>
 
                 <div className="table-scroll">
@@ -873,7 +873,7 @@ export default function VsrOperationsPage() {
                         <tr key={r.id}>
                           <td data-label="ID"><b>{r.id}</b></td>
                           <td data-label="Period">
-                            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: r.type.includes("Monthly") ? "rgba(37, 99, 235, 0.1)" : "rgba(13, 148, 136, 0.1)", color: r.type.includes("Monthly") ? "#2563eb" : "#0d9488" }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: r.type.includes("Monthly") ? "rgba(148, 200, 61, 0.15)" : "rgba(243, 112, 33, 0.12)", color: r.type.includes("Monthly") ? "#7da830" : "#F37021" }}>
                               {r.type}
                             </span>
                             <br /><b>{r.period}</b>
@@ -884,7 +884,7 @@ export default function VsrOperationsPage() {
                             <small>Transfer: ₦{r.transfer.toLocaleString()}</small>
                           </td>
                           <td data-label="File">
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#2563eb", fontWeight: 700, fontSize: 11 }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#94C83D", fontWeight: 700, fontSize: 11 }}>
                               <FileText size={13} /> {r.fileName}
                             </span>
                           </td>

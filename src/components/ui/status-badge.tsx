@@ -4,36 +4,36 @@ type BadgeVariant = "role" | "status" | "alert" | "loan" | "outlet" | "default";
 
 const colorMap: Record<string, { bg: string; fg: string }> = {
   // Roles
-  super_admin: { bg: "#ede9fe", fg: "#7c3aed" },
-  admin:       { bg: "#ede9fe", fg: "#7c3aed" },
-  supervisor:  { bg: "#dbeafe", fg: "#2563eb" },
-  vsr:         { bg: "#ecfdf5", fg: "#0e918a" },
-  merchandiser:{ bg: "#fff7ed", fg: "#ea580c" },
-  tsr:         { bg: "#fefce8", fg: "#ca8a04" },
+  super_admin: { bg: "rgba(243, 112, 33, 0.14)", fg: "#F37021" },
+  admin:       { bg: "rgba(243, 112, 33, 0.14)", fg: "#F37021" },
+  supervisor:  { bg: "rgba(148, 200, 61, 0.16)", fg: "#7da830" },
+  vsr:         { bg: "rgba(148, 200, 61, 0.14)", fg: "#94C83D" },
+  merchandiser:{ bg: "rgba(243, 112, 33, 0.12)", fg: "#F37021" },
+  tsr:         { bg: "rgba(148, 200, 61, 0.18)", fg: "#84b832" },
   // Statuses
-  active:        { bg: "#dcfce7", fg: "#16a34a" },
-  inactive:      { bg: "#f3f4f6", fg: "#6b7280" },
-  on_leave:      { bg: "#fef3c7", fg: "#d97706" },
-  "On route":    { bg: "#dbeafe", fg: "#2563eb" },
-  "Needs review":{ bg: "#fef2f2", fg: "#dc2626" },
+  active:        { bg: "rgba(148, 200, 61, 0.16)", fg: "#84b832" },
+  inactive:      { bg: "rgba(148, 163, 184, 0.15)", fg: "#64748b" },
+  on_leave:      { bg: "rgba(243, 112, 33, 0.12)", fg: "#F37021" },
+  "On route":    { bg: "rgba(148, 200, 61, 0.18)", fg: "#94C83D" },
+  "Needs review":{ bg: "rgba(239, 68, 68, 0.14)", fg: "#dc2626" },
   // Alert statuses
-  pending:   { bg: "#fef3c7", fg: "#d97706" },
-  reviewed:  { bg: "#dbeafe", fg: "#2563eb" },
-  escalated: { bg: "#fce7f3", fg: "#db2777" },
-  resolved:  { bg: "#dcfce7", fg: "#16a34a" },
+  pending:   { bg: "rgba(243, 112, 33, 0.14)", fg: "#F37021" },
+  reviewed:  { bg: "rgba(148, 200, 61, 0.15)", fg: "#7da830" },
+  escalated: { bg: "rgba(243, 112, 33, 0.2)", fg: "#e05e12" },
+  resolved:  { bg: "rgba(148, 200, 61, 0.18)", fg: "#84b832" },
   // Loan statuses
-  pending_supervisor: { bg: "#fef3c7", fg: "#d97706" },
-  pending_admin:      { bg: "#fef3c7", fg: "#d97706" },
-  approved:           { bg: "#dcfce7", fg: "#16a34a" },
-  rejected:           { bg: "#fef2f2", fg: "#dc2626" },
-  disbursed:          { bg: "#dbeafe", fg: "#2563eb" },
+  pending_supervisor: { bg: "rgba(243, 112, 33, 0.14)", fg: "#F37021" },
+  pending_admin:      { bg: "rgba(243, 112, 33, 0.16)", fg: "#F37021" },
+  approved:           { bg: "rgba(148, 200, 61, 0.16)", fg: "#84b832" },
+  rejected:           { bg: "rgba(239, 68, 68, 0.12)", fg: "#dc2626" },
+  disbursed:          { bg: "rgba(148, 200, 61, 0.18)", fg: "#94C83D" },
   // Outlet statuses
-  healthy:     { bg: "#dcfce7", fg: "#16a34a" },
-  "needs_review": { bg: "#fef2f2", fg: "#dc2626" },
+  healthy:     { bg: "rgba(148, 200, 61, 0.16)", fg: "#84b832" },
+  "needs_review": { bg: "rgba(239, 68, 68, 0.12)", fg: "#dc2626" },
   // Alert severity
-  info:     { bg: "#dbeafe", fg: "#2563eb" },
-  warning:  { bg: "#fef3c7", fg: "#d97706" },
-  critical: { bg: "#fef2f2", fg: "#dc2626" },
+  info:     { bg: "rgba(148, 200, 61, 0.14)", fg: "#94C83D" },
+  warning:  { bg: "rgba(243, 112, 33, 0.15)", fg: "#F37021" },
+  critical: { bg: "rgba(239, 68, 68, 0.15)", fg: "#dc2626" },
 };
 
 function slugify(s: string): string {

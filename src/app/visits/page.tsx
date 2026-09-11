@@ -48,7 +48,7 @@ export default function VisitsPage() {
 
   const outcomeBreakdown = useMemo(() => {
     const labels: VisitOutcome[] = ["Completed", "Partial", "Missed", "Rescheduled"];
-    const colors = ["#2563eb", "#14b8a6", "#f59e0b", "#94a3b8"];
+    const colors = ["#94C83D", "#F37021", "#7da830", "#94a3b8"];
     return labels.map((s, i) => ({
       name: s,
       value: visitData.filter((v) => v.outcome === s).length,
@@ -109,7 +109,7 @@ export default function VisitsPage() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 9 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                 <Tooltip content={<Tip />} />
-                <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="#94C83D" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

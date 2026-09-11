@@ -461,7 +461,7 @@ export default function MerchandiserDashboard() {
               onClick={() => setShowSettingsModal(true)}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
-                background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
+                background: "linear-gradient(135deg, #94C83D, #F37021)", color: "#0A0E17",
                 display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
                 cursor: "pointer", overflow: "hidden", padding: 0
               }}

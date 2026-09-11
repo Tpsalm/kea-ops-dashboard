@@ -41,7 +41,7 @@ export default function OutletsPage() {
   const typeBreakdown = useMemo(() => {
     const map = new Map<string, number>();
     outletData.forEach((o) => map.set(o.type, (map.get(o.type) ?? 0) + 1));
-    const colors = ["#2563eb", "#14b8a6", "#f59e0b", "#8b5cf6", "#f58220", "#0ea5e9"];
+    const colors = ["#94C83D", "#F37021", "#7da830", "#e05e12", "#84b832", "#ff8a3d"];
     return Array.from(map.entries()).map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }));
   }, []);
 
@@ -117,8 +117,8 @@ export default function OutletsPage() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                 <Tooltip content={<Tip />} />
-                <Bar dataKey="total" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="visited" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="total" fill="#94C83D" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="visited" fill="#7da830" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

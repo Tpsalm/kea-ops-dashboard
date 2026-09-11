@@ -16,12 +16,12 @@ interface KpiCardProps {
 }
 
 const tones: Record<string, { bg: string; fg: string; border: string }> = {
-  blue:   { bg: "#eff6ff", fg: "#2563eb", border: "#dbeafe" },
-  teal:   { bg: "#f0fdf4", fg: "#0e918a", border: "#ccfbf1" },
-  amber:  { bg: "#fffbeb", fg: "#d97706", border: "#fef3c7" },
-  violet: { bg: "#f5f3ff", fg: "#7c3aed", border: "#ede9fe" },
-  red:    { bg: "#fef2f2", fg: "#dc2626", border: "#fee2e2" },
-  green:  { bg: "#f0fdf4", fg: "#16a34a", border: "#dcfce7" },
+  blue:   { bg: "rgba(148, 200, 61, 0.12)", fg: "#94C83D", border: "rgba(148, 200, 61, 0.25)" },
+  teal:   { bg: "rgba(148, 200, 61, 0.16)", fg: "#7da830", border: "rgba(148, 200, 61, 0.3)" },
+  amber:  { bg: "rgba(243, 112, 33, 0.12)", fg: "#F37021", border: "rgba(243, 112, 33, 0.28)" },
+  violet: { bg: "rgba(243, 112, 33, 0.16)", fg: "#e05e12", border: "rgba(243, 112, 33, 0.32)" },
+  red:    { bg: "rgba(239, 68, 68, 0.12)", fg: "#dc2626", border: "rgba(239, 68, 68, 0.25)" },
+  green:  { bg: "rgba(148, 200, 61, 0.15)", fg: "#84b832", border: "rgba(148, 200, 61, 0.3)" },
 };
 
 export function KpiCard({ label, value, icon: Icon, tone = "blue", trend, trendUp, subtitle, className }: KpiCardProps) {

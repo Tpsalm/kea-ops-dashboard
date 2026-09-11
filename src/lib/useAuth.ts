@@ -157,6 +157,10 @@ export default function useAuth() {
 
         const signedInUser = profile ? mapProfile(profile) : mapSupabaseUser(data.user);
         setUser(signedInUser);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("kea_urgent_login_alert", "true");
+          sessionStorage.setItem("kea_last_login_role", signedInUser.role);
+        }
         return signedInUser;
       }
     } catch (supabaseError) {
@@ -167,6 +171,10 @@ export default function useAuth() {
     const demoUser = demoUsers[emailLower];
     if (demoUser && password === "kea12345") {
       setUser(demoUser);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("kea_urgent_login_alert", "true");
+        sessionStorage.setItem("kea_last_login_role", demoUser.role);
+      }
       return demoUser;
     }
 
@@ -181,6 +189,10 @@ export default function useAuth() {
     await supabase.auth.signOut();
     setUser(null);
     localStorage.removeItem("kea_user");
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("kea_urgent_login_alert");
+      sessionStorage.removeItem("kea_last_login_role");
+    }
     document.cookie = "kea_auth=; Path=/; Max-Age=0; SameSite=Lax";
   }
 

@@ -22,6 +22,11 @@ export default function LoginPage() {
     try {
       const signedInUser = await signIn(email, password);
       document.cookie = "kea_auth=1; Path=/; Max-Age=28800; SameSite=Lax";
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("kea_urgent_login_alert", "true");
+        sessionStorage.setItem("kea_last_login_role", signedInUser.role);
+        sessionStorage.setItem("kea_last_login_time", Date.now().toString());
+      }
       const defaultPath = roleHome(signedInUser.role);
       const nextPath = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null;
       router.push(nextPath?.startsWith("/admin") || nextPath?.startsWith("/portal/") ? nextPath : defaultPath);

@@ -51,7 +51,7 @@ export default function CreditsPage() {
 
   const statusBreakdown = useMemo(() => {
     const labels: CreditStatus[] = ["Outstanding", "Partially Paid", "Settled", "Overdue"];
-    const colors = ["#2563eb", "#14b8a6", "#94a3b8", "#f59e0b"];
+    const colors = ["#F37021", "#94C83D", "#84b832", "#dc2626"];
     return labels.map((s, i) => ({
       name: s,
       value: creditData.filter((c) => c.status === s).length,
@@ -112,8 +112,8 @@ export default function CreditsPage() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                 <Tooltip content={<Tip />} />
-                <Bar dataKey="issued" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="outstanding" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="issued" fill="#94C83D" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="outstanding" fill="#F37021" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

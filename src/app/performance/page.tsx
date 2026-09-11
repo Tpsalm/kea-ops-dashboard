@@ -17,7 +17,7 @@ export default function PerformancePage() {
   const completion = visibleStaff.length ? Math.round(visibleStaff.reduce((sum, member) => sum + member.completion, 0) / visibleStaff.length) : 0;
   const periodFactor = period === "Today" ? 0.08 : period === "Last 7 days" ? 0.24 : period === "This quarter" ? 2.8 : 1;
   const chartActivity = activityData.map((point) => ({ ...point, visits: Math.round(point.visits * periodFactor * Math.max(0.1, visibleActivities.length / activities.length)), checks: Math.round(point.checks * periodFactor * Math.max(0.1, visibleActivities.length / activities.length)) }));
-  const chartRoles = ["Merchandiser", "VSR", "Supervisor", "TSR"].map((staffRole, index) => ({ name: `${staffRole}s`, value: visibleStaff.filter((member) => member.role === staffRole).length, color: ["#2563eb", "#14b8a6", "#f59e0b", "#8b5cf6"][index] }));
+  const chartRoles = ["Merchandiser", "VSR", "Supervisor", "TSR"].map((staffRole, index) => ({ name: `${staffRole}s`, value: visibleStaff.filter((member) => member.role === staffRole).length, color: ["#7da830", "#94C83D", "#F37021", "#e05e12"][index] }));
   const chartCompletion = ["Lagos", "Ogun", "Oyo", "Delta", "Enugu"].map((name) => {
     const regionalStaff = visibleStaff.filter((member) => member.region === name);
     const planned = Math.round(regionalStaff.reduce((sum, member) => sum + member.visits, 0) * periodFactor);

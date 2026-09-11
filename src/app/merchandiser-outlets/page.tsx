@@ -236,7 +236,7 @@ export default function MerchandiserOutletsPage() {
               style={{
                 padding: "6px 14px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 700,
                 cursor: "pointer", background: activeTab === "outlets" ? "var(--card, #fff)" : "transparent",
-                color: activeTab === "outlets" ? "#2563eb" : "var(--muted, #6b7280)",
+                color: activeTab === "outlets" ? "#94C83D" : "var(--muted, #6b7280)",
                 boxShadow: activeTab === "outlets" ? "0 1px 3px rgba(0,0,0,0.08)" : "none"
               }}
             >
@@ -383,7 +383,7 @@ export default function MerchandiserOutletsPage() {
                     <td style={{ padding: "12px 14px" }}>
                       <span style={{
                         fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4,
-                        background: "#eff6ff", color: "#2563eb"
+                        background: "rgba(148, 200, 61, 0.14)", color: "#7da830"
                       }}>
                         {o.tier}
                       </span>

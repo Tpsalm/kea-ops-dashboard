@@ -20,10 +20,10 @@ export type StaffPoint = {
 
 // Role → colour mapping (matches the workforce donut chart).
 const ROLE_COLORS: Record<StaffPoint["role"], string> = {
-  VSR: "#2563eb",           // blue
-  Merchandiser: "#14b8a6",  // teal
-  Supervisor: "#f59e0b",    // amber
-  TSR: "#8b5cf6",           // violet
+  VSR: "#94C83D",           // Kea Lime Green
+  Merchandiser: "#7da830",  // Dark Lime
+  Supervisor: "#F37021",    // Kea Orange
+  TSR: "#e05e12",           // Deep Orange
 };
 
 const routeGroups = [
@@ -276,7 +276,7 @@ export default function OperationsMap({
           <Polyline
             key={index}
             positions={route}
-            pathOptions={{ color: index ? "#14b8a6" : "#2563eb", weight: 2, opacity: 0.4, dashArray: "6 6" }}
+            pathOptions={{ color: index ? "#F37021" : "#94C83D", weight: 2, opacity: 0.6, dashArray: "6 6" }}
           />
         ))}
 

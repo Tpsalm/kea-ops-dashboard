@@ -162,9 +162,9 @@ export default function SuperAdminDashboard() {
 
   // Donut chart dataset for VSR credit portfolio
   const vsrPortfolioData = [
-    { name: "Debt-Free (Eligible)", value: debtFreeCount, color: "#10b981" },
-    { name: "Active Debt (Locked)", value: activeDebtCount, color: "#ef4444" },
-    { name: "Due for Funding", value: dueFundingCount, color: "#f59e0b" },
+    { name: "Debt-Free (Eligible)", value: debtFreeCount, color: "#94C83D" },
+    { name: "Active Debt (Locked)", value: activeDebtCount, color: "#F37021" },
+    { name: "Due for Funding", value: dueFundingCount, color: "#e05e12" },
   ];
 
   // Fallback items if database is freshly seeded
@@ -304,7 +304,7 @@ export default function SuperAdminDashboard() {
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 6, background: "#eff6ff", color: "#2563eb", display: "grid", placeItems: "center" }}>
+              <div style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(148, 200, 61, 0.12)", color: "#94C83D", display: "grid", placeItems: "center" }}>
                 <BarChart3 size={16} />
               </div>
               <div>
@@ -316,7 +316,7 @@ export default function SuperAdminDashboard() {
                 </p>
               </div>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "2px 8px", borderRadius: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#94C83D", background: "rgba(148, 200, 61, 0.12)", padding: "2px 8px", borderRadius: 6 }}>
               5 Regions
             </span>
           </div>
@@ -331,7 +331,7 @@ export default function SuperAdminDashboard() {
                   contentStyle={{ background: "#0f172a", border: "none", borderRadius: 8, color: "#fff", fontSize: 12 }}
                   formatter={(val: any, name: any) => [name === "outlets" ? `${val} Outlets` : `${val}%`, name === "outlets" ? "Coverage" : "Execution Rate"]}
                 />
-                <Bar dataKey="outlets" fill="#2563eb" radius={[4, 4, 0, 0]} barSize={26} name="outlets" />
+                <Bar dataKey="outlets" fill="#94C83D" radius={[4, 4, 0, 0]} barSize={26} name="outlets" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -340,7 +340,7 @@ export default function SuperAdminDashboard() {
             <span style={{ fontSize: 11, color: "var(--muted, #64748b)" }}>
               Top performer: <strong style={{ color: "var(--text, #111)" }}>Lagos (1,420 Outlets · 92%)</strong>
             </span>
-            <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}>
+            <span style={{ fontSize: 11, color: "#84b832", fontWeight: 700 }}>
               Avg Execution: 89%
             </span>
           </div>

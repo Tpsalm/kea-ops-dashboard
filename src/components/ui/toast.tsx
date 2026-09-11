@@ -33,7 +33,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const dismiss = (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id));
 
   const icons = { success: CheckCircle2, error: AlertTriangle, info: Info };
-  const colors = { success: "#16a34a", error: "#dc2626", info: "#2563eb" };
+  const colors = { success: "#84b832", error: "#dc2626", info: "#94C83D" };
 
   return (
     <ToastContext.Provider value={{ toast }}>

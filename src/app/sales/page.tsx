@@ -85,16 +85,16 @@ export default function SalesPage() {
             <AreaChart data={salesTrend} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
               <defs>
                 <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2563eb" stopOpacity={0.22} />
-                  <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#94C83D" stopOpacity={0.22} />
+                  <stop offset="100%" stopColor="#94C83D" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
               <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 11 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 11 }} />
               <Tooltip content={<Tip />} />
-              <Area type="monotone" dataKey="target" stroke="#14b8a6" strokeWidth={2} fill="transparent" />
-              <Area type="monotone" dataKey="sales" stroke="#2563eb" strokeWidth={2.5} fill="url(#salesFill)" />
+              <Area type="monotone" dataKey="target" stroke="#7da830" strokeWidth={2} fill="transparent" />
+              <Area type="monotone" dataKey="sales" stroke="#94C83D" strokeWidth={2.5} fill="url(#salesFill)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

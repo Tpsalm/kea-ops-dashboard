@@ -169,8 +169,8 @@ export const completionData = [
 ];
 
 export const roleData = [
-  { name: "Merchandisers", value: 82, color: "#2563eb" }, { name: "VSRs", value: 96, color: "#14b8a6" },
-  { name: "Supervisors", value: 28, color: "#f59e0b" }, { name: "TSRs", value: 14, color: "#8b5cf6" },
+  { name: "Merchandisers", value: 82, color: "#94C83D" }, { name: "VSRs", value: 96, color: "#7da830" },
+  { name: "Supervisors", value: 28, color: "#F37021" }, { name: "TSRs", value: 14, color: "#e05e12" },
 ];
 
 export type VsrFundingStatus = "Funded" | "Awaiting Funding" | "No Loan Required" | "Under Review - Risk & Compliance" | "Cleared by Risk & Compliance";
@@ -486,10 +486,10 @@ export const visitData: VisitRecord[] = [
 ];
 
 export const ROLE_COLORS: Record<Role, string> = {
-  VSR: "#2563eb",           // blue
-  Merchandiser: "#14b8a6",  // teal
-  Supervisor: "#f59e0b",    // amber
-  TSR: "#8b5cf6",           // violet
+  VSR: "#94C83D",           // Kea Lime Green
+  Merchandiser: "#7da830",  // Kea Olive Green
+  Supervisor: "#F37021",    // Kea Orange
+  TSR: "#e05e12",           // Kea Deep Orange
 };
 
 // Sidebar navigation. Every ANALYTICS tab maps to its own dedicated page.

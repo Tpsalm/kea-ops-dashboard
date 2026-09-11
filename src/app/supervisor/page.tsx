@@ -230,7 +230,7 @@ export default function SupervisorDashboard() {
               onClick={() => setShowSettingsModal(true)}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--line)",
-                background: "linear-gradient(135deg, #0d9488, #2563eb)", color: "#fff",
+                background: "linear-gradient(135deg, #94C83D, #F37021)", color: "#0A0E17",
                 display: "grid", placeItems: "center", fontSize: 11, fontWeight: 800,
                 cursor: "pointer", overflow: "hidden", padding: 0
               }}
@@ -351,11 +351,11 @@ export default function SupervisorDashboard() {
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ fontSize: 12, fontWeight: 800, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 6 }}>
-                    <Banknote size={15} color="#2563eb" /> VSR Credit & Funding Surveillance
+                    <Banknote size={15} color="#F37021" /> VSR Credit & Funding Surveillance
                   </div>
                   <button
                     onClick={() => setActivePage("vsr-surveillance")}
-                    style={{ background: "none", border: "none", color: "#2563eb", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                    style={{ background: "none", border: "none", color: "#F37021", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
                   >
                     View Loans <ArrowRight size={13} />
                   </button>
@@ -372,7 +372,7 @@ export default function SupervisorDashboard() {
                   <div className="kx-kpi" onClick={() => setActivePage("vsr-surveillance")}>
                     <div className="kx-kpi-iconwrap tone-teal"><DollarSign size={18} /></div>
                     <span className="kx-kpi-label">Funded VSRs</span>
-                    <strong className="kx-kpi-value" style={{ color: "#0d9488" }}>{fundedVsrsCount}</strong>
+                    <strong className="kx-kpi-value" style={{ color: "#7da830" }}>{fundedVsrsCount}</strong>
                     <div className="kx-kpi-trend up"><b>{Math.round((fundedVsrsCount / totalVsrsCount) * 100)}%</b> <small>capital disbursed</small></div>
                   </div>
 
@@ -398,9 +398,9 @@ export default function SupervisorDashboard() {
                   </div>
 
                   <div className="kx-kpi" onClick={() => setActivePage("vsr-surveillance")}>
-                    <div className="kx-kpi-iconwrap tone-blue"><TrendingUp size={18} /></div>
+                    <div className="kx-kpi-iconwrap tone-orange"><TrendingUp size={18} /></div>
                     <span className="kx-kpi-label">VSRs Due for Funding</span>
-                    <strong className="kx-kpi-value" style={{ color: "#2563eb" }}>{vsrsDueForFundingCount}</strong>
+                    <strong className="kx-kpi-value" style={{ color: "#F37021" }}>{vsrsDueForFundingCount}</strong>
                     <div className="kx-kpi-trend up"><b>Endorsement Ready</b> <small>· to Admin</small></div>
                   </div>
                 </div>
@@ -481,12 +481,12 @@ export default function SupervisorDashboard() {
                       <PieChart>
                         <Pie
                           data={[
-                            { name: "Merchandisers", value: totalMerchCount, color: "#0d9488" },
-                            { name: "VSRs", value: totalVsrsCount, color: "#2563eb" },
+                            { name: "Merchandisers", value: totalMerchCount, color: "#7da830" },
+                            { name: "VSRs", value: totalVsrsCount, color: "#94C83D" },
                           ]}
                           dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={84} paddingAngle={3} strokeWidth={0}
                         >
-                          {[{ name: "Merchandisers", value: totalMerchCount, color: "#0d9488" }, { name: "VSRs", value: totalVsrsCount, color: "#2563eb" }].map((entry) => (
+                          {[{ name: "Merchandisers", value: totalMerchCount, color: "#7da830" }, { name: "VSRs", value: totalVsrsCount, color: "#94C83D" }].map((entry) => (
                             <Cell key={entry.name} fill={entry.color} />
                           ))}
                         </Pie>
@@ -653,7 +653,7 @@ export default function SupervisorDashboard() {
                       onClick={() => setVsrFilter(f)}
                       style={{
                         padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, border: "1px solid var(--line)",
-                        background: vsrFilter === f ? "#2563eb" : "var(--card)",
+                        background: vsrFilter === f ? "#F37021" : "var(--card)",
                         color: vsrFilter === f ? "#fff" : "var(--text)", cursor: "pointer",
                       }}
                     >
@@ -664,7 +664,7 @@ export default function SupervisorDashboard() {
 
                 <button
                   onClick={() => setActivePage("user-onboarding")}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#2563eb", color: "#fff", border: "none", padding: "7px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#94C83D", color: "#0A0E17", border: "none", padding: "7px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer" }}
                 >
                   <UserPlus size={14} /> Create New VSR
                 </button>
@@ -676,7 +676,7 @@ export default function SupervisorDashboard() {
                     <h2>VSR Fleet Funding & Debt Ledger</h2>
                     <p>Hierarchical loan review: Supervisor endorses requests before forwarding to Super Admin Executive</p>
                   </div>
-                  <Banknote size={16} color="#2563eb" />
+                  <Banknote size={16} color="#F37021" />
                 </header>
                 <div className="table-scroll">
                   <table>
@@ -722,7 +722,7 @@ export default function SupervisorDashboard() {
                                 type="button"
                                 onClick={() => handleEndorseVsrFunding(v.name, v.tranche)}
                                 style={{
-                                  background: "#2563eb", color: "#fff", border: "none", padding: "5px 10px",
+                                  background: "#94C83D", color: "#0A0E17", border: "none", padding: "5px 10px",
                                   borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4
                                 }}
                               >

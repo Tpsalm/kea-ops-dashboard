@@ -110,8 +110,8 @@ export default function TargetsPage() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                 <Tooltip content={<Tip />} />
-                <Bar dataKey="achieved" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="target" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="achieved" fill="#94C83D" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="target" fill="#F37021" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -128,7 +128,7 @@ export default function TargetsPage() {
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} domain={[0, 100]} />
                 <YAxis type="category" dataKey="name" width={92} axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                 <Tooltip content={<Tip />} />
-                <Bar dataKey="attainment" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="attainment" fill="#7da830" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -168,7 +168,7 @@ export default function TargetsPage() {
                       <td data-label="Achieved"><b>{formats[t.metric](t.achieved)}</b></td>
                       <td data-label="Attainment">
                         <div className="progress-cell">
-                          <div><i style={{ width: `${Math.min(pct, 100)}%`, background: metFlag ? "#2563eb" : "#f59e0b" }} /></div>
+                          <div><i style={{ width: `${Math.min(pct, 100)}%`, background: metFlag ? "#94C83D" : "#F37021" }} /></div>
                           <b>{pct}%</b>
                         </div>
                       </td>

@@ -175,7 +175,7 @@ export function SupervisorAlertInbox() {
               style={{
                 padding: "5px 12px", borderRadius: 4, border: "none", fontSize: 11, fontWeight: 700,
                 cursor: "pointer", background: activeSubTab === "emails" ? "#fff" : "transparent",
-                color: activeSubTab === "emails" ? "#2563eb" : "#6b7280",
+                color: activeSubTab === "emails" ? "#F37021" : "#6b7280",
                 display: "flex", alignItems: "center", gap: 4
               }}
             >
@@ -252,7 +252,7 @@ export function SupervisorAlertInbox() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 6, background: "#eff6ff", color: "#2563eb", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(243, 112, 33, 0.12)", color: "#F37021", display: "grid", placeItems: "center", flexShrink: 0 }}>
                   <Mail size={16} />
                 </div>
                 <div>
@@ -293,7 +293,7 @@ export function SupervisorAlertInbox() {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
               <div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", textTransform: "uppercase" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#F37021", textTransform: "uppercase" }}>
                   Dispatched Email Preview
                 </span>
                 <h3 style={{ fontSize: 15, fontWeight: 800, margin: "4px 0 2px" }}>{selectedEmail.subject}</h3>

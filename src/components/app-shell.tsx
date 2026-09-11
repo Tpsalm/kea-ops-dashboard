@@ -8,11 +8,12 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Bell, CheckCircle2, ChevronRight, LayoutDashboard, LogOut, Menu, Moon,
   MoreHorizontal, Search, Settings, ShieldCheck, Store, Sun, UserRound, X,
-  ShieldAlert, Banknote, Laptop, Camera, Trash2, Check, User
+  ShieldAlert, Banknote, Laptop, Camera, Trash2, Check, User, AlertTriangle
 } from "lucide-react";
 import { NAV } from "../app/data";
 import useAuth from "../lib/useAuth";
 import { useTheme } from "../lib/theme-provider";
+import { UrgentLoginModal } from "./urgent-login-modal";
 
 export function AppShell({
   children,
@@ -43,6 +44,24 @@ export function AppShell({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [panel, setPanel] = useState<null | "settings" | "profile" | "manage">(null);
   const [notice, setNotice] = useState("");
+  const [urgentModalOpen, setUrgentModalOpen] = useState(false);
+
+  // Auto-pop urgent modal on login
+  useEffect(() => {
+    try {
+      const isUrgentPending = sessionStorage.getItem("kea_urgent_login_alert");
+      if (isUrgentPending === "true") {
+        setUrgentModalOpen(true);
+        sessionStorage.removeItem("kea_urgent_login_alert");
+      } else {
+        const sessionSeen = sessionStorage.getItem(`kea_seen_alert_${user?.role}`);
+        if (!sessionSeen && user?.role) {
+          setUrgentModalOpen(true);
+          sessionStorage.setItem(`kea_seen_alert_${user?.role}`, "true");
+        }
+      }
+    } catch {}
+  }, [user?.role]);
 
   // Profile avatar & custom info
   const [avatar, setAvatar] = useState<string>("");
@@ -169,6 +188,30 @@ export function AppShell({
           <button type="button" className="mobile-menu" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu size={21} /></button>
           <div className="top-search"><Search size={17} /><input id="global-search" placeholder="Search people, stores, routes..." value={searchValue} onChange={(e) => onSearch?.(e.target.value)} /><kbd>⌘ K</kbd></div>
           <div className="top-actions">
+            <button
+              type="button"
+              className="urgent-alert-pill"
+              onClick={() => setUrgentModalOpen(true)}
+              title="Open Urgent Action Items"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "5px 11px",
+                borderRadius: "20px",
+                background: "rgba(243, 112, 33, 0.12)",
+                border: "1px solid rgba(243, 112, 33, 0.35)",
+                color: "#F37021",
+                fontSize: "11px",
+                fontWeight: 700,
+                cursor: "pointer",
+                marginRight: "4px",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#F37021", display: "inline-block" }} className="animate-pulse" />
+              <span>Urgent Notice</span>
+            </button>
             <button type="button" onClick={toggleTheme} aria-label="Toggle dark mode" title={`Switch to ${isDark ? "Light" : "Dark"} mode`}>
               {isDark ? <Sun size={19} /> : <Moon size={19} />}
             </button>
@@ -431,6 +474,14 @@ export function AppShell({
           </section>
         </div>
       )}
+
+      {/* ─── URGENT LOGIN ATTENTION POPUP ─── */}
+      <UrgentLoginModal
+        role={user?.role}
+        userName={profileName || user?.name || "User"}
+        isOpen={urgentModalOpen}
+        onClose={() => setUrgentModalOpen(false)}
+      />
     </div>
   );
 }

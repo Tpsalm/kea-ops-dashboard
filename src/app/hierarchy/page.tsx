@@ -154,7 +154,7 @@ export default function HierarchyPage() {
             <div style={{display: "grid", gap: 8, padding: "0 16px 16px"}}>
               {vsrs.map(vsr => (
                 <button key={vsr.id} className="modal-row" onClick={() => handleDrillDown("vsr", vsr.id, vsr)} style={{textAlign: "left"}}>
-                  <MapPin size={17} style={{color: "#2563eb"}} /><span><b>{vsr.name}</b><small>{vsr.route} · {vsr.completion}%</small></span>
+                  <MapPin size={17} style={{color: "#94C83D"}} /><span><b>{vsr.name}</b><small>{vsr.route} · {vsr.completion}%</small></span>
                   <ChevronRight size={16} />
                 </button>
               ))}
