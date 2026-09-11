@@ -26,6 +26,7 @@ import { LeaveManagement } from "./leave-management";
 import { DocumentVault } from "./document-vault";
 import { SupervisorAlertInbox } from "./alert-inbox";
 import { ProfileSettingsModal } from "../../components/profile-settings-modal";
+import { UrgentLoginModal } from "../../components/urgent-login-modal";
 import { useTheme } from "../../lib/theme-provider";
 
 type PageKey =
@@ -96,6 +97,23 @@ export default function SupervisorDashboard() {
   // Profile avatar & custom info state
   const [userAvatar, setUserAvatar] = useState<string>("");
   const [userName, setUserName] = useState<string>("Michael Olayiwola");
+  const [urgentModalOpen, setUrgentModalOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const isUrgentPending = sessionStorage.getItem("kea_urgent_login_alert");
+      if (isUrgentPending === "true") {
+        setUrgentModalOpen(true);
+        sessionStorage.removeItem("kea_urgent_login_alert");
+      } else {
+        const sessionSeen = sessionStorage.getItem("kea_seen_alert_supervisor");
+        if (!sessionSeen) {
+          setUrgentModalOpen(true);
+          sessionStorage.setItem("kea_seen_alert_supervisor", "true");
+        }
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     function loadProfile() {
@@ -219,6 +237,24 @@ export default function SupervisorDashboard() {
           <button className="reference-menu" type="button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu size={19} /></button>
           <span className="vsr-page-title">{pageTitles[activePage].title}</span>
           <div className="reference-actions">
+            <button
+              type="button"
+              onClick={() => setUrgentModalOpen(true)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "5px 10px", borderRadius: 20,
+                background: "rgba(243, 112, 33, 0.14)", border: "1px solid rgba(243, 112, 33, 0.4)",
+                color: "#F37021", fontSize: 10, fontWeight: 800, cursor: "pointer",
+                letterSpacing: "0.04em", transition: "all 0.2s ease"
+              }}
+              title="View Urgent Supervisor Directives"
+            >
+              <span style={{
+                width: 6, height: 6, borderRadius: "50%", background: "#F37021",
+                boxShadow: "0 0 0 3px rgba(243, 112, 33, 0.25)", display: "inline-block"
+              }} />
+              Urgent Notice
+            </button>
             <button type="button" onClick={toggleTheme} aria-label="Toggle dark mode" title={`Switch to ${isDark ? "Light" : "Dark"} mode`}>
               {isDark ? <Sun size={15} /> : <Moon size={15} />}
             </button>
@@ -790,6 +826,14 @@ export default function SupervisorDashboard() {
         defaultEmail="michael.olayiwola@kea.com"
         roleLabel="Field Supervisor · Operations Control"
         onFlash={flash}
+      />
+
+      {/* ─── URGENT ATTENTION NOTIFICATION MODAL ─── */}
+      <UrgentLoginModal
+        role="supervisor"
+        userName={userName || supervisor.name}
+        isOpen={urgentModalOpen}
+        onClose={() => setUrgentModalOpen(false)}
       />
     </div>
   );
