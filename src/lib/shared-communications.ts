@@ -295,3 +295,115 @@ export function acknowledgeSupervisorBroadcast(id: string, staffName: string): v
     window.dispatchEvent(new CustomEvent("kea-directive-acknowledged", { detail: { id, staffName } }));
   } catch {}
 }
+
+// --- Workflow Lifecycle Event Bus ---
+// Three lifecycle events published by the browser client after a successful API mutation
+// returns. Each writes a lightweight index to localStorage (cross-tab durable) then
+// dispatches a CustomEvent on the same window (same-tab instant). Paired listeners
+// live on each dashboard page to trigger toast + data refetch.
+
+export const WORKFLOW_CREATED_EVENT = "kea-workflow-created";
+export const WORKFLOW_STEP_CHANGED_EVENT = "kea-workflow-step-changed";
+export const WORKFLOW_MESSAGE_SENT_EVENT = "kea-workflow-message-sent";
+
+const WORKFLOW_EVENT_STORAGE_KEY = "kea_workflow_event_log";
+
+interface WorkflowEventRecord {
+  id: string;
+  type: string;
+  workflowId: string;
+  workflowTitle: string;
+  actorRole: string;
+  actorName: string;
+  targetUserId?: string;
+  timestamp: string;
+  payload?: any;
+}
+
+function appendWorkflowEvent(record: WorkflowEventRecord): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = localStorage.getItem(WORKFLOW_EVENT_STORAGE_KEY);
+    const list: WorkflowEventRecord[] = raw ? JSON.parse(raw) : [];
+    const updated = [record, ...list].slice(0, 100);
+    localStorage.setItem(WORKFLOW_EVENT_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+}
+
+export function publishWorkflowCreated(event: {
+  workflowId: string;
+  workflowTitle: string;
+  originatorRole: string;
+  originatorName: string;
+  assignedSupervisorId: string;
+  payload?: any;
+}): void {
+  if (typeof window === "undefined") return;
+  try {
+    const record: WorkflowEventRecord = {
+      id: `wf-evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      type: WORKFLOW_CREATED_EVENT,
+      workflowId: event.workflowId,
+      workflowTitle: event.workflowTitle,
+      actorRole: event.originatorRole,
+      actorName: event.originatorName,
+      targetUserId: event.assignedSupervisorId,
+      timestamp: new Date().toISOString(),
+      payload: event.payload,
+    };
+    appendWorkflowEvent(record);
+    window.dispatchEvent(new CustomEvent(WORKFLOW_CREATED_EVENT, { detail: record }));
+  } catch {}
+}
+
+export function publishWorkflowStepChanged(event: {
+  workflowId: string;
+  workflowTitle: string;
+  stepType: string;
+  actorRole: string;
+  actorName: string;
+  payload?: any;
+}): void {
+  if (typeof window === "undefined") return;
+  try {
+    const record: WorkflowEventRecord = {
+      id: `wf-evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      type: WORKFLOW_STEP_CHANGED_EVENT,
+      workflowId: event.workflowId,
+      workflowTitle: event.workflowTitle,
+      actorRole: event.actorRole,
+      actorName: event.actorName,
+      timestamp: new Date().toISOString(),
+      payload: event.payload,
+    };
+    appendWorkflowEvent(record);
+    window.dispatchEvent(new CustomEvent(WORKFLOW_STEP_CHANGED_EVENT, { detail: record }));
+  } catch {}
+}
+
+export function publishWorkflowMessageSent(event: {
+  workflowId: string;
+  workflowTitle: string;
+  direction: "upstream" | "downstream";
+  senderRole: string;
+  senderName: string;
+  targetUserId?: string;
+  payload?: any;
+}): void {
+  if (typeof window === "undefined") return;
+  try {
+    const record: WorkflowEventRecord = {
+      id: `wf-evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      type: WORKFLOW_MESSAGE_SENT_EVENT,
+      workflowId: event.workflowId,
+      workflowTitle: event.workflowTitle,
+      actorRole: event.senderRole,
+      actorName: event.senderName,
+      targetUserId: event.targetUserId,
+      timestamp: new Date().toISOString(),
+      payload: event.payload,
+    };
+    appendWorkflowEvent(record);
+    window.dispatchEvent(new CustomEvent(WORKFLOW_MESSAGE_SENT_EVENT, { detail: record }));
+  } catch {}
+}

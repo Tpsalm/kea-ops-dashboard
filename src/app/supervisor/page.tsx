@@ -29,8 +29,14 @@ import { ProfileSettingsModal } from "../../components/profile-settings-modal";
 import { UrgentLoginModal } from "../../components/urgent-login-modal";
 import { useTheme } from "../../lib/theme-provider";
 import {
-  getSupervisorBroadcasts, publishSupervisorBroadcast, type SupervisorBroadcast
+  getSupervisorBroadcasts, publishSupervisorBroadcast, type SupervisorBroadcast,
+  WORKFLOW_CREATED_EVENT, WORKFLOW_STEP_CHANGED_EVENT, WORKFLOW_MESSAGE_SENT_EVENT,
 } from "../../lib/shared-communications";
+import { useWorkflowRealtime } from "@/lib/use-workflow-realtime";
+import { WorkflowTracker } from "@/components/workflow-tracker";
+import { WorkflowMessagesThread } from "@/components/workflow-messages-thread";
+import { useToast } from "@/components/ui/toast";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 type PageKey =
   | "home"
@@ -40,10 +46,12 @@ type PageKey =
   | "document-vault"
   | "field-broadcasts"
   | "user-onboarding"
-  | "alert-inbox";
+  | "alert-inbox"
+  | "workflow-inbox";
 
 const navItems: { key: PageKey | "settings"; label: string; icon: typeof Users }[] = [
   { key: "home", label: "Operations Overview", icon: Home },
+  { key: "workflow-inbox", label: "Workflow Inbox", icon: Layers as any },
   { key: "merchandisers-outlets", label: "Merchandisers & Outlets", icon: Store },
   { key: "vsr-surveillance", label: "VSR Surveillance & Loans", icon: Banknote },
   { key: "field-broadcasts", label: "Directives & Broadcasts", icon: Send as any },
@@ -56,6 +64,7 @@ const navItems: { key: PageKey | "settings"; label: string; icon: typeof Users }
 
 const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   home: { title: "SUPERVISOR OPERATIONS CONTROL", subtitle: "Real-time field surveillance, merchandiser status breakdown, outlet health, and VSR funding surveillance." },
+  "workflow-inbox": { title: "WORKFLOW INBOX & TRACKER", subtitle: "Bidirectional triage: review VSR & Merchandiser submissions, message originators, escalate upstream to Super Admin, and track steps in real time." },
   "merchandisers-outlets": { title: "MERCHANDISER ACTIVITY & OUTLETS", subtitle: "Supervised retail outlets, merchandiser status breakdown (Active, Inactive, On Leave), and store health." },
   "vsr-surveillance": { title: "VSR CREDIT & FUNDING SURVEILLANCE", subtitle: "Track VSR funding tranches, active loan debt balances, repayment schedules, and funding eligibility." },
   "field-broadcasts": { title: "FIELD DIRECTIVES & BROADCAST DISPATCH", subtitle: "Broadcast instant instructions, route directives, and document guidelines to VSRs and Merchandisers." },
@@ -104,6 +113,94 @@ export default function SupervisorDashboard() {
   const [userAvatar, setUserAvatar] = useState<string>("");
   const [userName, setUserName] = useState<string>("Michael Olayiwola");
   const [urgentModalOpen, setUrgentModalOpen] = useState(false);
+
+  // ── Workflow Inbox State ──
+  const { toast } = useToast();
+  const [workflowUserId, setWorkflowUserId] = useState<string>("");
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const [showWorkflowThread, setShowWorkflowThread] = useState(false);
+  const [workflowActionLoading, setWorkflowActionLoading] = useState<string | null>(null);
+
+  const { workflows, loading: wfLoading, refetch: wfRefetch } = useWorkflowRealtime(
+    workflowUserId || undefined,
+    "supervisor",
+    {
+      onNew: (w) => toast(`New workflow received: ${w.title}`, "info"),
+      onUpdate: (w) => toast(`Workflow updated: ${w.title}`, "info"),
+    },
+  );
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => d?.user?.id && setWorkflowUserId(d.user.id))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const onCreated = (e: any) => {
+      const det = e.detail ?? {};
+      if (det.targetUserId && workflowUserId && det.targetUserId !== workflowUserId) return;
+      toast(`🔔 Workflow created: ${det.workflowTitle ?? det.workflowId}`, "info");
+      wfRefetch().catch(() => {});
+    };
+    const onStep = (e: any) => {
+      const det = e.detail ?? {};
+      toast(`⚡ Workflow step: ${det.workflowTitle} → ${det.actorRole ?? det.stepType}`, "info");
+      wfRefetch().catch(() => {});
+    };
+    const onMsg = (e: any) => {
+      const det = e.detail ?? {};
+      if (det.targetUserId && workflowUserId && det.targetUserId !== workflowUserId) return;
+      toast(`💬 New workflow message: ${det.workflowTitle}`, "info");
+      wfRefetch().catch(() => {});
+    };
+    const onStorage = () => wfRefetch().catch(() => {});
+    window.addEventListener(WORKFLOW_CREATED_EVENT, onCreated as any);
+    window.addEventListener(WORKFLOW_STEP_CHANGED_EVENT, onStep as any);
+    window.addEventListener(WORKFLOW_MESSAGE_SENT_EVENT, onMsg as any);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(WORKFLOW_CREATED_EVENT, onCreated as any);
+      window.removeEventListener(WORKFLOW_STEP_CHANGED_EVENT, onStep as any);
+      window.removeEventListener(WORKFLOW_MESSAGE_SENT_EVENT, onMsg as any);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [workflowUserId, wfRefetch, toast]);
+
+  async function escalateSelected(wfId: string) {
+    setWorkflowActionLoading(wfId);
+    try {
+      const res = await fetch(`/api/workflows/${wfId}/escalate`, { method: "POST", credentials: "include" });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error ?? `HTTP ${res.status}`);
+      }
+      toast("Escalated to Super Admin Executive", "success");
+      wfRefetch().catch(() => {});
+    } catch (err: any) {
+      toast(err.message ?? "Escalation failed", "error");
+    } finally {
+      setWorkflowActionLoading(null);
+    }
+  }
+
+  async function requestInfo(wfId: string, originatorId: string) {
+    const body = prompt("Request additional information from the originator:");
+    if (body === null) return;
+    try {
+      const res = await fetch(`/api/workflows/${wfId}/messages`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ direction: "downstream", body: body || "Requesting additional information." }),
+      });
+      if (!res.ok) throw new Error("Could not deliver message");
+      toast("Information request sent to originator", "success");
+    } catch (err: any) {
+      toast(err.message ?? "Failed to send message", "error");
+    }
+  }
 
   useEffect(() => {
     try {

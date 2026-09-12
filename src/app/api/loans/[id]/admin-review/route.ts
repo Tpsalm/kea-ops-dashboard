@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
-import { updateLoan, getLoanById, createAlert, getUserById } from "@/lib/db";
-import { sendSupervisorLoanDecisionEmail } from "@/lib/email-service";
+import {
+  updateLoan, getLoanById, createAlert, getUserById,
+  adminActionWorkflow,
+} from "@/lib/db";
+import { sendSupervisorLoanDecisionEmail, sendSupervisorWorkflowDecisionEmail } from "@/lib/email-service";
 
 /**
  * PATCH /api/loans/[id]/admin-review
  * Super Admin makes the final decision: approve (disburse) or reject.
- * Dispatches instant in-app alerts and email notifications to the assigned Supervisor.
+ * Dispatches instant in-app alerts, legacy loan-decision email, AND
+ * canonical Workflow Decision Email after adminActionWorkflow success.
  */
 export async function PATCH(
   request: Request,
@@ -42,6 +46,20 @@ export async function PATCH(
     const supervisorId = loan.supervisorId || vsr?.supervisorId;
     const supervisor = supervisorId ? await getUserById(supervisorId) : null;
 
+    const { createClient } = await import("@/lib/supabase-server");
+    const supabase = await createClient();
+
+    // Locate related workflow (loans → workflows)
+    const { data: wfRow } = await supabase
+      .from("workflows")
+      .select("id")
+      .eq("related_entity_type", "loans")
+      .eq("related_entity_id", id)
+      .limit(1)
+      .maybeSingle();
+
+    const decision: "approve" | "reject" = approved ? "approve" : "reject";
+
     if (approved) {
       // APPROVE → disburse
       const updated = await updateLoan(id, {
@@ -55,14 +73,11 @@ export async function PATCH(
       });
 
       // Update VSR's loan_debt
-      const { createClient } = await import("@/lib/supabase-server");
-      const supabase = await createClient();
       const { error: rpcError } = await supabase.rpc("increment_loan_debt", {
         p_user_id: loan.vsrId,
         p_amount: amount,
       });
       if (rpcError) {
-        // Fallback: direct update if RPC doesn't exist
         await supabase
           .from("users")
           .update({ loan_debt: amount, updated_at: now })
@@ -95,7 +110,7 @@ export async function PATCH(
         });
       }
 
-      // 3. Dispatch Instant Email to the Supervisor
+      // 3A. Dispatch legacy Loan Decision Email to Supervisor (kept for backward compat)
       try {
         await sendSupervisorLoanDecisionEmail({
           supervisorEmail: supervisor?.email || "supervisor@kea.com",
@@ -107,13 +122,42 @@ export async function PATCH(
           notes,
           loanId: id,
         });
-      } catch (emailErr) {
-        console.error("Failed to send supervisor email:", emailErr);
-      }
+      } catch (_emailErr) { /* non-blocking */ }
+
+      // 3B. Canonical adminActionWorkflow + Workflow Decision Email
+      let workflowRef: any = null;
+      try {
+        if (wfRow) {
+          const { workflow } = await adminActionWorkflow({
+            id: wfRow.id,
+            adminUser: user,
+            decision,
+            notes,
+            adminName: user.name,
+          });
+          workflowRef = workflow;
+
+          try {
+            sendSupervisorWorkflowDecisionEmail({
+              supervisorEmail: supervisor?.email ?? "supervisor@kea.com",
+              supervisorName: supervisor?.name ?? "Field Operations Supervisor",
+              workflowId: workflow.id,
+              workflowTitle: workflow.title,
+              originatorName: vsr?.name ?? "VSR",
+              originatorRole: "vsr",
+              decision,
+              notes: notes ?? undefined,
+            }).catch((emailErr) => {
+              console.warn("[loans/admin-review approve workflow] Resend failed (non-blocking):", emailErr);
+            });
+          } catch (_wfEmailOuter) {}
+        }
+      } catch (_wfErr) { /* workflow integration is non-blocking */ }
 
       return NextResponse.json({
         loan: updated,
         action: "approved",
+        workflowId: workflowRef?.id ?? wfRow?.id ?? null,
         notifiedSupervisor: supervisor?.email || "supervisor@kea.com",
       });
     } else {
@@ -151,7 +195,7 @@ export async function PATCH(
         });
       }
 
-      // 3. Dispatch Instant Email to the Supervisor
+      // 3A. Dispatch legacy Loan Decision Email to Supervisor (backward compat)
       try {
         await sendSupervisorLoanDecisionEmail({
           supervisorEmail: supervisor?.email || "supervisor@kea.com",
@@ -163,13 +207,42 @@ export async function PATCH(
           notes,
           loanId: id,
         });
-      } catch (emailErr) {
-        console.error("Failed to send supervisor email:", emailErr);
-      }
+      } catch (_emailErr) { /* non-blocking */ }
+
+      // 3B. Canonical adminActionWorkflow + Workflow Decision Email
+      let workflowRef: any = null;
+      try {
+        if (wfRow) {
+          const { workflow } = await adminActionWorkflow({
+            id: wfRow.id,
+            adminUser: user,
+            decision,
+            notes,
+            adminName: user.name,
+          });
+          workflowRef = workflow;
+
+          try {
+            sendSupervisorWorkflowDecisionEmail({
+              supervisorEmail: supervisor?.email ?? "supervisor@kea.com",
+              supervisorName: supervisor?.name ?? "Field Operations Supervisor",
+              workflowId: workflow.id,
+              workflowTitle: workflow.title,
+              originatorName: vsr?.name ?? "VSR",
+              originatorRole: "vsr",
+              decision,
+              notes: notes ?? undefined,
+            }).catch((emailErr) => {
+              console.warn("[loans/admin-review reject workflow] Resend failed (non-blocking):", emailErr);
+            });
+          } catch (_wfEmailOuter) {}
+        }
+      } catch (_wfErr) { /* workflow integration is non-blocking */ }
 
       return NextResponse.json({
         loan: updated,
         action: "rejected",
+        workflowId: workflowRef?.id ?? wfRow?.id ?? null,
         notifiedSupervisor: supervisor?.email || "supervisor@kea.com",
       });
     }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
-import { createLoan, getLoans, createAlert, getUserById } from "@/lib/db";
+import { createLoan, getLoans, createAlert, getUserById, createWorkflow } from "@/lib/db";
 
 /**
  * GET /api/loans
@@ -95,7 +95,31 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ loan, message: "Application submitted and routed to assigned Supervisor." }, { status: 201 });
+    let workflowId: string | null = null;
+    try {
+      if (vsrProfile.supervisorId) {
+        const { workflow } = await createWorkflow({
+          originatorId: user.id,
+          originatorRole: "vsr",
+          assignedSupervisorId: vsrProfile.supervisorId,
+          assignedAdminId: null,
+          clientId: vsrProfile.clientId ?? null,
+          status: "submitted_by_vsr",
+          title: `Funding Request: ₦${Number(amount).toLocaleString()}`,
+          summary: purpose.trim(),
+          priority: 3,
+          documentIds: [],
+          relatedEntityType: "loans",
+          relatedEntityId: loan.id,
+          actorNameForStep: user.name,
+        });
+        workflowId = workflow.id;
+      }
+    } catch (_wfErr) {
+      // Do not fail loan creation because workflow create failed.
+    }
+
+    return NextResponse.json({ loan, workflowId, message: "Application submitted and routed to assigned Supervisor." }, { status: 201 });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Failed to submit application" },

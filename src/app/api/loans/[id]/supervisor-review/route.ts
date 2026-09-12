@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
-import { updateLoan, getLoanById, createAlert, getUserById } from "@/lib/db";
+import {
+  updateLoan, getLoanById, createAlert, getUserById,
+  createWorkflowStep, escalateWorkflow, updateWorkflowStatus, getWorkflowById,
+} from "@/lib/db";
+import { sendSupervisorEscalationNotificationEmail } from "@/lib/email-service";
 
 /**
  * PATCH /api/loans/[id]/supervisor-review
- * Supervisor triages a loan: approve (escalate to admin) or reject.
+ * Supervisor triages a loan: approve (escalate to admin via canonical escalateWorkflow helper) or reject.
+ * Uses optimistic step_version locking on the Workflow side.
  */
 export async function PATCH(
   request: Request,
@@ -39,6 +44,17 @@ export async function PATCH(
     }
 
     const now = new Date().toISOString();
+    const { createClient } = await import("@/lib/supabase-server");
+    const supabase = await createClient();
+
+    // Locate related workflow (loans → workflows)
+    const { data: wfRow } = await supabase
+      .from("workflows")
+      .select("id, step_version")
+      .eq("related_entity_type", "loans")
+      .eq("related_entity_id", id)
+      .limit(1)
+      .maybeSingle();
 
     if (approved) {
       // ESCALATE to Super Admin
@@ -49,11 +65,7 @@ export async function PATCH(
         supervisor_notes: notes,
       });
 
-      // Alert the Super Admin
-      const admins = await getUserById(user.id);
-      // Find a super_admin to send the alert to (simple: query users table)
-      const { createClient } = await import("@/lib/supabase-server");
-      const supabase = await createClient();
+      // Find a super_admin to alert
       const { data: adminUser } = await supabase
         .from("users")
         .select("id")
@@ -75,7 +87,41 @@ export async function PATCH(
         });
       }
 
-      return NextResponse.json({ loan: updated, action: "escalated" });
+      let workflowRef: any = null;
+      try {
+        if (wfRow) {
+          // Insert "Supervisor Endorsed" review step first, then canonical escalate
+          await createWorkflowStep({
+            workflowId: wfRow.id,
+            stepType: "review",
+            actorId: user.id,
+            actorRole: user.role as any,
+            title: "Supervisor Endorsed",
+            description: notes ?? "Supervisor approved, escalating to admin.",
+            statusFrom: "submitted_by_vsr",
+            statusTo: "under_supervisor_review",
+          });
+          const { workflow, step } = await escalateWorkflow(wfRow.id, user, user.name);
+          workflowRef = workflow;
+
+          // ──── Non-blocking Resend: Escalation Confirmation Email ────
+          try {
+            const originatorProf = vsr;
+            sendSupervisorEscalationNotificationEmail({
+              supervisorEmail: user.email ?? "supervisor@kea.com",
+              supervisorName: user.name,
+              workflowId: workflow.id,
+              workflowTitle: workflow.title,
+              originatorName: originatorProf?.name ?? "VSR",
+              originatorRole: "vsr",
+            }).catch((emailErr) => {
+              console.warn("[loans/supervisor-review escalate] Resend failed (non-blocking):", emailErr);
+            });
+          } catch (_emailOuter) {}
+        }
+      } catch (_e) { /* ignore workflow integration errors */ }
+
+      return NextResponse.json({ loan: updated, action: "escalated", workflowId: workflowRef?.id ?? wfRow?.id ?? null });
     } else {
       // REJECT at Supervisor level
       const updated = await updateLoan(id, {
@@ -98,7 +144,32 @@ export async function PATCH(
         relatedEntityId: id,
       });
 
-      return NextResponse.json({ loan: updated, action: "rejected" });
+      try {
+        if (wfRow) {
+          await createWorkflowStep({
+            workflowId: wfRow.id,
+            stepType: "review",
+            actorId: user.id,
+            actorRole: user.role as any,
+            title: "Supervisor Rejected",
+            description: notes ?? "Supervisor rejected request.",
+            statusFrom: "submitted_by_vsr",
+            statusTo: "rejected",
+          });
+          try {
+            const wfFull = await getWorkflowById(wfRow.id, user);
+            await updateWorkflowStatus({
+              id: wfRow.id,
+              newStatus: "rejected",
+              expectedStepVersion: Number(wfFull.stepVersion),
+            });
+          } catch (_verErr) {
+            await supabase.from("workflows").update({ status: "rejected", updated_at: now }).eq("id", wfRow.id);
+          }
+        }
+      } catch (_e) { /* ignore */ }
+
+      return NextResponse.json({ loan: updated, action: "rejected", workflowId: wfRow?.id ?? null });
     }
   } catch (err) {
     return NextResponse.json(

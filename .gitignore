@@ -28,6 +28,10 @@ next-env.d.ts
 *.swp
 *.swo
 
+# Local AI tool state
+.trae/
+.continue/
+
 # OS
 .DS_Store
 Thumbs.db

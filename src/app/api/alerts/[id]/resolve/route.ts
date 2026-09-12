@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
-import { updateAlert, getAlertById, createAlert, getUserById } from "@/lib/db";
+import {
+  updateAlert, getAlertById, createAlert, getUserById,
+  createWorkflowStep,
+} from "@/lib/db";
 import { sendSupervisorAlertResolutionEmail } from "@/lib/email-service";
 
 /**
@@ -59,6 +62,45 @@ export async function PATCH(
       }
     }
 
+    try {
+      const { createClient } = await import("@/lib/supabase-server");
+      const supabase = await createClient();
+      let workflowId: string | null = null;
+      if (alert?.relatedEntityType && alert?.relatedEntityId) {
+        const { data: existing } = await supabase
+          .from("workflows")
+          .select("id")
+          .eq("related_entity_type", alert.relatedEntityType)
+          .eq("related_entity_id", alert.relatedEntityId)
+          .limit(1)
+          .maybeSingle();
+        workflowId = existing?.id ?? null;
+      }
+      if (!workflowId) {
+        const { data: sameAlert } = await supabase
+          .from("workflows")
+          .select("id")
+          .eq("related_entity_type", "alerts")
+          .eq("related_entity_id", id)
+          .limit(1)
+          .maybeSingle();
+        workflowId = sameAlert?.id ?? null;
+      }
+      if (workflowId) {
+        await createWorkflowStep({
+          workflowId,
+          stepType: "admin_action_approve",
+          actorId: user.id,
+          actorRole: user.role as any,
+          title: "Admin Resolved",
+          description: notes || "Super Admin closed this escalation.",
+          statusFrom: "escalated_to_admin",
+          statusTo: "approved",
+        });
+        await supabase.from("workflows").update({ status: "approved", updated_at: now }).eq("id", workflowId);
+      }
+    } catch (_e) { /* ignore */ }
+
     return NextResponse.json({ alert: updated, resolved: true });
   } catch (err) {
     return NextResponse.json(
@@ -67,4 +109,3 @@ export async function PATCH(
     );
   }
 }
-

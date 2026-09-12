@@ -53,7 +53,10 @@ DO $$ BEGIN
     'leave_request',
     'document_upload',
     'performance_review',
-    'system_event'
+    'system_event',
+    'pod_submission',
+    'field_report_submission',
+    'alert_resolution'
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
@@ -70,7 +73,10 @@ DO $$ BEGIN
     'pending_supervisor',
     'pending_admin',
     'resolved',
-    'rejected'
+    'rejected',
+    'pending',
+    'reviewed',
+    'escalated'
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 

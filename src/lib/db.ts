@@ -1,7 +1,18 @@
 import { createClient } from "./supabase-server";
 import type {
   User, Outlet, Loan, Leave, Alert, Document, Client,
+  Workflow, WorkflowStep, WorkflowMessage,
 } from "@/db/schema";
+
+export class WorkflowError extends Error {
+  code: string;
+  status: number;
+  constructor(message: string, code: string, status = 400) {
+    super(message);
+    this.code = code;
+    this.status = status;
+  }
+}
 
 /**
  * Database query layer — all API routes go through here.
@@ -471,4 +482,465 @@ export async function getClients(): Promise<Client[]> {
   const { data, error } = await supabase.from("clients").select("*").order("name");
   if (error) throw new Error(error.message);
   return (data ?? []) as Client[];
+}
+
+/* ──────────────── Workflows ──────────────── */
+
+export interface WorkflowScopeUser {
+  id: string;
+  role: "super_admin" | "admin" | "supervisor" | "vsr" | "merchandiser" | "tsr";
+}
+
+export interface WorkflowFilters {
+  status?: string;
+  clientId?: string;
+  relatedEntityType?: string;
+  limit?: number;
+}
+
+export async function resolveHierarchy(userId: string): Promise<{
+  supervisorId: string | null;
+  supervisorName: string | null;
+  tsrId: string | null;
+  adminId: string | null;
+  adminName: string | null;
+}> {
+  const supabase = await createClient();
+  const { data: user, error: uErr } = await supabase
+    .from("users")
+    .select("supervisor_id, tsr_id")
+    .eq("id", userId)
+    .single();
+  if (uErr || !user) {
+    return { supervisorId: null, supervisorName: null, tsrId: null, adminId: null, adminName: null };
+  }
+  let supervisorName: string | null = null;
+  if (user.supervisor_id) {
+    const sup = await getUserById(user.supervisor_id);
+    supervisorName = sup?.name ?? null;
+  }
+  const { data: admin, error: aErr } = await supabase
+    .from("users")
+    .select("id, name")
+    .eq("role", "super_admin")
+    .limit(1)
+    .maybeSingle();
+  return {
+    supervisorId: user.supervisor_id ?? null,
+    supervisorName,
+    tsrId: user.tsr_id ?? null,
+    adminId: (!aErr && admin) ? admin.id : null,
+    adminName: (!aErr && admin) ? admin.name : null,
+  };
+}
+
+export async function getWorkflows(user: WorkflowScopeUser, filters?: WorkflowFilters): Promise<Workflow[]> {
+  const supabase = await createClient();
+  let query = supabase.from("workflows").select("*");
+  switch (user.role) {
+    case "super_admin":
+    case "admin":
+      break;
+    case "supervisor":
+      query = query.eq("assigned_supervisor_id", user.id);
+      break;
+    case "vsr":
+    case "merchandiser":
+      query = query.eq("originator_id", user.id);
+      break;
+    case "tsr": {
+      const { data: sups, error } = await supabase
+        .from("users")
+        .select("id")
+        .eq("tsr_id", user.id);
+      const supIds = (!error && sups) ? sups.map((s: any) => s.id) : ["__none__"];
+      query = query.in("assigned_supervisor_id", supIds);
+      break;
+    }
+  }
+  if (filters?.status) query = query.eq("status", filters.status);
+  if (filters?.clientId) query = query.eq("client_id", filters.clientId);
+  if (filters?.relatedEntityType) query = query.eq("related_entity_type", filters.relatedEntityType);
+  if (filters?.limit) query = query.limit(filters.limit);
+  const { data, error } = await query.order("created_at", { ascending: false });
+  if (error) throw new WorkflowError(error.message, "DB_ERROR", 500);
+  return (data ?? []) as Workflow[];
+}
+
+export async function getWorkflowById(id: string, requireUser: WorkflowScopeUser): Promise<Workflow> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("workflows").select("*").eq("id", id).single();
+  if (error || !data) throw new WorkflowError("Workflow not found", "WORKFLOW_NOT_FOUND", 404);
+  const wf = data as Workflow;
+  let inScope = false;
+  switch (requireUser.role) {
+    case "super_admin":
+    case "admin":
+      inScope = true;
+      break;
+    case "supervisor":
+      inScope = wf.assignedSupervisorId === requireUser.id;
+      break;
+    case "vsr":
+    case "merchandiser":
+      inScope = wf.originatorId === requireUser.id;
+      break;
+    case "tsr": {
+      if (wf.assignedSupervisorId) {
+        const sup = await getUserById(wf.assignedSupervisorId);
+        inScope = !!sup && sup.tsrId === requireUser.id;
+      }
+      break;
+    }
+  }
+  if (!inScope) throw new WorkflowError("Outside workflow access scope", "FORBIDDEN_SCOPE", 403);
+  return wf;
+}
+
+export async function createWorkflow(payload: {
+  originatorId: string;
+  originatorRole: Workflow["originatorRole"];
+  assignedSupervisorId: string;
+  assignedAdminId?: string | null;
+  clientId?: string | null;
+  status?: Workflow["status"];
+  title: string;
+  summary?: string | null;
+  priority?: number;
+  documentIds?: string[];
+  relatedEntityType?: string | null;
+  relatedEntityId?: string | null;
+  actorNameForStep?: string;
+}): Promise<{ workflow: Workflow; initialSteps: WorkflowStep[] }> {
+  const supabase = await createClient();
+  const status = payload.status ?? "draft";
+  const insertData: Record<string, any> = {
+    originator_id: payload.originatorId,
+    originator_role: payload.originatorRole,
+    assigned_supervisor_id: payload.assignedSupervisorId,
+    status,
+    title: payload.title,
+    summary: payload.summary ?? null,
+    priority: payload.priority ?? 1,
+    document_ids: payload.documentIds ?? [],
+    step_version: 0,
+  };
+  if (payload.assignedAdminId) insertData.assigned_admin_id = payload.assignedAdminId;
+  if (payload.clientId) insertData.client_id = payload.clientId;
+  if (payload.relatedEntityType) insertData.related_entity_type = payload.relatedEntityType;
+  if (payload.relatedEntityId) insertData.related_entity_id = payload.relatedEntityId;
+
+  const { data: wfData, error: wfErr } = await supabase
+    .from("workflows")
+    .insert([insertData])
+    .select()
+    .single();
+  if (wfErr || !wfData) {
+    throw new WorkflowError(wfErr?.message ?? "Failed to create workflow", "DB_ERROR", 500);
+  }
+  const workflow = wfData as Workflow;
+  const steps: WorkflowStep[] = [];
+
+  try {
+    const { data: s1, error: s1Err } = await supabase
+      .from("workflow_steps")
+      .insert([{
+        workflow_id: workflow.id,
+        step_order: 1,
+        step_type: "create",
+        actor_id: payload.originatorId,
+        actor_role: payload.originatorRole,
+        title: "Draft Created",
+        description: `Workflow created by ${payload.actorNameForStep ?? payload.originatorRole}`,
+        status_from: null,
+        status_to: "draft",
+      }])
+      .select()
+      .single();
+    if (s1Err) throw s1Err;
+    steps.push(s1 as WorkflowStep);
+
+    if (status !== "draft") {
+      const submitType = status === "submitted_by_vsr" ? "submitted_by_vsr" : "submitted_by_merchandiser";
+      const submitTitle = submitType === "submitted_by_vsr" ? "Submitted by VSR" : "Submitted by Merchandiser";
+      const { data: s2, error: s2Err } = await supabase
+        .from("workflow_steps")
+        .insert([{
+          workflow_id: workflow.id,
+          step_order: 2,
+          step_type: "submit",
+          actor_id: payload.originatorId,
+          actor_role: payload.originatorRole,
+          title: submitTitle,
+          description: payload.summary ?? null,
+          status_from: "draft",
+          status_to: submitType,
+        }])
+        .select()
+        .single();
+      if (s2Err) throw s2Err;
+      steps.push(s2 as WorkflowStep);
+    }
+  } catch (stepErr: any) {
+    await supabase.from("workflows").delete().eq("id", workflow.id);
+    throw new WorkflowError(stepErr?.message ?? "Failed to attach steps", "DB_ERROR", 500);
+  }
+  return { workflow, initialSteps: steps };
+}
+
+export async function createWorkflowStep(payload: {
+  workflowId: string;
+  stepOrder?: number;
+  stepType: WorkflowStep["stepType"];
+  actorId: string;
+  actorRole: WorkflowStep["actorRole"];
+  title: string;
+  description?: string | null;
+  statusFrom?: WorkflowStep["statusFrom"] | null;
+  statusTo?: WorkflowStep["statusTo"] | null;
+  metadata?: Record<string, any> | null;
+}): Promise<WorkflowStep> {
+  const supabase = await createClient();
+  let stepOrder = payload.stepOrder;
+  if (!stepOrder) {
+    const { data: lastStep, error: lastErr } = await supabase
+      .from("workflow_steps")
+      .select("step_order")
+      .eq("workflow_id", payload.workflowId)
+      .order("step_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    stepOrder = (!lastErr && lastStep) ? (Number(lastStep.step_order) + 1) : 1;
+  }
+  const { data, error } = await supabase
+    .from("workflow_steps")
+    .insert([{
+      workflow_id: payload.workflowId,
+      step_order: stepOrder,
+      step_type: payload.stepType,
+      actor_id: payload.actorId,
+      actor_role: payload.actorRole,
+      title: payload.title,
+      description: payload.description ?? null,
+      status_from: payload.statusFrom ?? null,
+      status_to: payload.statusTo ?? null,
+      metadata: payload.metadata ?? null,
+    }])
+    .select()
+    .single();
+  if (error || !data) throw new WorkflowError(error?.message ?? "Step insert failed", "DB_ERROR", 500);
+  return data as WorkflowStep;
+}
+
+export async function getWorkflowSteps(workflowId: string): Promise<WorkflowStep[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("workflow_steps")
+    .select("*")
+    .eq("workflow_id", workflowId)
+    .order("step_order", { ascending: true });
+  if (error) throw new WorkflowError(error.message, "DB_ERROR", 500);
+  return (data ?? []) as WorkflowStep[];
+}
+
+export async function createWorkflowMessage(payload: {
+  workflowId: string;
+  senderId: string;
+  targetUserId: string;
+  direction: WorkflowMessage["direction"];
+  body: string;
+  attachmentUrl?: string | null;
+}): Promise<WorkflowMessage> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("workflow_messages")
+    .insert([{
+      workflow_id: payload.workflowId,
+      sender_id: payload.senderId,
+      target_user_id: payload.targetUserId,
+      direction: payload.direction,
+      body: payload.body,
+      attachment_url: payload.attachmentUrl ?? null,
+    }])
+    .select()
+    .single();
+  if (error || !data) throw new WorkflowError(error?.message ?? "Message insert failed", "DB_ERROR", 500);
+  return data as WorkflowMessage;
+}
+
+export async function getWorkflowMessages(workflowId: string): Promise<WorkflowMessage[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("workflow_messages")
+    .select("*")
+    .eq("workflow_id", workflowId)
+    .order("sent_at", { ascending: true });
+  if (error) throw new WorkflowError(error.message, "DB_ERROR", 500);
+  return (data ?? []) as WorkflowMessage[];
+}
+
+export async function updateWorkflowStatus(params: {
+  id: string;
+  newStatus: Workflow["status"];
+  expectedStepVersion: number;
+}): Promise<Workflow> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("workflows")
+    .update({
+      status: params.newStatus,
+      step_version: params.expectedStepVersion + 1,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", params.id)
+    .eq("step_version", params.expectedStepVersion)
+    .select()
+    .single();
+  if (error || !data) {
+    throw new WorkflowError(
+      "Workflow state has changed — please refresh and try again",
+      "WORKFLOW_STALE_STATE",
+      409,
+    );
+  }
+  return data as Workflow;
+}
+
+export async function escalateWorkflow(id: string, supervisorUser: WorkflowScopeUser, supervisorName?: string): Promise<{ workflow: Workflow; step: WorkflowStep }> {
+  const supabase = await createClient();
+  const { data: wfRaw, error: wfErr } = await supabase.from("workflows").select("*").eq("id", id).single();
+  if (wfErr || !wfRaw) throw new WorkflowError("Workflow not found", "WORKFLOW_NOT_FOUND", 404);
+  const wf = wfRaw as Workflow;
+  if (wf.assignedSupervisorId !== supervisorUser.id) {
+    throw new WorkflowError("Escalation allowed only for assigned supervisor", "FORBIDDEN_SCOPE", 403);
+  }
+  const { data: admin, error: aErr } = await supabase
+    .from("users")
+    .select("id, name")
+    .eq("role", "super_admin")
+    .limit(1)
+    .maybeSingle();
+  if (aErr || !admin) {
+    throw new WorkflowError("No super_admin user available for escalation", "HIERARCHY_MISSING_ADMIN", 422);
+  }
+  const updated = await updateWorkflowStatus({
+    id,
+    newStatus: "escalated_to_admin",
+    expectedStepVersion: Number(wf.stepVersion),
+  });
+  const { data: upd2 } = await supabase
+    .from("workflows")
+    .update({ assigned_admin_id: admin.id, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+  const finalWorkflow = (upd2 ?? updated) as Workflow;
+  const step = await createWorkflowStep({
+    workflowId: id,
+    stepType: "escalate",
+    actorId: supervisorUser.id,
+    actorRole: supervisorUser.role as any,
+    title: "Escalated to Super Admin",
+    description: `Escalated by ${supervisorName ?? "Supervisor"} to ${admin.name}`,
+    statusFrom: wf.status as any,
+    statusTo: "escalated_to_admin",
+  });
+  return { workflow: finalWorkflow, step };
+}
+
+export async function adminActionWorkflow(params: {
+  id: string;
+  adminUser: WorkflowScopeUser;
+  decision: "approve" | "reject";
+  notes?: string | null;
+  adminName?: string;
+}): Promise<{ workflow: Workflow; step: WorkflowStep }> {
+  const supabase = await createClient();
+  const { data: wfRaw, error: wfErr } = await supabase.from("workflows").select("*").eq("id", params.id).single();
+  if (wfErr || !wfRaw) throw new WorkflowError("Workflow not found", "WORKFLOW_NOT_FOUND", 404);
+  const wf = wfRaw as Workflow;
+  const newStatus = params.decision === "approve" ? "approved" : "rejected";
+  const stepType = params.decision === "approve" ? "admin_action_approve" : "admin_action_reject";
+  const stepTitle = params.decision === "approve" ? "Admin Decision: Approved" : "Admin Decision: Rejected";
+  const updated = await updateWorkflowStatus({
+    id: params.id,
+    newStatus: newStatus as any,
+    expectedStepVersion: Number(wf.stepVersion),
+  });
+  const step = await createWorkflowStep({
+    workflowId: params.id,
+    stepType: stepType as any,
+    actorId: params.adminUser.id,
+    actorRole: params.adminUser.role as any,
+    title: stepTitle,
+    description: params.notes ?? null,
+    statusFrom: wf.status as any,
+    statusTo: newStatus as any,
+  });
+  return { workflow: updated, step };
+}
+
+/**
+ * Supervisor review transition (Tier 1 response loop).
+ * Moves a field-submitted workflow into `under_supervisor_review` so the
+ * tracker reflects "Under Supervisor Review" before escalation. Optionally
+ * recorded as a change-request review without altering the state machine.
+ */
+export async function supervisorActionWorkflow(params: {
+  id: string;
+  supervisorUser: WorkflowScopeUser;
+  action: "review" | "request_changes";
+  notes?: string | null;
+  supervisorName?: string;
+}): Promise<{ workflow: Workflow; step: WorkflowStep }> {
+  const supabase = await createClient();
+  const { data: wfRaw, error: wfErr } = await supabase
+    .from("workflows")
+    .select("*")
+    .eq("id", params.id)
+    .single();
+  if (wfErr || !wfRaw) throw new WorkflowError("Workflow not found", "WORKFLOW_NOT_FOUND", 404);
+  const wf = wfRaw as Workflow;
+
+  if (wf.assignedSupervisorId !== params.supervisorUser.id) {
+    throw new WorkflowError("Review allowed only for assigned supervisor", "FORBIDDEN_SCOPE", 403);
+  }
+
+  const allowedFrom = ["submitted_by_vsr", "submitted_by_merchandiser", "under_supervisor_review"];
+  if (!allowedFrom.includes(wf.status)) {
+    throw new WorkflowError(`Cannot review from status "${wf.status}"`, "INVALID_STATE", 409);
+  }
+
+  const newStatus: Workflow["status"] = "under_supervisor_review";
+  const updated = await updateWorkflowStatus({
+    id: params.id,
+    newStatus,
+    expectedStepVersion: Number(wf.stepVersion),
+  });
+
+  const step = await createWorkflowStep({
+    workflowId: params.id,
+    stepType: "review",
+    actorId: params.supervisorUser.id,
+    actorRole: params.supervisorUser.role as any,
+    title: params.action === "request_changes" ? "Changes Requested by Supervisor" : "Under Supervisor Review",
+    description: params.notes ?? null,
+    statusFrom: wf.status as any,
+    statusTo: newStatus as any,
+  });
+  return { workflow: updated, step };
+}
+
+/**
+ * Marks every unread message in a workflow thread as read for the current user.
+ */
+export async function markWorkflowMessagesRead(workflowId: string, userId: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("workflow_messages")
+    .update({ is_read: true })
+    .eq("workflow_id", workflowId)
+    .eq("target_user_id", userId)
+    .eq("is_read", false);
+  if (error) throw new WorkflowError(error.message, "DB_ERROR", 500);
 }

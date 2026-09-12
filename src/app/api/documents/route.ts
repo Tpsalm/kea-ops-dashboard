@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
-import { createDocument, getDocuments, createAlert, getUserById } from "@/lib/db";
+import {
+  createDocument, getDocuments, createAlert, getUserById,
+  WorkflowError, resolveHierarchy, createWorkflow,
+} from "@/lib/db";
 
 /**
  * GET /api/documents
@@ -68,7 +71,22 @@ export async function POST(request: Request) {
     }
 
     const uploaderProfile = await getUserById(user.id);
-    const effectiveSupervisorId = supervisorId || uploaderProfile?.supervisorId || (user.role === "supervisor" ? user.id : undefined);
+    let effectiveSupervisorId = supervisorId || uploaderProfile?.supervisorId || (user.role === "supervisor" ? user.id : undefined);
+
+    if (!effectiveSupervisorId && (user.role === "merchandiser" || user.role === "vsr")) {
+      const hier = await resolveHierarchy(user.id);
+      effectiveSupervisorId = hier.supervisorId ?? undefined;
+    }
+
+    if (user.role === "merchandiser" && !effectiveSupervisorId) {
+      return NextResponse.json(
+        {
+          error: "Merchandiser has no assigned supervisor. Ask your TSR to set supervisor_id on your profile.",
+          code: "HIERARCHY_MISSING_SUPERVISOR",
+        },
+        { status: 422 },
+      );
+    }
 
     const doc = await createDocument({
       uploaderId: user.id,
@@ -81,6 +99,33 @@ export async function POST(request: Request) {
       fileName,
       notes: notes || (metadata ? JSON.stringify(metadata) : undefined),
     });
+
+    let workflowId: string | null = null;
+    try {
+      if (effectiveSupervisorId && (user.role === "merchandiser" || user.role === "vsr" || user.role === "supervisor")) {
+        const wfStatus: any =
+          user.role === "merchandiser" ? "submitted_by_merchandiser" :
+          user.role === "vsr" ? "submitted_by_vsr" : "under_supervisor_review";
+        const { workflow } = await createWorkflow({
+          originatorId: user.id,
+          originatorRole: user.role as any,
+          assignedSupervisorId: effectiveSupervisorId,
+          assignedAdminId: null,
+          clientId: uploaderProfile?.clientId ?? null,
+          status: wfStatus,
+          title: `Document: ${title}`,
+          summary: notes ?? `Uploaded ${type} document`,
+          priority: 2,
+          documentIds: [doc.id],
+          relatedEntityType: "documents",
+          relatedEntityId: doc.id,
+          actorNameForStep: user.name,
+        });
+        workflowId = workflow.id;
+      }
+    } catch (_wfErr) {
+      // Workflow creation should not fail the document upload; continue silently.
+    }
 
     const { createClient } = await import("@/lib/supabase-server");
     const supabase = await createClient();
@@ -148,6 +193,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       document: doc,
+      workflowId,
       message: user.role === "supervisor"
         ? "Document uploaded and Super Admin alerted."
         : "Submission sent and Supervisor alerted instantly.",

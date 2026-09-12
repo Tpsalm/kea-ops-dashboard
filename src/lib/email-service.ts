@@ -216,35 +216,191 @@ export async function sendSupervisorAlertResolutionEmail(params: {
   alertId: string;
   notes?: string;
 }) {
-  const { supervisorEmail, supervisorName, alertTitle, alertId, notes } = params;
-  const subject = `[KEA OPERATIONS] Escalation Resolved by Super Admin: ${alertTitle}`;
+  try {
+    const { supervisorEmail, supervisorName, alertTitle, alertId, notes } = params;
+    const subject = `[KEA OPERATIONS] Escalation Resolved by Super Admin: ${alertTitle}`;
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <body style="font-family: sans-serif; padding: 20px; background: #f8fafc;">
-        <div style="max-width: 580px; margin: 0 auto; background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; padding: 24px;">
-          <h2 style="color: #0b1730; margin-top: 0;">Escalation Resolved</h2>
-          <p>Dear <strong>${supervisorName}</strong>,</p>
-          <p>The operational escalation you routed to the Super Admin has been acknowledged and marked as <strong>RESOLVED</strong>.</p>
-          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 8px; margin: 16px 0;">
-            <strong>Alert:</strong> ${alertTitle}<br />
-            <strong>Status:</strong> Resolved by Super Admin Executive<br />
-            ${notes ? `<strong>Notes:</strong> ${notes}` : ""}
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <body style="font-family: sans-serif; padding: 20px; background: #f8fafc;">
+          <div style="max-width: 580px; margin: 0 auto; background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; padding: 24px;">
+            <h2 style="color: #0b1730; margin-top: 0;">Escalation Resolved</h2>
+            <p>Dear <strong>${supervisorName}</strong>,</p>
+            <p>The operational escalation you routed to the Super Admin has been acknowledged and marked as <strong>RESOLVED</strong>.</p>
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 8px; margin: 16px 0;">
+              <strong>Alert:</strong> ${alertTitle}<br />
+              <strong>Status:</strong> Resolved by Super Admin Executive<br />
+              ${notes ? `<strong>Notes:</strong> ${notes}` : ""}
+            </div>
+            <p>Thank you for ensuring real-time operational vigilance.</p>
           </div>
-          <p>Thank you for ensuring real-time operational vigilance.</p>
-        </div>
-      </body>
-    </html>
-  `;
+        </body>
+      </html>
+    `;
 
-  return sendEmail({
-    to: supervisorEmail || "supervisor@kea.com",
-    recipientName: supervisorName,
-    subject,
-    html,
-    text: `Escalation Resolved: ${alertTitle}. Resolved by Super Admin Executive.`,
-    category: "alert_resolution",
-    metadata: { alertId, alertTitle }
-  });
+    return sendEmail({
+      to: supervisorEmail || "supervisor@kea.com",
+      recipientName: supervisorName,
+      subject,
+      html,
+      text: `Escalation Resolved: ${alertTitle}. Resolved by Super Admin Executive.`,
+      category: "alert_resolution",
+      metadata: { alertId, alertTitle }
+    });
+  } catch (err) {
+    console.warn("[KEA Email Service] sendSupervisorAlertResolutionEmail failed (non-blocking):", err);
+    return { success: false, messageId: "fallback" };
+  }
+}
+
+/**
+ * Send Instant Supervisor Notification for Super Admin Workflow Governance Decision
+ * (Approved / Rejected) — downstream resolution event back to the endorsing supervisor.
+ * Non-blocking: any Resend/throw is swallowed; callers never await-return a rejection.
+ */
+export async function sendSupervisorWorkflowDecisionEmail(params: {
+  supervisorEmail: string;
+  supervisorName: string;
+  workflowId: string;
+  workflowTitle: string;
+  originatorName: string;
+  originatorRole: string;
+  decision: "approve" | "reject";
+  notes?: string;
+}) {
+  try {
+    const { supervisorEmail, supervisorName, workflowId, workflowTitle, originatorName, originatorRole, decision, notes } = params;
+    const decisionText = decision === "approve" ? "APPROVED" : "REJECTED";
+    const badgeColor = decision === "approve" ? "#16a34a" : "#dc2626";
+    const subject = `[KEA OPERATIONS] Super Admin Workflow Decision: ${workflowTitle} — ${decisionText}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+            .header { background: #0b1730; color: #ffffff; padding: 24px; text-align: left; }
+            .logo { font-weight: 900; font-size: 20px; letter-spacing: 0.05em; color: #14b8a6; }
+            .badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 13px; color: #ffffff; background-color: ${badgeColor}; margin-top: 10px; }
+            .content { padding: 24px; font-size: 14px; line-height: 1.6; }
+            .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; }
+            .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #edf2f7; }
+            .row:last-child { border-bottom: none; }
+            .label { color: #64748b; font-weight: 600; font-size: 13px; }
+            .val { font-weight: 700; color: #0f172a; font-size: 13px; }
+            .footer { background: #f1f5f9; padding: 16px 24px; font-size: 12px; color: #64748b; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">KEA TALENT & FIELD OPERATIONS</div>
+              <h2 style="margin: 8px 0 0; font-size: 18px;">Workflow Governance Decision</h2>
+              <div class="badge">${decisionText}</div>
+            </div>
+            <div class="content">
+              <p>Dear <strong>${supervisorName}</strong>,</p>
+              <p>This is an automated operational notification regarding the escalated workflow you endorsed for <strong>${originatorName}</strong> (${originatorRole}).</p>
+              
+              <div class="card">
+                <div class="row"><span class="label">Workflow Title:</span><span class="val">${workflowTitle}</span></div>
+                <div class="row"><span class="label">Originator:</span><span class="val">${originatorName} (${originatorRole})</span></div>
+                <div class="row"><span class="label">Decision:</span><span class="val" style="color: ${badgeColor};">${decisionText}</span></div>
+                <div class="row"><span class="label">Workflow Reference:</span><span class="val">${workflowId}</span></div>
+                ${notes ? `<div class="row"><span class="label">Executive Review Notes:</span><span class="val">${notes}</span></div>` : ""}
+              </div>
+
+              ${decision === "approve" 
+                ? `<p style="color: #16a34a; font-weight: 600;">✓ The workflow has been approved by the Super Admin Executive. A downstream resolution event has been fired back to the originator's dashboard.</p>`
+                : `<p style="color: #dc2626; font-weight: 600;">✗ The workflow was declined by the Super Admin Executive. Please relay the executive notes to the originator and decide whether re-submission is warranted.</p>`
+              }
+
+              <p style="margin-top: 20px;">You can view the full step-by-step audit trail in your <strong>Supervisor Operations Console</strong> under Workflow Inbox.</p>
+            </div>
+            <div class="footer">
+              KEA Group Operations Surveillance System · Automated Dispatch
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const text = `KEA OPERATIONS NOTIFICATION\nSuper Admin Workflow Decision: ${workflowTitle} is ${decisionText}.\nOriginator: ${originatorName} (${originatorRole})\nSupervisor: ${supervisorName}\nNotes: ${notes || "None"}\nReference: ${workflowId}`;
+
+    return sendEmail({
+      to: supervisorEmail || "supervisor@kea.com",
+      recipientName: supervisorName,
+      subject,
+      html,
+      text,
+      category: decision === "approve" ? "loan_approval" : "loan_rejection",
+      metadata: { workflowId, workflowTitle, originatorName, decision }
+    });
+  } catch (err) {
+    console.warn("[KEA Email Service] sendSupervisorWorkflowDecisionEmail failed (non-blocking):", err);
+    return { success: false, messageId: "fallback" };
+  }
+}
+
+/**
+ * Send Instant Supervisor Confirmation when they escalate a Workflow to Super Admin.
+ * This is a receipt-style email — confirms the escalation was received upstream.
+ * Non-blocking: any Resend/throw is swallowed.
+ */
+export async function sendSupervisorEscalationNotificationEmail(params: {
+  supervisorEmail: string;
+  supervisorName: string;
+  workflowId: string;
+  workflowTitle: string;
+  originatorName: string;
+  originatorRole: string;
+}) {
+  try {
+    const { supervisorEmail, supervisorName, workflowId, workflowTitle, originatorName, originatorRole } = params;
+    const subject = `[KEA OPERATIONS] Workflow Escalated to Executive Governance: ${workflowTitle}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background: #f8fafc;">
+          <div style="max-width: 580px; margin: 0 auto; background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; padding: 24px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+              <span style="background:#0b1730;color:#14b8a6;padding:4px 10px;border-radius:6px;font-weight:800;letter-spacing:.05em;font-size:12px;">KEA OPS</span>
+              <span style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:6px;font-weight:700;font-size:12px;">ESCALATION RECEIVED</span>
+            </div>
+            <h2 style="color: #0b1730; margin-top: 0;">Escalation Lodged with Executive Governance</h2>
+            <p>Dear <strong>${supervisorName}</strong>,</p>
+            <p>This is an automated confirmation that the workflow below has been escalated to the <strong>Super Admin Executive</strong> for final governance review.</p>
+            <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 14px; border-radius: 8px; margin: 16px 0;">
+              <div style="padding:4px 0;"><strong>Workflow:</strong> ${workflowTitle}</div>
+              <div style="padding:4px 0;"><strong>Originator:</strong> ${originatorName} (${originatorRole})</div>
+              <div style="padding:4px 0;"><strong>Reference:</strong> ${workflowId}</div>
+              <div style="padding:4px 0;"><strong>Escalated by:</strong> ${supervisorName}</div>
+            </div>
+            <p style="font-size:13px;color:#64748b;">You will receive a follow-up decision notification the moment the Super Admin Executive renders their Approve/Reject verdict.</p>
+            <p>Thank you for ensuring real-time operational vigilance.</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const text = `KEA OPERATIONS ESCALATION CONFIRMATION\nWorkflow "${workflowTitle}" escalated to Executive Governance.\nOriginator: ${originatorName} (${originatorRole})\nEscalated by: ${supervisorName}\nReference: ${workflowId}`;
+
+    return sendEmail({
+      to: supervisorEmail || "supervisor@kea.com",
+      recipientName: supervisorName,
+      subject,
+      html,
+      text,
+      category: "general",
+      metadata: { workflowId, workflowTitle, originatorName, escalatedBy: supervisorName }
+    });
+  } catch (err) {
+    console.warn("[KEA Email Service] sendSupervisorEscalationNotificationEmail failed (non-blocking):", err);
+    return { success: false, messageId: "fallback" };
+  }
 }
