@@ -41,11 +41,34 @@ export async function getUsers(filters?: {
   return (data ?? []) as User[];
 }
 
+function mapUser(row: any): User {
+  return {
+    id: row.id,
+    authId: row.auth_id ?? null,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+    status: row.status,
+    phone: row.phone ?? null,
+    region: row.region ?? null,
+    state: row.state ?? null,
+    lga: row.lga ?? null,
+    territory: row.territory ?? null,
+    supervisorId: row.supervisor_id ?? null,
+    tsrId: row.tsr_id ?? null,
+    clientId: row.client_id ?? null,
+    loanDebt: row.loan_debt ?? "0",
+    meta: row.meta ?? {},
+    createdAt: row.created_at ?? null,
+    updatedAt: row.updated_at ?? null,
+  } as User;
+}
+
 export async function getUserById(id: string): Promise<User | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("users").select("*").eq("id", id).single();
   if (error) return null;
-  return data as User;
+  return mapUser(data);
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
@@ -498,6 +521,60 @@ export interface WorkflowFilters {
   limit?: number;
 }
 
+// Supabase returns snake_case columns; the app's Drizzle types are camelCase.
+// Normalize at the API boundary so scope checks and the UI read real values.
+function mapWorkflow(row: any): Workflow {
+  return {
+    id: row.id,
+    relatedEntityType: row.related_entity_type ?? null,
+    relatedEntityId: row.related_entity_id ?? null,
+    originatorId: row.originator_id,
+    originatorRole: row.originator_role,
+    assignedSupervisorId: row.assigned_supervisor_id,
+    assignedAdminId: row.assigned_admin_id ?? null,
+    clientId: row.client_id ?? null,
+    status: row.status,
+    title: row.title,
+    summary: row.summary ?? null,
+    priority: row.priority,
+    documentIds: row.document_ids ?? [],
+    stepVersion: row.step_version ?? 0,
+    createdAt: row.created_at ?? null,
+    updatedAt: row.updated_at ?? null,
+  } as Workflow;
+}
+
+function mapWorkflowStep(row: any): WorkflowStep {
+  return {
+    id: row.id,
+    workflowId: row.workflow_id,
+    stepOrder: row.step_order,
+    stepType: row.step_type,
+    actorId: row.actor_id,
+    actorRole: row.actor_role,
+    title: row.title,
+    description: row.description ?? null,
+    statusFrom: row.status_from ?? null,
+    statusTo: row.status_to ?? null,
+    metadata: row.metadata ?? null,
+    occurredAt: row.occurred_at ?? null,
+  } as WorkflowStep;
+}
+
+function mapWorkflowMessage(row: any): WorkflowMessage {
+  return {
+    id: row.id,
+    workflowId: row.workflow_id,
+    senderId: row.sender_id,
+    targetUserId: row.target_user_id,
+    direction: row.direction,
+    body: row.body,
+    attachmentUrl: row.attachment_url ?? null,
+    isRead: row.is_read ?? false,
+    sentAt: row.sent_at ?? null,
+  } as WorkflowMessage;
+}
+
 export async function resolveHierarchy(userId: string): Promise<{
   supervisorId: string | null;
   supervisorName: string | null;
@@ -564,14 +641,14 @@ export async function getWorkflows(user: WorkflowScopeUser, filters?: WorkflowFi
   if (filters?.limit) query = query.limit(filters.limit);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw new WorkflowError(error.message, "DB_ERROR", 500);
-  return (data ?? []) as Workflow[];
+  return (data ?? []).map(mapWorkflow);
 }
 
 export async function getWorkflowById(id: string, requireUser: WorkflowScopeUser): Promise<Workflow> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("workflows").select("*").eq("id", id).single();
   if (error || !data) throw new WorkflowError("Workflow not found", "WORKFLOW_NOT_FOUND", 404);
-  const wf = data as Workflow;
+  const wf = mapWorkflow(data);
   let inScope = false;
   switch (requireUser.role) {
     case "super_admin":
@@ -638,7 +715,7 @@ export async function createWorkflow(payload: {
   if (wfErr || !wfData) {
     throw new WorkflowError(wfErr?.message ?? "Failed to create workflow", "DB_ERROR", 500);
   }
-  const workflow = wfData as Workflow;
+  const workflow = mapWorkflow(wfData);
   const steps: WorkflowStep[] = [];
 
   try {
@@ -658,7 +735,7 @@ export async function createWorkflow(payload: {
       .select()
       .single();
     if (s1Err) throw s1Err;
-    steps.push(s1 as WorkflowStep);
+    steps.push(mapWorkflowStep(s1));
 
     if (status !== "draft") {
       const submitType = status === "submitted_by_vsr" ? "submitted_by_vsr" : "submitted_by_merchandiser";
@@ -679,7 +756,7 @@ export async function createWorkflow(payload: {
         .select()
         .single();
       if (s2Err) throw s2Err;
-      steps.push(s2 as WorkflowStep);
+      steps.push(mapWorkflowStep(s2));
     }
   } catch (stepErr: any) {
     await supabase.from("workflows").delete().eq("id", workflow.id);
@@ -729,7 +806,7 @@ export async function createWorkflowStep(payload: {
     .select()
     .single();
   if (error || !data) throw new WorkflowError(error?.message ?? "Step insert failed", "DB_ERROR", 500);
-  return data as WorkflowStep;
+  return mapWorkflowStep(data);
 }
 
 export async function getWorkflowSteps(workflowId: string): Promise<WorkflowStep[]> {
@@ -740,7 +817,7 @@ export async function getWorkflowSteps(workflowId: string): Promise<WorkflowStep
     .eq("workflow_id", workflowId)
     .order("step_order", { ascending: true });
   if (error) throw new WorkflowError(error.message, "DB_ERROR", 500);
-  return (data ?? []) as WorkflowStep[];
+  return (data ?? []).map(mapWorkflowStep);
 }
 
 export async function createWorkflowMessage(payload: {
@@ -765,7 +842,7 @@ export async function createWorkflowMessage(payload: {
     .select()
     .single();
   if (error || !data) throw new WorkflowError(error?.message ?? "Message insert failed", "DB_ERROR", 500);
-  return data as WorkflowMessage;
+  return mapWorkflowMessage(data);
 }
 
 export async function getWorkflowMessages(workflowId: string): Promise<WorkflowMessage[]> {
@@ -776,7 +853,7 @@ export async function getWorkflowMessages(workflowId: string): Promise<WorkflowM
     .eq("workflow_id", workflowId)
     .order("sent_at", { ascending: true });
   if (error) throw new WorkflowError(error.message, "DB_ERROR", 500);
-  return (data ?? []) as WorkflowMessage[];
+  return (data ?? []).map(mapWorkflowMessage);
 }
 
 export async function updateWorkflowStatus(params: {
@@ -803,14 +880,14 @@ export async function updateWorkflowStatus(params: {
       409,
     );
   }
-  return data as Workflow;
+  return mapWorkflow(data);
 }
 
 export async function escalateWorkflow(id: string, supervisorUser: WorkflowScopeUser, supervisorName?: string): Promise<{ workflow: Workflow; step: WorkflowStep }> {
   const supabase = await createClient();
   const { data: wfRaw, error: wfErr } = await supabase.from("workflows").select("*").eq("id", id).single();
   if (wfErr || !wfRaw) throw new WorkflowError("Workflow not found", "WORKFLOW_NOT_FOUND", 404);
-  const wf = wfRaw as Workflow;
+  const wf = mapWorkflow(wfRaw);
   if (wf.assignedSupervisorId !== supervisorUser.id) {
     throw new WorkflowError("Escalation allowed only for assigned supervisor", "FORBIDDEN_SCOPE", 403);
   }
@@ -834,7 +911,7 @@ export async function escalateWorkflow(id: string, supervisorUser: WorkflowScope
     .eq("id", id)
     .select()
     .single();
-  const finalWorkflow = (upd2 ?? updated) as Workflow;
+  const finalWorkflow = upd2 ? mapWorkflow(upd2) : updated;
   const step = await createWorkflowStep({
     workflowId: id,
     stepType: "escalate",
@@ -858,7 +935,7 @@ export async function adminActionWorkflow(params: {
   const supabase = await createClient();
   const { data: wfRaw, error: wfErr } = await supabase.from("workflows").select("*").eq("id", params.id).single();
   if (wfErr || !wfRaw) throw new WorkflowError("Workflow not found", "WORKFLOW_NOT_FOUND", 404);
-  const wf = wfRaw as Workflow;
+  const wf = mapWorkflow(wfRaw);
   const newStatus = params.decision === "approve" ? "approved" : "rejected";
   const stepType = params.decision === "approve" ? "admin_action_approve" : "admin_action_reject";
   const stepTitle = params.decision === "approve" ? "Admin Decision: Approved" : "Admin Decision: Rejected";
@@ -900,7 +977,7 @@ export async function supervisorActionWorkflow(params: {
     .eq("id", params.id)
     .single();
   if (wfErr || !wfRaw) throw new WorkflowError("Workflow not found", "WORKFLOW_NOT_FOUND", 404);
-  const wf = wfRaw as Workflow;
+  const wf = mapWorkflow(wfRaw);
 
   if (wf.assignedSupervisorId !== params.supervisorUser.id) {
     throw new WorkflowError("Review allowed only for assigned supervisor", "FORBIDDEN_SCOPE", 403);
