@@ -27,8 +27,9 @@ import {
   getSupervisorBroadcasts, acknowledgeSupervisorBroadcast,
   type SharedMerchandiserPod, type SupervisorBroadcast
 } from "../../lib/shared-communications";
+import { WorkflowCenter } from "../../components/workflow-center";
 
-type PageKey = "home" | "stores" | "leave" | "pod-upload" | "photos";
+type PageKey = "home" | "stores" | "leave" | "pod-upload" | "photos" | "workflow";
 
 const navItems: { key: PageKey | "settings"; label: string; icon: any }[] = [
   { key: "home", label: "Overview", icon: Home },
@@ -36,6 +37,7 @@ const navItems: { key: PageKey | "settings"; label: string; icon: any }[] = [
   { key: "leave", label: "Leave Requests", icon: Calendar },
   { key: "pod-upload", label: "POD Tracker Upload", icon: FileSpreadsheet },
   { key: "photos", label: "Activity Photos", icon: Camera },
+  { key: "workflow", label: "Workflow & Messages", icon: Send },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -45,6 +47,7 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   leave: { title: "LEAVE APPLICATION & SCHEDULE", subtitle: "Submit scheduled leave requests with relief coverage directly to your Supervisor." },
   "pod-upload": { title: "POD TRACKER UPLOAD & TEMPLATE", subtitle: "Download the supervisor's official template and upload verified Proof of Delivery trackers." },
   photos: { title: "ACTIVITY PHOTOS & EVIDENCE", subtitle: "Capture, upload and geotag shelf audits, gondola displays, and retail store evidence." },
+  workflow: { title: "WORKFLOW & MESSAGES", subtitle: "Submit requests, track progress, and message your supervisor in real time." },
 };
 
 const posmItems = ["Shelf talkers", "Brand posters", "Wobblers", "Standees", "Price cards", "Gondola branding"];
@@ -755,6 +758,14 @@ export default function MerchandiserDashboard() {
 
           {/* ══════════════════════════════════════════════════════════════
               TAB 2: ASSIGNED STORES & OUTLETS
+             ══════════════════════════════════════════════════════════════ */}
+          {activePage === "workflow" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <WorkflowCenter actor={{ role: "merchandiser", name: userName || "Maria Uchechukwu" }} />
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "stores" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>

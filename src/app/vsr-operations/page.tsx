@@ -25,8 +25,9 @@ import {
   getSharedVsrReports, saveSharedVsrReport, getSupervisorBroadcasts,
   acknowledgeSupervisorBroadcast, type SharedVsrReport, type SupervisorBroadcast
 } from "../../lib/shared-communications";
+import { WorkflowCenter } from "../../components/workflow-center";
 
-type PageKey = "home" | "funding" | "reports" | "routes" | "sales" | "performance";
+type PageKey = "home" | "funding" | "reports" | "routes" | "sales" | "performance" | "workflow";
 
 const navItems: { key: PageKey | "settings"; label: string; icon: any }[] = [
   { key: "home", label: "Overview", icon: Home },
@@ -35,6 +36,7 @@ const navItems: { key: PageKey | "settings"; label: string; icon: any }[] = [
   { key: "routes", label: "My Routes & Stores", icon: Route },
   { key: "sales", label: "Daily Sales Log", icon: DollarSign },
   { key: "performance", label: "Targets & Performance", icon: Target },
+  { key: "workflow", label: "Workflow & Messages", icon: Send },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -45,6 +47,7 @@ const pageTitles: Record<PageKey, { title: string; subtitle: string }> = {
   routes: { title: "MY ROUTES & STORES", subtitle: "Route coverage, scheduled visits and real-time completion tracking." },
   sales: { title: "DAILY SALES & COLLECTIONS", subtitle: "Record sales transactions, collection modes and outstanding credit." },
   performance: { title: "PERFORMANCE & TARGETS", subtitle: "Daily, weekly and monthly targets vs actual achievements." },
+  workflow: { title: "WORKFLOW & MESSAGES", subtitle: "Submit requests, track progress, and message your supervisor in real time." },
 };
 
 export default function VsrOperationsPage() {
@@ -664,6 +667,14 @@ export default function VsrOperationsPage() {
 
           {/* ══════════════════════════════════════════════════════════════
               TAB 2: CAPITAL & FUNDING APPLICATION
+             ══════════════════════════════════════════════════════════════ */}
+          {activePage === "workflow" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <WorkflowCenter actor={{ role: "vsr", name: userName || "Babatunde Adeleke" }} />
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
              ══════════════════════════════════════════════════════════════ */}
           {activePage === "funding" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>

@@ -174,6 +174,10 @@ export default function useAuth() {
       if (typeof window !== "undefined") {
         sessionStorage.setItem("kea_urgent_login_alert", "true");
         sessionStorage.setItem("kea_last_login_role", demoUser.role);
+        // Demo identity bridge — lets API routes resolve this user server-side.
+        document.cookie = `kea_demo_session=${encodeURIComponent(
+          JSON.stringify({ email: emailLower, role: demoUser.role, name: demoUser.name })
+        )}; Path=/; Max-Age=28800; SameSite=Lax`;
       }
       return demoUser;
     }
@@ -194,6 +198,7 @@ export default function useAuth() {
       sessionStorage.removeItem("kea_last_login_role");
     }
     document.cookie = "kea_auth=; Path=/; Max-Age=0; SameSite=Lax";
+    document.cookie = "kea_demo_session=; Path=/; Max-Age=0; SameSite=Lax";
   }
 
   async function resetPassword(email: string) {

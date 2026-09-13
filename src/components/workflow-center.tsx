@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Layers, Plus, ArrowUpCircle, CheckCircle2, XCircle, Search, RotateCcw, MessageSquare } from "lucide-react";
 import { useWorkflowRealtime } from "@/lib/use-workflow-realtime";
 import { WorkflowTracker } from "@/components/workflow-tracker";
@@ -13,7 +13,7 @@ import type { Workflow } from "@/db/schema";
 type CenterRole = "super_admin" | "super-admin" | "admin" | "supervisor" | "vsr" | "merchandiser" | "tsr";
 
 export interface WorkflowActor {
-  userId: string;
+  userId?: string;
   role: string;
   name: string;
   supervisorId?: string | null;
@@ -54,8 +54,27 @@ export function WorkflowCenter({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [threadOpen, setThreadOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [resolvedUserId, setResolvedUserId] = useState<string>(actor.userId ?? "");
 
-  const { workflows, loading, refetch } = useWorkflowRealtime(actor.userId || undefined, role, {
+  // Resolve the current user's real id (demo sessions have none client-side).
+  useEffect(() => {
+    if (actor.userId) {
+      setResolvedUserId(actor.userId);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled && d?.user?.id) setResolvedUserId(d.user.id);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [actor.userId]);
+
+  const { workflows, loading, refetch } = useWorkflowRealtime(resolvedUserId || undefined, role, {
     onNew: (w) => toast(`New workflow: ${w.title}`, "info"),
     onUpdate: (w) => toast(`Workflow updated: ${w.title}`, "info"),
   });
@@ -268,7 +287,7 @@ export function WorkflowCenter({
       {selected && threadOpen && (
         <WorkflowMessagesThread
           workflowId={selected.id}
-          sender={{ userId: actor.userId, role: role as any, name: actor.name }}
+          sender={{ userId: resolvedUserId || null, role: role as any, name: actor.name }}
         />
       )}
 
@@ -276,7 +295,7 @@ export function WorkflowCenter({
         open={submitOpen}
         onClose={() => setSubmitOpen(false)}
         actor={{
-          userId: actor.userId,
+          userId: resolvedUserId || actor.userId || "",
           role,
           name: actor.name,
           supervisorId: actor.supervisorId,

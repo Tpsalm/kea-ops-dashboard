@@ -16,6 +16,7 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { AlertBadge } from "@/components/ui/alert-badge";
 import { useToast } from "@/components/ui/toast";
+import { WorkflowCenter } from "@/components/workflow-center";
 
 interface AdminKpis {
   totalMerchandisers: number;
@@ -248,6 +249,19 @@ export default function SuperAdminDashboard() {
           <AlertBadge userId={userId} />
         </div>
       </div>
+
+      {/* ─── 1b. WORKFLOW GOVERNANCE & MESSAGES ─── */}
+      <section
+        style={{
+          marginBottom: 22,
+          padding: 16,
+          borderRadius: 14,
+          border: "1px solid var(--line, #e5e7eb)",
+          background: "var(--card, #fff)",
+        }}
+      >
+        <WorkflowCenter actor={{ role: "super_admin", name: "Super Admin Executive" }} />
+      </section>
 
       {/* ─── 2. HIGH-LEVEL KPI COUNTERS ─── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, marginBottom: 22 }}>
