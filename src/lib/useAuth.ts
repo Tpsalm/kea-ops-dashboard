@@ -150,6 +150,22 @@ export default function useAuth() {
   async function signIn(email: string, password: string): Promise<User> {
     const emailLower = email.toLowerCase();
 
+    // Demo identities are intentionally local fallback accounts. Avoid an
+    // unnecessary Auth request for them because they are not provisioned in
+    // Supabase Auth and GoTrue can return a 500 for those credentials.
+    const demoUser = demoUsers[emailLower];
+    if (demoUser && password === "kea12345") {
+      setUser(demoUser);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("kea_urgent_login_alert", "true");
+        sessionStorage.setItem("kea_last_login_role", demoUser.role);
+        document.cookie = `kea_demo_session=${encodeURIComponent(
+          JSON.stringify({ email: emailLower, role: demoUser.role, name: demoUser.name })
+        )}; Path=/; Max-Age=28800; SameSite=Lax`;
+      }
+      return demoUser;
+    }
+
     // Step 1: Try real Supabase Auth
     try {
       const supabase = createClient();
@@ -175,7 +191,6 @@ export default function useAuth() {
     }
 
     // Step 2: Fall back to demo login
-    const demoUser = demoUsers[emailLower];
     if (demoUser && password === "kea12345") {
       setUser(demoUser);
       if (typeof window !== "undefined") {

@@ -37,9 +37,10 @@ export function useRealtimeAlerts(userId?: string) {
 
     const supabase = createClient();
 
-    // Subscribe to INSERT events on the alerts table
-    channelRef.current = supabase
-      .channel("alerts-realtime")
+    // Register every callback before subscribing. Supabase channels reject
+    // handlers added after the channel has entered the subscribed state.
+    const channel = supabase
+      .channel(`alerts-realtime-${userId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "alerts" },
@@ -65,7 +66,9 @@ export function useRealtimeAlerts(userId?: string) {
           }
         }
       )
-      .subscribe();
+      ;
+
+    channelRef.current = channel.subscribe();
 
     return () => {
       channelRef.current?.unsubscribe();
