@@ -60,7 +60,7 @@ export function useRealtimeAlerts(userId?: string) {
           setAlerts((prev) =>
             prev.map((a) => (a.id === updated.id ? updated : a))
           );
-          if (updated.status === "resolved" || updated.status === "reviewed") {
+          if (updated.status === "resolved" || updated.status === "reviewed" || updated.status === "rejected") {
             setUnreadCount((c) => Math.max(0, c - 1));
           }
         }

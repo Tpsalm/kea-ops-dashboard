@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       alerts,
       count: alerts.length,
-      unread: alerts.filter((a) => a.status === "pending").length,
+      unread: alerts.filter((a) => ["pending", "pending_supervisor", "pending_admin", "escalated"].includes(String(a.status))).length,
     });
   } catch (err) {
     return NextResponse.json(

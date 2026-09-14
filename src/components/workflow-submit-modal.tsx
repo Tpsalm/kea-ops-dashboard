@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/toast";
 import { publishWorkflowCreated } from "@/lib/shared-communications";
 import { Send, UserPlus, AlertCircle, FileText } from "lucide-react";
 
-type OriginatorRole = "vsr" | "merchandiser" | "supervisor";
+type OriginatorRole = "super_admin" | "vsr" | "merchandiser" | "supervisor";
 type Actor = {
   userId: string;
   role: string;
@@ -44,7 +44,7 @@ export function WorkflowSubmitModal({
   const [originatorName, setOriginatorName] = useState(prefill?.originatorOverrideName ?? actor.name);
   const [originatorRole, setOriginatorRole] = useState<OriginatorRole>(
     (prefill?.originatorOverrideRole as OriginatorRole) ??
-    (actor.role === "vsr" || actor.role === "merchandiser" || actor.role === "supervisor"
+    (actor.role === "super_admin" || actor.role === "vsr" || actor.role === "merchandiser" || actor.role === "supervisor"
       ? actor.role
       : "vsr"),
   );
@@ -145,6 +145,7 @@ export function WorkflowSubmitModal({
                   onChange={(e) => setOriginatorRole(e.target.value as any)}
                   style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 12 }}
                 >
+                  <option value="super_admin">Super Admin</option>
                   <option value="vsr">VSR</option>
                   <option value="merchandiser">Merchandiser</option>
                   <option value="supervisor">Supervisor</option>

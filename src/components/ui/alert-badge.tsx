@@ -58,7 +58,7 @@ export function AlertBadge({ userId }: AlertBadgeProps) {
               alerts.slice(0, 10).map((a) => (
                 <div key={a.id} style={{
                   padding: "10px 14px", borderBottom: "1px solid var(--line, #e5e7eb)", fontSize: 12,
-                  background: a.status === "pending" ? "#fffbeb" : "transparent",
+                  background: ["pending", "pending_supervisor", "pending_admin", "escalated"].includes(a.status) ? "#fffbeb" : "transparent",
                 }}>
                   <div style={{ fontWeight: 600, color: "var(--text, #111)" }}>{a.title}</div>
                   {a.message ? <div style={{ color: "var(--muted, #6b7280)", marginTop: 2 }}>{a.message}</div> : null}

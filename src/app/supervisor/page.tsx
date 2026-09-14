@@ -37,6 +37,7 @@ import { WorkflowTracker } from "@/components/workflow-tracker";
 import { WorkflowMessagesThread } from "@/components/workflow-messages-thread";
 import { useToast } from "@/components/ui/toast";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { WorkflowCenter } from "@/components/workflow-center";
 
 type PageKey =
   | "home"
@@ -1224,6 +1225,16 @@ export default function SupervisorDashboard() {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <SupervisorAlertInbox />
             </div>
+          )}
+
+          {activePage === "workflow-inbox" && (
+            <WorkflowCenter
+              actor={{
+                userId: workflowUserId || undefined,
+                role: "supervisor",
+                name: userName || "Supervisor",
+              }}
+            />
           )}
         </div>
       </main>

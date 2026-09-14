@@ -3,9 +3,11 @@ import { requireRole, getCurrentUser } from "@/lib/auth-helpers";
 import {
   WorkflowError,
   createWorkflow,
+  createAlert,
   getWorkflows,
   resolveHierarchy,
   getUserById,
+  getUsers,
 } from "@/lib/db";
 
 const WF_ROLES = ["super_admin", "admin", "supervisor", "vsr", "merchandiser", "tsr"] as const;
@@ -102,6 +104,22 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!assignedSupervisorId && (originatorRole === "super_admin" || originatorRole === "admin")) {
+      const supabaseUser = await getUserById(user.id);
+      const hierarchy = await resolveHierarchy(supabaseUser?.id ?? user.id);
+      assignedSupervisorId = hierarchy.supervisorId ?? undefined;
+      if (!assignedSupervisorId) {
+        const supervisors = await getUsers({ role: "supervisor", status: "active" });
+        assignedSupervisorId = supervisors[0]?.id;
+      }
+      if (!assignedSupervisorId) {
+        return NextResponse.json(
+          { error: "No active supervisor available for workflow routing.", code: "HIERARCHY_MISSING_SUPERVISOR" },
+          { status: 422 },
+        );
+      }
+    }
+
     // Tier 2: Supervisor-initiated workflows route directly up to the executive
     // tier (Super Admin). Auto-assign the governance admin and land in
     // `under_admin_review` so the Super Admin inbox lights up immediately.
@@ -147,6 +165,23 @@ export async function POST(request: Request) {
       relatedEntityId,
       actorNameForStep: originatorName,
     });
+
+    const recipientId = originatorRole === "supervisor" ? assignedAdminId : assignedSupervisorId;
+    if (recipientId && recipientId !== originatorId) {
+      await createAlert({
+        type: "system_event",
+        severity: priority >= 4 ? "critical" : "info",
+        title: `New workflow: ${title}`,
+        message: summary ?? `${originatorName} submitted a workflow for review.`,
+        fromUserId: originatorId,
+        toUserId: recipientId,
+        supervisorId: assignedSupervisorId,
+        clientId: clientId ?? undefined,
+        relatedEntityType: "workflow",
+        relatedEntityId: workflow.id,
+        status: "pending",
+      }).catch(() => null);
+    }
 
     return NextResponse.json(
       { workflow, steps: initialSteps },

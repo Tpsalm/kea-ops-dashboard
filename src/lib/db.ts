@@ -842,6 +842,24 @@ export async function createWorkflowMessage(payload: {
     .select()
     .single();
   if (error || !data) throw new WorkflowError(error?.message ?? "Message insert failed", "DB_ERROR", 500);
+  const { data: workflow } = await supabase
+    .from("workflows")
+    .select("assigned_supervisor_id, client_id")
+    .eq("id", payload.workflowId)
+    .maybeSingle();
+  await createAlert({
+    type: "system_event",
+    severity: "info",
+    title: "New workflow message",
+    message: payload.body,
+    fromUserId: payload.senderId,
+    toUserId: payload.targetUserId,
+    supervisorId: workflow?.assigned_supervisor_id,
+    clientId: workflow?.client_id,
+    relatedEntityType: "workflow",
+    relatedEntityId: payload.workflowId,
+    status: "pending",
+  }).catch(() => null);
   return mapWorkflowMessage(data);
 }
 
@@ -922,6 +940,19 @@ export async function escalateWorkflow(id: string, supervisorUser: WorkflowScope
     statusFrom: wf.status as any,
     statusTo: "escalated_to_admin",
   });
+  await createAlert({
+    type: "system_event",
+    severity: "critical",
+    title: "Workflow escalated to Super Admin",
+    message: `${supervisorName ?? "Supervisor"} escalated ${wf.title}.`,
+    fromUserId: supervisorUser.id,
+    toUserId: admin.id,
+    supervisorId: supervisorUser.id,
+    clientId: wf.clientId ?? undefined,
+    relatedEntityType: "workflow",
+    relatedEntityId: id,
+    status: "escalated",
+  }).catch(() => null);
   return { workflow: finalWorkflow, step };
 }
 
@@ -954,6 +985,19 @@ export async function adminActionWorkflow(params: {
     statusFrom: wf.status as any,
     statusTo: newStatus as any,
   });
+  await createAlert({
+    type: "system_event",
+    severity: params.decision === "reject" ? "critical" : "info",
+    title: `Workflow ${params.decision === "approve" ? "approved" : "rejected"}`,
+    message: params.notes ?? `${params.adminName ?? "Super Admin"} reviewed ${wf.title}.`,
+    fromUserId: params.adminUser.id,
+    toUserId: wf.assignedSupervisorId,
+    supervisorId: wf.assignedSupervisorId,
+    clientId: wf.clientId ?? undefined,
+    relatedEntityType: "workflow",
+    relatedEntityId: params.id,
+    status: "pending",
+  }).catch(() => null);
   return { workflow: updated, step };
 }
 
@@ -1005,6 +1049,19 @@ export async function supervisorActionWorkflow(params: {
     statusFrom: wf.status as any,
     statusTo: newStatus as any,
   });
+  await createAlert({
+    type: "system_event",
+    severity: "info",
+    title: params.action === "request_changes" ? "Workflow changes requested" : "Workflow under supervisor review",
+    message: params.notes ?? `${params.supervisorName ?? "Supervisor"} reviewed ${wf.title}.`,
+    fromUserId: params.supervisorUser.id,
+    toUserId: wf.originatorId,
+    supervisorId: params.supervisorUser.id,
+    clientId: wf.clientId ?? undefined,
+    relatedEntityType: "workflow",
+    relatedEntityId: params.id,
+    status: "pending",
+  }).catch(() => null);
   return { workflow: updated, step };
 }
 

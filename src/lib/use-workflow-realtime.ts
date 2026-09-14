@@ -33,6 +33,27 @@ function buildWorkflowFilter(
   }
 }
 
+function mapRealtimeWorkflow(row: any): Workflow {
+  return {
+    id: row.id,
+    relatedEntityType: row.related_entity_type ?? row.relatedEntityType ?? null,
+    relatedEntityId: row.related_entity_id ?? row.relatedEntityId ?? null,
+    originatorId: row.originator_id ?? row.originatorId,
+    originatorRole: row.originator_role ?? row.originatorRole,
+    assignedSupervisorId: row.assigned_supervisor_id ?? row.assignedSupervisorId,
+    assignedAdminId: row.assigned_admin_id ?? row.assignedAdminId ?? null,
+    clientId: row.client_id ?? row.clientId ?? null,
+    status: row.status,
+    title: row.title,
+    summary: row.summary ?? null,
+    priority: row.priority ?? 1,
+    documentIds: row.document_ids ?? row.documentIds ?? [],
+    stepVersion: row.step_version ?? row.stepVersion ?? 0,
+    createdAt: row.created_at ?? row.createdAt ?? null,
+    updatedAt: row.updated_at ?? row.updatedAt ?? null,
+  } as Workflow;
+}
+
 export function useWorkflowRealtime(
   userId: string | null | undefined,
   role: AppRole | null | undefined,
@@ -86,7 +107,7 @@ export function useWorkflowRealtime(
             ...(filter ? { filter } : {}),
           },
           (payload: any) => {
-            const newWf = payload.new as Workflow;
+            const newWf = mapRealtimeWorkflow(payload.new);
             setWorkflows((prev) => {
               if (prev.some((w) => w.id === newWf.id)) return prev;
               opts?.onNew?.(newWf);
@@ -103,7 +124,7 @@ export function useWorkflowRealtime(
             ...(filter ? { filter } : {}),
           },
           (payload: any) => {
-            const upWf = payload.new as Workflow;
+            const upWf = mapRealtimeWorkflow(payload.new);
             opts?.onUpdate?.(upWf);
             setWorkflows((prev) =>
               prev.map((w) => (w.id === upWf.id ? upWf : w)),

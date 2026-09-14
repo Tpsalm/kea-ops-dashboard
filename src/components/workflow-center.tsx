@@ -7,6 +7,7 @@ import { WorkflowTracker } from "@/components/workflow-tracker";
 import { WorkflowMessagesThread } from "@/components/workflow-messages-thread";
 import { WorkflowSubmitModal } from "@/components/workflow-submit-modal";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { AlertBadge } from "@/components/ui/alert-badge";
 import { useToast } from "@/components/ui/toast";
 import type { Workflow } from "@/db/schema";
 
@@ -136,20 +137,23 @@ export function WorkflowCenter({
             WORKFLOW TRACKER
           </span>
         </div>
-        {canCreate && (
-          <button
-            onClick={() => setSubmitOpen(true)}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "8px 14px", borderRadius: 10,
-              border: "none", background: "#0b1730", color: "#fff",
-              fontSize: 12, fontWeight: 700, cursor: "pointer",
-            }}
-          >
-            <Plus size={14} />
-            New Workflow
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {resolvedUserId && <AlertBadge userId={resolvedUserId} />}
+          {canCreate && (
+            <button
+              onClick={() => setSubmitOpen(true)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "8px 14px", borderRadius: 10,
+                border: "none", background: "#0b1730", color: "#fff",
+                fontSize: 12, fontWeight: 700, cursor: "pointer",
+              }}
+            >
+              <Plus size={14} />
+              New Workflow
+            </button>
+          )}
+        </div>
       </div>
 
       {loading && workflows.length === 0 ? (
