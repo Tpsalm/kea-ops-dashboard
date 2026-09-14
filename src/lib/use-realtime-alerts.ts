@@ -36,11 +36,12 @@ export function useRealtimeAlerts(userId?: string) {
     fetchAlerts();
 
     const supabase = createClient();
+    const channelName = `alerts-realtime-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     // Register every callback before subscribing. Supabase channels reject
     // handlers added after the channel has entered the subscribed state.
     const channel = supabase
-      .channel(`alerts-realtime-${userId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "alerts" },
