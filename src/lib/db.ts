@@ -413,7 +413,7 @@ export async function getDocuments(filters?: {
   if (filters?.supervisorId) query = query.eq("supervisor_id", filters.supervisorId);
   if (filters?.status) query = query.eq("status", filters.status);
   if (filters?.type) query = query.eq("type", filters.type);
-  const { data, error } = await query.order("uploaded_at", { ascending: false });
+  const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as Document[];
 }

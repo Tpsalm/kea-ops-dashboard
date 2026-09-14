@@ -1,0 +1,19 @@
+-- Reconcile the legacy documents table with the live upload API contract.
+BEGIN;
+
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS client_id UUID;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS uploader_id UUID;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS supervisor_id UUID;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS target_user_id UUID;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS type TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_url TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_name TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_size BIGINT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS mime_type TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending_review';
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMPTZ DEFAULT now();
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
+
+COMMIT;
