@@ -308,13 +308,6 @@ export default function SuperAdminDashboard() {
           tone="green"
           subtitle="Debt-free & eligible VSRs"
         />
-        <KpiCard
-          label="Route Execution"
-          value="89%"
-          icon={Target}
-          tone="violet"
-          subtitle="Target: 90% completion"
-        />
       </div>
 
       {/* ─── 3. VISUAL CHARTS SECTION (COLUMN + DONUT) ─── */}

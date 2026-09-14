@@ -56,7 +56,7 @@ export default function LoginPage() {
 
   return (
     <main className="auth-page">
-      <section className="auth-brand"><div className="brand-logo auth-logo" aria-label="Kea Corporate Hospitality Services"><b className="logo-k">k</b><b className="logo-e">e</b><b className="logo-a">a</b><small>Corporate Hospitality Services</small></div><p>Kea</p><h1>Talent management<br />for every field team.</h1><span>One secure workspace for people, outlets, routes, and growth.</span></section>
+      <section className="auth-brand"><div className="brand-logo auth-logo" aria-label="Kea Corporate Hospitality Services"><b className="logo-k">k</b><b className="logo-e">e</b><b className="logo-a">a</b><small>Corporate Hospitality Services</small></div><h1>Talent management<br />for every field team.</h1><span>One secure workspace for people, outlets, routes, and growth.</span></section>
       <section className="auth-panel">
         <div className="auth-kicker"><ShieldCheck size={16} /> SECURE WORKSPACE</div>
         <h2>Sign in to KEA</h2><p className="auth-muted">Use the organisation account created for you by the Super Admin.</p>

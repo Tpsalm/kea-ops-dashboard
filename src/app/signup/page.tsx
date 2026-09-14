@@ -42,7 +42,6 @@ export default function SignupPage() {
     <main className="auth-page signup-page">
       <section className="auth-brand">
         <div className="brand-logo auth-logo" aria-label="KEA Corporate Hospitality Services"><b className="logo-k">k</b><b className="logo-e">e</b><b className="logo-a">a</b><small>Corporate Hospitality Services</small></div>
-        <p>Kea</p>
         <h1>Join the field operations workspace.</h1>
         <span>Create your account to access your role-based dashboard and start capturing field performance.</span>
       </section>
