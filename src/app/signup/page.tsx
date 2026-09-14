@@ -39,7 +39,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="auth-page">
+    <main className="auth-page signup-page">
       <section className="auth-brand">
         <div className="brand-logo auth-logo" aria-label="KEA Corporate Hospitality Services"><b className="logo-k">k</b><b className="logo-e">e</b><b className="logo-a">a</b><small>Corporate Hospitality Services</small></div>
         <p>KEA GROUP</p>

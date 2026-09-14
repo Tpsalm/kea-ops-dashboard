@@ -429,6 +429,23 @@ nav a.active:before{background:#f58220}
 .live-dot,.status.active i{background:#8bc34a}
 table th{background:#181818;color:#9ccc65;border-color:#2a2a2a}
 table td{color:#fff;border-color:#2a2a2a}
+
+/* Preserve the original signup experience while the dashboard uses Citrus dark mode. */
+.signup-page{background:#eef3f1;color:#102522}
+.signup-page .auth-brand{background:#123c35;color:#eff8f4;border-right:0}
+.signup-page .auth-brand p{color:#b7e36c}
+.signup-page .auth-brand h1{color:#eff8f4}
+.signup-page .auth-brand span{color:#b8d0c7}
+.signup-page .auth-panel{background:#eef3f1;color:#102522}
+.signup-page .auth-kicker{color:#138a76}
+.signup-page .auth-panel h2{color:#102522}
+.signup-page .auth-muted{color:#657772}
+.signup-page .auth-panel label{color:#3d534e}
+.signup-page .auth-panel input,.signup-page .auth-panel select{background:#fff;color:#102522;border-color:#cad8d2}
+.signup-page .auth-submit{background:#94c83d;border-color:#7fae32;color:#0d1805}
+.signup-page .auth-submit:hover{background:#a2d645}
+.signup-page .auth-error{color:#b42318}
+.signup-page .auth-policy{color:#657772;border-color:#dce6e2}
 .empty b{color:var(--text);font-size:13px}
 .empty span{font-size:11px}
 
