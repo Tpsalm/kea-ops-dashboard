@@ -7,10 +7,6 @@ export const metadata: Metadata = {
   title: "KEA Talent Management System",
   description:
     "Kea talent, field workforce, outlet, and performance management.",
-  icons: {
-    icon: "/brand/kea-logo.jpg",
-    apple: "/brand/kea-logo.jpg",
-  },
 };
 
 export const viewport: Viewport = {

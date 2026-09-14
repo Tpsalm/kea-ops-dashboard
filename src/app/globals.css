@@ -418,7 +418,6 @@ nav a.active:before{background:#f58220}
 .auth-brand p,.auth-kicker,.auth-panel h2{color:#f58220}
 .auth-brand h1{color:#f58220}
 .auth-brand span,.auth-muted,.auth-policy,.auth-panel label{color:#fff}
-.auth-logo-image{display:block;width:min(100%,430px);height:auto;object-fit:contain;object-position:left center;margin:0 0 32px;background:#000}
 .auth-panel input{background:#121212;color:#fff;border-color:#2a2a2a}
 .auth-panel input:focus{border-color:#8bc34a;box-shadow:0 0 0 2px rgba(139,195,74,.2)}
 .auth-recovery,.auth-policy a{color:#9ccc65!important}
