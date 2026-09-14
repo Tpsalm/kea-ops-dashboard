@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Building2, Users, Banknote, AlertTriangle, CheckCircle, FileText,
+  Building2, Users, Banknote, AlertTriangle, FileText,
   ShieldAlert, Check, X, Search, RefreshCw, Target,
   TrendingUp, Layers, PieChart as PieIcon, BarChart3, ExternalLink
 } from "lucide-react";
@@ -302,11 +302,11 @@ export default function SuperAdminDashboard() {
           subtitle="VSRs with outstanding debt"
         />
         <KpiCard
-          label="No Active Loans"
-          value={debtFreeCount}
-          icon={CheckCircle}
-          tone="green"
-          subtitle="Debt-free & eligible VSRs"
+          label="Total VSRs"
+          value={totalVSRs}
+          icon={Users}
+          tone="violet"
+          subtitle="All registered field sales reps"
         />
       </div>
 
