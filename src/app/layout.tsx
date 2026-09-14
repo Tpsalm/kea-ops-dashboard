@@ -6,7 +6,7 @@ import { ThemeProvider } from "../lib/theme-provider";
 export const metadata: Metadata = {
   title: "KEA Talent Management System",
   description:
-    "KEA Group talent, field workforce, outlet, and performance management.",
+    "Kea talent, field workforce, outlet, and performance management.",
   icons: {
     icon: "/brand/kea-logo.jpg",
     apple: "/brand/kea-logo.jpg",

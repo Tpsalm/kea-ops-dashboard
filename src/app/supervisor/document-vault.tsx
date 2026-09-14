@@ -105,6 +105,8 @@ export function DocumentVault() {
 
   useEffect(() => {
     fetchDocsAndVSRs();
+    const poll = window.setInterval(fetchDocsAndVSRs, 15000);
+    return () => window.clearInterval(poll);
   }, [fetchDocsAndVSRs]);
 
   // Download official Supervisor POD Tracker Template

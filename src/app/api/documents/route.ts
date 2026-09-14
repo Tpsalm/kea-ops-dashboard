@@ -4,6 +4,7 @@ import {
   createDocument, getDocuments, createAlert, getUserById,
   WorkflowError, resolveHierarchy, createWorkflow,
 } from "@/lib/db";
+import { createClient } from "@/lib/supabase-server";
 
 /**
  * GET /api/documents
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
       "vsr_weekly_report",
       "vsr_monthly_report",
       "performance_report",
+      "merchandiser_photo_audit",
     ];
 
     if (!validTypes.includes(type)) {
@@ -100,17 +102,31 @@ export async function POST(request: Request) {
       notes: notes || (metadata ? JSON.stringify(metadata) : undefined),
     });
 
+    const supabase = await createClient();
+
     let workflowId: string | null = null;
     try {
       if (effectiveSupervisorId && (user.role === "merchandiser" || user.role === "vsr" || user.role === "supervisor")) {
+        let assignedAdminId: string | null = null;
+        let workflowStatus: any = user.role === "merchandiser" ? "submitted_by_merchandiser" : user.role === "vsr" ? "submitted_by_vsr" : "under_admin_review";
+        if (user.role === "supervisor") {
+          const { data: adminUser } = await supabase
+            .from("users")
+            .select("id")
+            .eq("role", "super_admin")
+            .limit(1)
+            .maybeSingle();
+          assignedAdminId = adminUser?.id ?? null;
+          if (!assignedAdminId) throw new Error("No Super Admin is available for executive routing");
+        }
         const wfStatus: any =
           user.role === "merchandiser" ? "submitted_by_merchandiser" :
-          user.role === "vsr" ? "submitted_by_vsr" : "under_supervisor_review";
+          user.role === "vsr" ? "submitted_by_vsr" : workflowStatus;
         const { workflow } = await createWorkflow({
           originatorId: user.id,
           originatorRole: user.role as any,
           assignedSupervisorId: effectiveSupervisorId,
-          assignedAdminId: null,
+          assignedAdminId,
           clientId: uploaderProfile?.clientId ?? null,
           status: wfStatus,
           title: `Document: ${title}`,
@@ -126,9 +142,6 @@ export async function POST(request: Request) {
     } catch (_wfErr) {
       // Workflow creation should not fail the document upload; continue silently.
     }
-
-    const { createClient } = await import("@/lib/supabase-server");
-    const supabase = await createClient();
 
     // Determine Alert Recipient and Content based on Uploader Role
     if (user.role === "merchandiser" || user.role === "vsr") {

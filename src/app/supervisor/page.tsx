@@ -360,8 +360,8 @@ export default function SupervisorDashboard() {
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
-          <strong>KEA GROUP</strong>
-          <small>Supervisor Console</small>
+          <strong>Kea</strong>
+          <small>Talent Management System</small>
           <button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>
         <nav>

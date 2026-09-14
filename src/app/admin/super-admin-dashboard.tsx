@@ -74,6 +74,7 @@ export default function SuperAdminDashboard() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [escalatedLoans, setEscalatedLoans] = useState<Loan[]>([]);
   const [vsrList, setVsrList] = useState<VSRItem[]>([]);
+  const [documents, setDocuments] = useState<Array<{ id: string; title: string; type: string; uploaded_at: string; file_name?: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState("");
   const [activeTab, setActiveTab] = useState<"due" | "active" | "no_debt">("due");
@@ -83,11 +84,12 @@ export default function SuperAdminDashboard() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [kpisRes, alertsRes, loansRes, vsrRes] = await Promise.all([
+      const [kpisRes, alertsRes, loansRes, vsrRes, docsRes] = await Promise.all([
         fetch("/api/kpis?scope=admin"),
         fetch("/api/alerts?status=pending_admin"),
         fetch("/api/loans?status=pending_admin"),
         fetch("/api/users?role=vsr"),
+        fetch("/api/documents"),
       ]);
 
       if (kpisRes.ok) {
@@ -106,6 +108,10 @@ export default function SuperAdminDashboard() {
         const vData = await vsrRes.json();
         setVsrList(vData.users ?? []);
       }
+      if (docsRes.ok) {
+        const dData = await docsRes.json();
+        setDocuments(dData.documents ?? []);
+      }
     } catch {
       // offline / demo fallback
     } finally {
@@ -115,10 +121,12 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => {
     fetchData();
+    const poll = window.setInterval(fetchData, 15000);
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((d) => setUserId(d.user?.id ?? ""))
       .catch(() => {});
+    return () => window.clearInterval(poll);
   }, [fetchData]);
 
   async function handleLoanReview(loanId: string, approved: boolean, notes: string = "") {
@@ -455,7 +463,7 @@ export default function SuperAdminDashboard() {
               fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
               background: "#fef3c7", color: "#d97706"
             }}>
-              {displayEscalatedLoans.length + alerts.length} Action Items
+              {displayEscalatedLoans.length + alerts.length + documents.length} Action Items
             </span>
             <Link
               href="/action-center"
@@ -552,6 +560,13 @@ export default function SuperAdminDashboard() {
               >
                 Acknowledge
               </button>
+            </div>
+          ))}
+          {documents.map((document) => (
+            <div key={document.id} className="admin-action" style={{ minHeight: 0, padding: 14 }}>
+              <FileText size={18} />
+              <b>{document.title}</b>
+              <span>{document.type.replaceAll("_", " ")} · {document.file_name || "Uploaded document"}</span>
             </div>
           ))}
         </div>
