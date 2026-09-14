@@ -77,7 +77,14 @@ export default function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
+    let supabase: ReturnType<typeof createClient>;
+    try {
+      supabase = createClient();
+    } catch (error) {
+      console.warn("Supabase client unavailable; demo authentication remains available.", error);
+      setLoading(false);
+      return;
+    }
 
     // Try fetching the current Supabase session
     supabase.auth.getUser().then(({ data }) => {
@@ -94,7 +101,7 @@ export default function useAuth() {
           });
       }
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
@@ -142,10 +149,10 @@ export default function useAuth() {
 
   async function signIn(email: string, password: string): Promise<User> {
     const emailLower = email.toLowerCase();
-    const supabase = createClient();
 
     // Step 1: Try real Supabase Auth
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithPassword({ email: emailLower, password });
       if (!error && data.user) {
         // Fetch profile from public.users

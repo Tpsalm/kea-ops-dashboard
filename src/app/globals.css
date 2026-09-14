@@ -382,6 +382,53 @@ nav a i{font-style:normal;font-size:7px;padding:3px 5px;background:#0e9f8c;borde
 .pagination button:disabled{opacity:.4;cursor:not-allowed}
 .pagination span{white-space:nowrap}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:44px 20px;text-align:center;color:var(--muted)}
+
+/* KEA corporate identity: Citrus Analogous on true black. */
+:root{
+  --bg:#000000;
+  --card:#121212;
+  --text:#ffffff;
+  --muted:#ffffff;
+  --line:#2a2a2a;
+  --soft:#181818;
+  --nav:#000000;
+  --nav-text:#9ccc65;
+  --blue:#8bc34a;
+  --teal:#9ccc65;
+  --orange:#f58220;
+  --accent:#8bc34a;
+  --accent-soft:rgba(139,195,74,.16);
+  --accent-ink:#000000;
+  --bar-muted:#2a2a2a;
+  --shadow:0 8px 28px rgba(0,0,0,.35);
+}
+html,body{background:#000;color:#fff}
+.app,.app.dark{background:#000;color:#fff;--bg:#000;--card:#121212;--text:#fff;--muted:#fff;--line:#2a2a2a;--soft:#181818;--bar-muted:#2a2a2a}
+.sidebar{background:#000;color:#fff;border-right:1px solid #2a2a2a}
+.brand strong,.heading h1,.card-head h2,.kpi>strong,.kpi b,.table-card b{color:#f58220}
+nav a,nav button{color:#9ccc65}
+nav a:hover,nav a.active,nav button:hover,nav button.active{background:rgba(156,204,101,.16);color:#fff}
+nav a.active:before{background:#f58220}
+.topbar,.card,.kpi,.filters,.content .table-card,.action-modal,.notification-popover{background:#121212;color:#fff;border-color:#2a2a2a}
+.primary{border-color:#f58220;background:#f58220;color:#000;box-shadow:0 4px 18px rgba(245,130,32,.25)}
+.primary:hover{background:#ff9a3d;color:#000}
+.secondary{background:#181818;color:#fff;border-color:#2a2a2a}
+.auth-page{background:#000;color:#fff}
+.auth-brand{background:#000;color:#fff;border-right:1px solid #2a2a2a}
+.auth-brand p,.auth-kicker,.auth-panel h2{color:#f58220}
+.auth-brand h1{color:#f58220}
+.auth-brand span,.auth-muted,.auth-policy,.auth-panel label{color:#fff}
+.auth-logo-image{display:block;width:min(100%,430px);height:auto;object-fit:contain;object-position:left center;margin:0 0 32px;background:#000}
+.auth-panel input{background:#121212;color:#fff;border-color:#2a2a2a}
+.auth-panel input:focus{border-color:#8bc34a;box-shadow:0 0 0 2px rgba(139,195,74,.2)}
+.auth-recovery,.auth-policy a{color:#9ccc65!important}
+.auth-error{color:#f58220}
+.auth-submit{background:#f58220;border-color:#f58220;color:#000}
+.auth-submit:hover{background:#ff9a3d}
+.urgent-alert-pill{background:rgba(245,130,32,.16)!important;border-color:rgba(245,130,32,.5)!important;color:#f58220!important}
+.live-dot,.status.active i{background:#8bc34a}
+table th{background:#181818;color:#9ccc65;border-color:#2a2a2a}
+table td{color:#fff;border-color:#2a2a2a}
 .empty b{color:var(--text);font-size:13px}
 .empty span{font-size:11px}
 
