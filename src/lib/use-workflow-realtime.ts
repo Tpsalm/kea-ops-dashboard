@@ -145,7 +145,8 @@ export function useWorkflowRealtime(
       mounted.current = false;
       if (pollRef.current) clearInterval(pollRef.current);
       if (supabase && channelRef.current) {
-        try { supabase.removeChannel(channelRef.current); } catch {}
+        try { supabase.removeChannel(channelRef.current); } catch { channelRef.current.unsubscribe(); }
+        channelRef.current = null;
       }
     };
   }, [userId, role, fetchWorkflows, opts?.onNew, opts?.onUpdate]);
@@ -220,6 +221,7 @@ export function useWorkflowStepsRealtime(
         const sb = createClient();
         if (channelRef.current) sb.removeChannel(channelRef.current);
       } catch {}
+      channelRef.current = null;
     };
   }, [workflowId, fetchSteps, opts?.onStep]);
 
@@ -302,6 +304,7 @@ export function useWorkflowMessagesRealtime(
         const sb = createClient();
         if (channelRef.current) sb.removeChannel(channelRef.current);
       } catch {}
+      channelRef.current = null;
     };
   }, [workflowId, userId, fetchMsgs, opts?.onMessage]);
 

@@ -71,7 +71,12 @@ export function useRealtimeAlerts(userId?: string) {
     channelRef.current = channel.subscribe();
 
     return () => {
-      channelRef.current?.unsubscribe();
+      try {
+        supabase.removeChannel(channel);
+      } catch {
+        channel.unsubscribe();
+      }
+      channelRef.current = null;
     };
   }, [userId, fetchAlerts]);
 
