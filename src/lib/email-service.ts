@@ -162,7 +162,7 @@ export async function sendSupervisorLoanDecisionEmail(params: {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">KEA TALENT & FIELD OPERATIONS</div>
+            <div class="logo">Kea</div>
             <h2 style="margin: 8px 0 0; font-size: 18px;">Executive Decision Notification</h2>
             <div class="badge">${decisionText}</div>
           </div>
@@ -186,7 +186,7 @@ export async function sendSupervisorLoanDecisionEmail(params: {
             <p style="margin-top: 20px;">You can view full details in your <strong>Supervisor Operations Console</strong> under the Alert Triage & Document Vault sections.</p>
           </div>
           <div class="footer">
-            KEA Group Operations Surveillance System · Automated Dispatch
+            Kea · Talent Management System · Automated Dispatch
           </div>
         </div>
       </body>
@@ -298,7 +298,8 @@ export async function sendSupervisorWorkflowDecisionEmail(params: {
         <body>
           <div class="container">
             <div class="header">
-              <div class="logo">KEA TALENT & FIELD OPERATIONS</div>
+<div class="logo">Kea</div>
+            <div class="logo-sub">TALENT MANAGEMENT SYSTEM</div>
               <h2 style="margin: 8px 0 0; font-size: 18px;">Workflow Governance Decision</h2>
               <div class="badge">${decisionText}</div>
             </div>
@@ -322,7 +323,7 @@ export async function sendSupervisorWorkflowDecisionEmail(params: {
               <p style="margin-top: 20px;">You can view the full step-by-step audit trail in your <strong>Supervisor Operations Console</strong> under Workflow Inbox.</p>
             </div>
             <div class="footer">
-              KEA Group Operations Surveillance System · Automated Dispatch
+              Kea · Talent Management System · Automated Dispatch
             </div>
           </div>
         </body>

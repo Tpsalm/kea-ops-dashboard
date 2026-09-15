@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import {
   AlertTriangle, Bell, ClipboardList, CreditCard, Home, LogOut, MapPin, Menu, Moon,
   MoreHorizontal, Phone, Route, Search, Settings, Sun, Target,
@@ -26,6 +26,7 @@ import {
   acknowledgeSupervisorBroadcast, type SharedVsrReport, type SupervisorBroadcast
 } from "../../lib/shared-communications";
 import { WorkflowCenter } from "../../components/workflow-center";
+import { useLiveDocuments } from "../../lib/use-live-documents";
 
 type PageKey = "home" | "funding" | "reports" | "routes" | "sales" | "performance" | "workflow";
 
@@ -143,14 +144,23 @@ export default function VsrOperationsPage() {
   const [supervisorDirectives, setSupervisorDirectives] = useState<SupervisorBroadcast[]>([]);
 
   // Synchronize reports and incoming supervisor directives in real-time
-  useEffect(() => {
-    function loadData() {
-      const allReports = getSharedVsrReports();
-      setMyReportSubmissions(allReports);
-      const allDirectives = getSupervisorBroadcasts();
-      setSupervisorDirectives(allDirectives.filter((b) => b.targetRole === "all" || b.targetRole === "vsr"));
-    }
+  const [vsrUserId, setVsrUserId] = useState<string>("");
 
+  const loadData = useCallback(() => {
+    const allReports = getSharedVsrReports();
+    setMyReportSubmissions(allReports);
+    const allDirectives = getSupervisorBroadcasts();
+    setSupervisorDirectives(allDirectives.filter((b) => b.targetRole === "all" || b.targetRole === "vsr"));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => d?.user?.id && setVsrUserId(d.user.id))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     loadData();
 
     const handleDocSubmitted = () => loadData();
@@ -174,7 +184,16 @@ export default function VsrOperationsPage() {
       window.removeEventListener("kea-directive-acknowledged", handleDirectiveAck);
       window.removeEventListener("storage", loadData);
     };
-  }, []);
+  }, [loadData]);
+
+  // Live pipeline: the VSR dashboard syncs the moment its own uploads land (or
+  // the Supervisor responds) — Supabase realtime/broadcast + 15s poll fallback.
+  useLiveDocuments({
+    userId: vsrUserId,
+    role: "vsr",
+    pollInterval: 15000,
+    onRefresh: loadData,
+  });
 
   function flash(message: string) {
     setNotice(message);
@@ -338,6 +357,7 @@ export default function VsrOperationsPage() {
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
+          <strong>Kea</strong>
           <small>Talent Management System</small>
           <button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>

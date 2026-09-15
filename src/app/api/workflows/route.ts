@@ -59,12 +59,18 @@ export async function POST(request: Request) {
       typeof body.originatorOverrideId === "string"
         ? body.originatorOverrideId
         : null;
+    const requestedOriginatorId =
+      (user.role === "super_admin" || user.role === "admin") &&
+      typeof body.originatorId === "string" &&
+      body.originatorId.trim()
+        ? body.originatorId.trim()
+        : null;
 
     let originatorId = user.id;
     let originatorRole = user.role;
     let originatorName = user.name;
-    if (originatorOverrideId) {
-      const oUser = await getUserById(originatorOverrideId);
+    if (originatorOverrideId || requestedOriginatorId) {
+      const oUser = await getUserById(originatorOverrideId ?? requestedOriginatorId!);
       if (!oUser) {
         return NextResponse.json(
           { error: "Originator override user not found", code: "INVALID_BODY" },

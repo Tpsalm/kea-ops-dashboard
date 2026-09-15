@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FolderOpen, Upload, FileSpreadsheet, FileText, CheckCircle2, User, Send,
   Download, Eye, Check, X, Clock, ShieldCheck, AlertTriangle, Layers, Building2, Sparkles
@@ -12,6 +12,7 @@ import {
   updateMerchandiserPodStatus, updateVsrReportStatus,
   type SharedMerchandiserPod, type SharedVsrReport
 } from "@/lib/shared-communications";
+import { useLiveDocuments, notifyDashboardRefresh } from "@/lib/use-live-documents";
 
 interface Document {
   id: string;
@@ -43,12 +44,69 @@ export function DocumentVault() {
   const [selectedVsrId, setSelectedVsrId] = useState("");
   const [notes, setNotes] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [userId, setUserId] = useState<string>("");
 
   // Incoming Merchandiser POD Submissions state connected to real-time shared communication
   const [merchandiserPods, setMerchandiserPods] = useState<SharedMerchandiserPod[]>([]);
 
   // Incoming VSR Weekly & Monthly Reports state connected to real-time shared communication
   const [vsrReports, setVsrReports] = useState<SharedVsrReport[]>([]);
+
+  // Merge server-backed documents (cross-device uploads) into the inbound POD /
+  // report rows so the vault updates live no matter which device sent the file.
+  const mergedMerchandiserPods = useMemo<SharedMerchandiserPod[]>(() => {
+    const serverPods: SharedMerchandiserPod[] = docs
+      .filter((d) => d.type === "merchandiser_pod")
+      .map((d) => {
+        let meta: Record<string, any> = {};
+        try { meta = d.notes ? JSON.parse(d.notes) : {}; } catch { meta = {}; }
+        const nameMatch = d.title.match(/POD Tracker:\s*(.+?)\s*\(/);
+        return {
+          id: d.id,
+          merchandiserName: meta.merchandiserName || "Field Merchandiser",
+          merchandiserId: meta.merchandiserId || "",
+          storeName: meta.storeName || nameMatch?.[1] || "Retail Outlet",
+          storeId: meta.storeId,
+          deliveryRef: meta.deliveryRef || d.title.match(/\(([^)]+)\)\s*$/)?.[1] || "—",
+          fileName: d.file_name || "POD tracker",
+          uploadedAt: new Date(d.uploaded_at).toLocaleString(),
+          notes: typeof meta.notes === "string" ? meta.notes : "",
+          status: d.status,
+        };
+      });
+    const byId = new Map<string, SharedMerchandiserPod>();
+    [...serverPods, ...merchandiserPods].forEach((p) => byId.set(p.id, p));
+    return Array.from(byId.values());
+  }, [docs, merchandiserPods]);
+
+  const mergedVsrReports = useMemo<SharedVsrReport[]>(() => {
+    const serverReports: SharedVsrReport[] = docs
+      .filter((d) => d.type === "vsr_weekly_report" || d.type === "vsr_monthly_report")
+      .map((d) => {
+        let meta: Record<string, any> = {};
+        try { meta = d.notes ? JSON.parse(d.notes) : {}; } catch { meta = {}; }
+        const period = meta.period || d.title.replace(/^VSR (WEEKLY|MONTHLY) REPORT:\s*/i, "") || new Date(d.uploaded_at).toLocaleDateString();
+        return {
+          id: d.id,
+          vsrName: meta.vsrName || "Field VSR",
+          vsrId: meta.vsrId || "",
+          route: meta.route || "Route Lagos",
+          type: d.type === "vsr_monthly_report" ? "Monthly Reconciliation" : "Weekly Summary",
+          period,
+          grossSales: Number(meta.grossSales) || 0,
+          cash: Number(meta.cash) || 0,
+          transfer: Number(meta.transfer) || 0,
+          credit: Number(meta.credit) || 0,
+          fileName: d.file_name || "Field report",
+          uploadedAt: new Date(d.uploaded_at).toLocaleString(),
+          notes: typeof meta.notes === "string" ? meta.notes : "",
+          status: d.status,
+        };
+      });
+    const byId = new Map<string, SharedVsrReport>();
+    [...serverReports, ...vsrReports].forEach((r) => byId.set(r.id, r));
+    return Array.from(byId.values());
+  }, [docs, vsrReports]);
 
   const loadSharedData = useCallback(() => {
     setMerchandiserPods(getSharedMerchandiserPods());
@@ -105,9 +163,29 @@ export function DocumentVault() {
 
   useEffect(() => {
     fetchDocsAndVSRs();
-    const poll = window.setInterval(fetchDocsAndVSRs, 15000);
-    return () => window.clearInterval(poll);
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => d?.user?.id && setUserId(d.user.id))
+      .catch(() => {});
   }, [fetchDocsAndVSRs]);
+
+  // Live sync: VSR & Merchandiser uploads (and supervisor uploads) instantly
+  // refresh the vault — cross-device via Supabase realtime/broadcast, same
+  // browser via events/storage, plus a self-healing 12s poll fallback.
+  useLiveDocuments({
+    userId,
+    role: "supervisor",
+    onRefresh: () => {
+      fetchDocsAndVSRs();
+      loadSharedData();
+      notifyDashboardRefresh();
+    },
+    onNew: (doc) => {
+      if (doc.uploaderRole && doc.uploaderRole !== "supervisor") {
+        toast(`New submission received: ${doc.title ?? "Document"}`);
+      }
+    },
+  });
 
   // Download official Supervisor POD Tracker Template
   function handleDownloadTemplate() {
@@ -237,7 +315,7 @@ export function DocumentVault() {
             fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6
           }}
         >
-          <FileSpreadsheet size={14} /> Incoming Merchandiser PODs ({merchandiserPods.length})
+          <FileSpreadsheet size={14} /> Incoming Merchandiser PODs ({mergedMerchandiserPods.length})
         </button>
 
         <button
@@ -250,7 +328,7 @@ export function DocumentVault() {
             fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6
           }}
         >
-          <FileText size={14} /> Incoming VSR Weekly & Monthly Reports ({vsrReports.length})
+          <FileText size={14} /> Incoming VSR Weekly & Monthly Reports ({mergedVsrReports.length})
         </button>
 
         <button
@@ -382,7 +460,7 @@ export function DocumentVault() {
               </tr>
             </thead>
             <tbody>
-              {merchandiserPods.map((p) => (
+              {mergedMerchandiserPods.map((p) => (
                 <tr key={p.id} style={{ borderBottom: "1px solid var(--line, #e5e7eb)" }}>
                   <td style={{ padding: "12px 14px" }}>
                     <div style={{ fontWeight: 700, color: "var(--text, #111)" }}>{p.storeName}</div>
@@ -414,7 +492,7 @@ export function DocumentVault() {
                       }}>
                         {p.status}
                       </span>
-                      {!p.status.includes("Verified") && (
+                      {!p.status.includes("Verified") && merchandiserPods.some((mp) => mp.id === p.id) && (
                         <button
                           type="button"
                           onClick={() => verifyPod(p.id)}
@@ -450,7 +528,7 @@ export function DocumentVault() {
               </tr>
             </thead>
             <tbody>
-              {vsrReports.map((r) => (
+              {mergedVsrReports.map((r) => (
                 <tr key={r.id} style={{ borderBottom: "1px solid var(--line, #e5e7eb)" }}>
                   <td style={{ padding: "12px 14px" }}>
                     <div style={{ fontWeight: 700, color: "var(--text, #111)" }}>{r.vsrName}</div>
@@ -487,7 +565,7 @@ export function DocumentVault() {
                       }}>
                         {r.status}
                       </span>
-                      {!r.status.includes("Reconciled") && (
+                      {!r.status.includes("Reconciled") && vsrReports.some((vr) => vr.id === r.id) && (
                         <button
                           type="button"
                           onClick={() => reconcileReport(r.id)}

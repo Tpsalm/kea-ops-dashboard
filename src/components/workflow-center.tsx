@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/toast";
 import type { Workflow } from "@/db/schema";
 
 type CenterRole = "super_admin" | "super-admin" | "admin" | "supervisor" | "vsr" | "merchandiser" | "tsr";
+const FALLBACK_TIMESTAMP = "1970-01-01T00:00:00.000Z";
 
 export interface WorkflowActor {
   userId?: string;
@@ -60,7 +61,7 @@ export function WorkflowCenter({
   // Resolve the current user's real id (demo sessions have none client-side).
   useEffect(() => {
     if (actor.userId) {
-      setResolvedUserId(actor.userId);
+      queueMicrotask(() => setResolvedUserId(actor.userId ?? ""));
       return;
     }
     let cancelled = false;
@@ -194,7 +195,7 @@ export function WorkflowCenter({
                       {wf.title}
                     </div>
                     <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>
-                      {wf.originatorRole.toUpperCase()} · {new Date(wf.createdAt ?? Date.now()).toLocaleString([], { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      {wf.originatorRole.toUpperCase()} · {new Date(wf.createdAt ?? FALLBACK_TIMESTAMP).toLocaleString([], { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </button>
                   <StatusBadge value={wf.status} variant="status" />

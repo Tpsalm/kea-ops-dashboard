@@ -100,7 +100,7 @@ export function renderBaseLayout(
   <div class="email-wrapper">
     <div class="email-container">
       <div class="email-header">
-        <div class="brand-mark">KEA Talent &amp; Field Operations</div>
+        <div class="brand-mark">Kea &middot; Talent Management System</div>
         <h1 class="email-title">${title}</h1>
         ${subtitle ? `<p class="email-subtitle">${subtitle}</p>` : ""}
       </div>
@@ -108,7 +108,7 @@ export function renderBaseLayout(
         ${bodyInner}
       </div>
       <div class="email-footer">
-        <p>KEA Group Operations Surveillance System &middot; Automated Dispatch</p>
+        <p>Kea &middot; Talent Management System &middot; Automated Dispatch</p>
         <p style="margin-top:6px;">
           Questions? Contact <a href="mailto:support@kea.com" class="footer-link">support@kea.com</a>
         </p>
@@ -119,12 +119,12 @@ export function renderBaseLayout(
 </html>`;
 
   const text =
-    `KEA TALENT & FIELD OPERATIONS\n` +
+    `KEA · TALENT MANAGEMENT SYSTEM\n` +
     `${title.toUpperCase()}\n` +
     (subtitle ? `${subtitle}\n` : "") +
     `\n---\n\n` +
     bodyInner.replace(/<[^>]*>/g, "").trim() +
-    `\n\n---\nKEA Group Operations Surveillance System · Automated Dispatch`;
+    `\n\n---\nKea · Talent Management System · Automated Dispatch`;
 
   return { html, text };
 }

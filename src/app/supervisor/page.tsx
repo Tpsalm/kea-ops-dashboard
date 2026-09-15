@@ -33,6 +33,7 @@ import {
   WORKFLOW_CREATED_EVENT, WORKFLOW_STEP_CHANGED_EVENT, WORKFLOW_MESSAGE_SENT_EVENT,
 } from "../../lib/shared-communications";
 import { useWorkflowRealtime } from "@/lib/use-workflow-realtime";
+import { useLiveDocuments } from "@/lib/use-live-documents";
 import { WorkflowTracker } from "@/components/workflow-tracker";
 import { WorkflowMessagesThread } from "@/components/workflow-messages-thread";
 import { useToast } from "@/components/ui/toast";
@@ -137,6 +138,16 @@ export default function SupervisorDashboard() {
       .then((d) => d?.user?.id && setWorkflowUserId(d.user.id))
       .catch(() => {});
   }, []);
+
+  // Live pipeline: VSR & Merchandiser uploads instantly refresh the Supervisor's
+  // workflow inbox / alerts (cross-device via Supabase realtime & broadcast).
+  useLiveDocuments({
+    userId: workflowUserId,
+    role: "supervisor",
+    onRefresh: () => {
+      wfRefetch().catch(() => {});
+    },
+  });
 
   useEffect(() => {
     const onCreated = (e: any) => {
@@ -360,6 +371,7 @@ export default function SupervisorDashboard() {
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
+          <strong>Kea</strong>
           <small>Talent Management System</small>
           <button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>

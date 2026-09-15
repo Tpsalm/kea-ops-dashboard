@@ -54,6 +54,37 @@ function mapRealtimeWorkflow(row: any): Workflow {
   } as Workflow;
 }
 
+function mapRealtimeStep(row: any): WorkflowStep {
+  return {
+    id: row.id,
+    workflowId: row.workflow_id ?? row.workflowId,
+    stepOrder: row.step_order ?? row.stepOrder,
+    stepType: row.step_type ?? row.stepType,
+    actorId: row.actor_id ?? row.actorId,
+    actorRole: row.actor_role ?? row.actorRole,
+    title: row.title,
+    description: row.description ?? null,
+    statusFrom: row.status_from ?? row.statusFrom ?? null,
+    statusTo: row.status_to ?? row.statusTo ?? null,
+    metadata: row.metadata ?? null,
+    occurredAt: row.occurred_at ?? row.occurredAt ?? null,
+  } as WorkflowStep;
+}
+
+function mapRealtimeMessage(row: any): WorkflowMessage {
+  return {
+    id: row.id,
+    workflowId: row.workflow_id ?? row.workflowId,
+    senderId: row.sender_id ?? row.senderId,
+    targetUserId: row.target_user_id ?? row.targetUserId,
+    direction: row.direction,
+    body: row.body,
+    attachmentUrl: row.attachment_url ?? row.attachmentUrl ?? null,
+    isRead: row.is_read ?? row.isRead ?? false,
+    sentAt: row.sent_at ?? row.sentAt ?? null,
+  } as WorkflowMessage;
+}
+
 export function useWorkflowRealtime(
   userId: string | null | undefined,
   role: AppRole | null | undefined,
@@ -198,7 +229,7 @@ export function useWorkflowStepsRealtime(
             filter: `workflow_id=eq.${workflowId}`,
           },
           (payload: any) => {
-            const ns = payload.new as WorkflowStep;
+            const ns = mapRealtimeStep(payload.new);
             opts?.onStep?.(ns);
             setSteps((prev) => {
               if (prev.some((s) => s.id === ns.id)) return prev;
@@ -278,7 +309,7 @@ export function useWorkflowMessagesRealtime(
               filter: `workflow_id=eq.${workflowId}`,
             },
             (payload: any) => {
-              const nm = payload.new as WorkflowMessage;
+              const nm = mapRealtimeMessage(payload.new);
               if (nm.senderId !== userId && nm.targetUserId !== userId) return;
               opts?.onMessage?.(nm);
               setMessages((prev) => {

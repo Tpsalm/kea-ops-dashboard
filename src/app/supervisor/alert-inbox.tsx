@@ -68,8 +68,19 @@ export function SupervisorAlertInbox() {
 
   useEffect(() => {
     fetchData();
+    const onPulse = () => fetchData();
+    window.addEventListener("kea-documents-refreshed", onPulse);
+    window.addEventListener("kea-document-submitted", onPulse);
+    window.addEventListener("kea-document-reconciled", onPulse);
+    window.addEventListener("storage", onPulse);
     const interval = setInterval(fetchData, 8000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("kea-documents-refreshed", onPulse);
+      window.removeEventListener("kea-document-submitted", onPulse);
+      window.removeEventListener("kea-document-reconciled", onPulse);
+      window.removeEventListener("storage", onPulse);
+    };
   }, [fetchData]);
 
   async function escalateAlert(alertId: string) {

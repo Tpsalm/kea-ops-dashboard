@@ -6,6 +6,7 @@ import {
   getWorkflowMessages,
   createWorkflowMessage,
   createWorkflowStep,
+  resolveHierarchy,
 } from "@/lib/db";
 
 const WF_ROLES = ["super_admin", "admin", "supervisor", "vsr", "merchandiser", "tsr"] as const;
@@ -84,8 +85,12 @@ export async function POST(
       if (direction === "upstream") {
         targetUserId = workflow.assignedAdminId;
         if (!targetUserId) {
+          const hierarchy = await resolveHierarchy(user.id);
+          targetUserId = hierarchy.adminId;
+        }
+        if (!targetUserId) {
           return NextResponse.json(
-            { error: "Escalate workflow before sending upstream message", code: "INVALID_BODY" },
+            { error: "No Super Admin is available for upstream messaging", code: "HIERARCHY_MISSING_ADMIN" },
             { status: 422 },
           );
         }

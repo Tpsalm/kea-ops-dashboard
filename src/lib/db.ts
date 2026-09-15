@@ -413,7 +413,7 @@ export async function getDocuments(filters?: {
   if (filters?.supervisorId) query = query.eq("supervisor_id", filters.supervisorId);
   if (filters?.status) query = query.eq("status", filters.status);
   if (filters?.type) query = query.eq("type", filters.type);
-  const { data, error } = await query.order("created_at", { ascending: false });
+  const { data, error } = await query.order("uploaded_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as Document[];
 }
@@ -738,20 +738,25 @@ export async function createWorkflow(payload: {
     steps.push(mapWorkflowStep(s1));
 
     if (status !== "draft") {
-      const submitType = status === "submitted_by_vsr" ? "submitted_by_vsr" : "submitted_by_merchandiser";
-      const submitTitle = submitType === "submitted_by_vsr" ? "Submitted by VSR" : "Submitted by Merchandiser";
+      const submitType =
+        status === "under_admin_review" ? "admin_action_create" : "submit";
+      const submitTitle =
+        status === "submitted_by_vsr" ? "Submitted by VSR" :
+        status === "submitted_by_merchandiser" ? "Submitted by Merchandiser" :
+        status === "under_admin_review" ? "Submitted to Super Admin" :
+        "Workflow Submitted";
       const { data: s2, error: s2Err } = await supabase
         .from("workflow_steps")
         .insert([{
           workflow_id: workflow.id,
           step_order: 2,
-          step_type: "submit",
+          step_type: submitType,
           actor_id: payload.originatorId,
           actor_role: payload.originatorRole,
           title: submitTitle,
           description: payload.summary ?? null,
           status_from: "draft",
-          status_to: submitType,
+          status_to: status,
         }])
         .select()
         .single();
@@ -847,6 +852,17 @@ export async function createWorkflowMessage(payload: {
     .select("assigned_supervisor_id, client_id")
     .eq("id", payload.workflowId)
     .maybeSingle();
+  const { data: targetUser } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", payload.targetUserId)
+    .maybeSingle();
+  const alertStatus =
+    targetUser?.role === "super_admin" || targetUser?.role === "admin"
+      ? "pending_admin"
+      : targetUser?.role === "supervisor"
+        ? "pending_supervisor"
+        : "pending";
   await createAlert({
     type: "system_event",
     severity: "info",
@@ -858,7 +874,7 @@ export async function createWorkflowMessage(payload: {
     clientId: workflow?.client_id,
     relatedEntityType: "workflow",
     relatedEntityId: payload.workflowId,
-    status: "pending",
+    status: alertStatus,
   }).catch(() => null);
   return mapWorkflowMessage(data);
 }

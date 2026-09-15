@@ -99,10 +99,39 @@ export async function POST(request: Request) {
       title,
       fileUrl,
       fileName,
-      notes: notes || (metadata ? JSON.stringify(metadata) : undefined),
+      // Field submissions carry a `metadata` blob which the supervisor vault
+      // uses to render live inbound POD/report rows. Preserve both it and the
+      // free-text notes so no detail is lost on the receiving dashboard.
+      notes: metadata ? JSON.stringify({ ...metadata, notes: notes ?? "" }) : notes,
     });
 
     const supabase = await createClient();
+
+    // Broadcast an instant cross-device signal so open dashboards (Super Admin
+    // for supervisor uploads, Supervisor for field uploads) refresh in realtime.
+    try {
+      const ch = supabase.channel("kea-documents-live");
+      ch.subscribe((status: string) => {
+        if (status === "SUBSCRIBED") {
+          ch.send({
+            type: "broadcast",
+            event: "kea-document-created",
+            payload: {
+              id: doc.id,
+              type: doc.type,
+              title: doc.title,
+              uploaderId: user.id,
+              uploaderRole: user.role,
+              supervisorId: effectiveSupervisorId ?? undefined,
+              status: doc.status,
+              uploadedAt: doc.uploadedAt ?? new Date().toISOString(),
+            },
+          });
+        }
+      });
+    } catch {
+      // Broadcast is best-effort; polling still covers offline tabs.
+    }
 
     let workflowId: string | null = null;
     try {

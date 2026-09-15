@@ -69,6 +69,7 @@ export function WorkflowSubmitModal({
         priority,
         documentIds: prefill?.documentIds ?? [],
         originatorId: isExecutiveOriginatorPickerOn ? originatorId : actor.userId,
+        originatorOverrideId: isExecutiveOriginatorPickerOn ? originatorId : undefined,
         originatorRole: isExecutiveOriginatorPickerOn ? originatorRole : actor.role,
         originatorName: isExecutiveOriginatorPickerOn ? originatorName : actor.name,
         relatedEntityType: prefill?.relatedEntityType ?? null,

@@ -12,6 +12,7 @@ type SenderContext = {
   role: "super_admin" | "admin" | "supervisor" | "vsr" | "merchandiser" | "tsr" | null;
   name?: string;
 };
+const FALLBACK_TIMESTAMP = "1970-01-01T00:00:00.000Z";
 
 function canSendMessage(role: SenderContext["role"], direction: "upstream" | "downstream"): boolean {
   if (!role || role === "tsr") return false;
@@ -202,7 +203,7 @@ export function WorkflowMessagesThread({
                     {m.direction.toUpperCase()}
                   </span>
                   <span style={{ fontSize: 10, color: "#94a3b8" }}>
-                    {new Date(m.sentAt ?? Date.now()).toLocaleString([], { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(m.sentAt ?? FALLBACK_TIMESTAMP).toLocaleString([], { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
                 <div style={{

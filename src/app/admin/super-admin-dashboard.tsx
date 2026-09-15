@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { AlertBadge } from "@/components/ui/alert-badge";
 import { useToast } from "@/components/ui/toast";
 import { WorkflowCenter } from "@/components/workflow-center";
+import { useLiveDocuments } from "@/lib/use-live-documents";
 
 interface AdminKpis {
   totalMerchandisers: number;
@@ -121,13 +122,16 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => {
     fetchData();
-    const poll = window.setInterval(fetchData, 15000);
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((d) => setUserId(d.user?.id ?? ""))
       .catch(() => {});
-    return () => window.clearInterval(poll);
   }, [fetchData]);
+
+  // Live ingestion sync: whenever a Supervisor uploads a document, the Super
+  // Admin KPIs / alerts / loans / VSR ledger / document feed refresh at once —
+  // cross-device via Supabase realtime & broadcast, plus a 12s poll fallback.
+  useLiveDocuments({ userId, role: "super_admin", onRefresh: fetchData });
 
   async function handleLoanReview(loanId: string, approved: boolean, notes: string = "") {
     setProcessingId(loanId);

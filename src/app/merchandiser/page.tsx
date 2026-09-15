@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, Bell, Camera, CheckCircle2, ChevronDown, Home, Layers, LogOut, Menu,
   Moon, MoreHorizontal, PackageCheck, Presentation, Search, Settings, Store, Sun,
@@ -28,6 +28,7 @@ import {
   type SharedMerchandiserPod, type SupervisorBroadcast
 } from "../../lib/shared-communications";
 import { WorkflowCenter } from "../../components/workflow-center";
+import { useLiveDocuments } from "../../lib/use-live-documents";
 
 type PageKey = "home" | "stores" | "leave" | "pod-upload" | "photos" | "workflow";
 
@@ -96,41 +97,58 @@ export default function MerchandiserDashboard() {
   }, []);
 
   // Shared communications and supervisor directives state
+  const [merchUserId, setMerchUserId] = useState<string>("");
   const [myPodSubmissions, setMyPodSubmissions] = useState<SharedMerchandiserPod[]>([]);
   const [supervisorDirectives, setSupervisorDirectives] = useState<SupervisorBroadcast[]>([]);
 
+  const loadPodData = useCallback(() => {
+    const allPods = getSharedMerchandiserPods();
+    setMyPodSubmissions(allPods);
+    const allDirectives = getSupervisorBroadcasts();
+    setSupervisorDirectives(allDirectives.filter((b) => b.targetRole === "all" || b.targetRole === "merchandiser"));
+  }, []);
+
   useEffect(() => {
-    function loadData() {
-      const allPods = getSharedMerchandiserPods();
-      setMyPodSubmissions(allPods);
-      const allDirectives = getSupervisorBroadcasts();
-      setSupervisorDirectives(allDirectives.filter((b) => b.targetRole === "all" || b.targetRole === "merchandiser"));
-    }
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => d?.user?.id && setMerchUserId(d.user.id))
+      .catch(() => {});
+  }, []);
 
-    loadData();
+  useEffect(() => {
+    loadPodData();
 
-    const handleDocSubmitted = () => loadData();
-    const handleDocReconciled = () => loadData();
+    const handleDocSubmitted = () => loadPodData();
+    const handleDocReconciled = () => loadPodData();
     const handleDirectiveDispatched = (e: any) => {
-      loadData();
+      loadPodData();
       flash(`🚨 New Supervisor Directive Received: "${e.detail?.title || "Field Notice"}"`);
     };
-    const handleDirectiveAck = () => loadData();
+    const handleDirectiveAck = () => loadPodData();
 
     window.addEventListener("kea-document-submitted", handleDocSubmitted);
     window.addEventListener("kea-document-reconciled", handleDocReconciled);
     window.addEventListener("kea-directive-dispatched", handleDirectiveDispatched);
     window.addEventListener("kea-directive-acknowledged", handleDirectiveAck);
-    window.addEventListener("storage", loadData);
+    window.addEventListener("storage", loadPodData);
 
     return () => {
       window.removeEventListener("kea-document-submitted", handleDocSubmitted);
       window.removeEventListener("kea-document-reconciled", handleDocReconciled);
       window.removeEventListener("kea-directive-dispatched", handleDirectiveDispatched);
       window.removeEventListener("kea-directive-acknowledged", handleDirectiveAck);
-      window.removeEventListener("storage", loadData);
+      window.removeEventListener("storage", loadPodData);
     };
-  }, []);
+  }, [loadPodData]);
+
+  // Live pipeline: the Merchandiser dashboard syncs the moment its own uploads
+  // land (or the Supervisor responds) — Supabase realtime/broadcast + 15s poll.
+  useLiveDocuments({
+    userId: merchUserId,
+    role: "merchandiser",
+    pollInterval: 15000,
+    onRefresh: loadPodData,
+  });
 
   const [posm, setPosm] = useState<Record<string, boolean>>({
     "Shelf talkers": true,
@@ -456,6 +474,7 @@ export default function MerchandiserDashboard() {
       <aside className={mobileNav ? "reference-rail open" : "reference-rail"}>
         <div className="reference-brand">
           <div className="reference-logo"><b>k</b><b>e</b><b>a</b></div>
+          <strong>Kea</strong>
           <small>Talent Management System</small>
           <button type="button" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={18} /></button>
         </div>

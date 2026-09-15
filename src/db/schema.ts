@@ -7,7 +7,7 @@ import { sql } from "drizzle-orm";
 /* ──────────────────── ENUMS ──────────────────── */
 
 export const userRoleEnum = pgEnum("user_role", [
-  "super_admin", "supervisor", "vsr", "merchandiser", "tsr",
+  "super_admin", "admin", "supervisor", "vsr", "merchandiser", "tsr",
 ]);
 export const userStatusEnum = pgEnum("user_status", [
   "active", "inactive", "on_leave",
@@ -30,7 +30,8 @@ export const alertStatusEnum = pgEnum("alert_status", [
   "pending_supervisor", "pending_admin", "resolved", "rejected", "pending", "reviewed", "escalated"
 ]);
 export const documentTypeEnum = pgEnum("document_type", [
-  "pod_tracker", "performance_report",
+  "pod_tracker", "performance_report", "merchandiser_pod",
+  "vsr_weekly_report", "vsr_monthly_report", "merchandiser_photo_audit",
 ]);
 export const documentStatusEnum = pgEnum("document_status", [
   "pending_review", "reviewed", "escalated",
