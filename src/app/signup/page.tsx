@@ -48,12 +48,12 @@ export default function SignupPage() {
       <section className="auth-panel">
         <div className="auth-kicker"><ShieldCheck size={16} /> CREATE ACCOUNT</div>
         <h2>Sign up to KEA</h2>
-        <p className="auth-muted">Choose your role to be routed to the correct dashboard after sign-up.</p>
+        <p className="auth-muted">Choose the workspace you need. New accounts are routed to the selected dashboard after Super Admin provisioning.</p>
         <form onSubmit={submit}>
           <label>Full name<input type="text" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. KEA Field User" required /></label>
           <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@kea.com" required /></label>
           <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Create a password" required minLength={6} /></label>
-          <label>Role
+          <label>Requested workspace
             <select value={role} onChange={(event) => setRole(event.target.value as AppRole)} required>
               {roleOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
