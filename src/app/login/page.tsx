@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import useAuth, { roleHome } from "../../lib/useAuth";
@@ -87,8 +86,7 @@ export default function LoginPage() {
           {recoverySent && <p className="auth-success">Recovery email sent. Check your inbox.</p>}
           <button className="primary auth-submit" disabled={busy}>{busy ? "Signing in..." : "Continue"}<ArrowRight size={16} /></button>
         </form>
-        <div className="admin-console-note"><ShieldCheck size={16} /><span><strong>Super Admin Console</strong><small>Executive governance, approvals, and global monitoring use a separate admin account.</small></span></div>
-        <p className="auth-policy">No account yet? <Link href="/signup" style={{ fontWeight: 700, color: "#138a76" }}>Create an account</Link></p>
+        <p className="auth-policy">Accounts are created by the Super Admin.</p>
       </section>
     </main>
   );
