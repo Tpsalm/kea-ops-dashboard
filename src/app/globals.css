@@ -430,6 +430,107 @@ nav a.active:before{background:#f58220}
 table th{background:#181818;color:#9ccc65;border-color:#2a2a2a}
 table td{color:#fff;border-color:#2a2a2a}
 
+/* KEA field dashboards share the Super Admin Console visual language. */
+.app,
+.app.dark,
+.page-admin,
+.page-supervisor,
+.page-vsr,
+.page-merchandiser {
+  --bg: #000;
+  --card: #121212;
+  --text: #fff;
+  --muted: #d5d5d5;
+  --line: #2a2a2a;
+  --soft: #181818;
+  --bar-muted: #2a2a2a;
+  --accent: #9ccc65;
+  --accent-soft: rgba(156, 204, 101, .16);
+  --accent-ink: #000;
+  --orange: #f58220;
+  background: #000;
+  color: #fff;
+}
+.sidebar {
+  background: #0b5f64;
+  border-right-color: rgba(255, 255, 255, .12);
+}
+.brand {
+  border-bottom-color: rgba(255, 255, 255, .14);
+}
+.brand strong,
+.brand span,
+.heading h1,
+.card-head h2,
+.kpi > strong,
+.kpi b,
+.table-card b {
+  color: #fff;
+}
+nav a,
+nav button {
+  color: #e1f0d1;
+}
+nav a:hover,
+nav a.active,
+nav button:hover,
+nav button.active {
+  background: rgba(156, 204, 101, .2);
+  color: #fff;
+}
+nav a.active:before,
+nav button.active:before {
+  background: #9ccc65;
+}
+.topbar,
+.card,
+.kpi,
+.filters,
+.content .table-card,
+.action-modal,
+.notification-popover {
+  background: #121212;
+  color: #fff;
+  border-color: #2a2a2a;
+}
+.primary {
+  border-color: #f58220;
+  background: #f58220;
+  color: #000;
+  box-shadow: 0 4px 18px rgba(245, 130, 32, .25);
+}
+.secondary {
+  background: #181818;
+  color: #fff;
+  border-color: #2a2a2a;
+}
+.page-supervisor .admin-select,
+.page-vsr .admin-select,
+.page-merchandiser .admin-select,
+.page-supervisor .select-box,
+.page-vsr .select-box,
+.page-merchandiser .select-box {
+  background: #181818;
+  border-color: #2a2a2a;
+  color: #fff;
+}
+.page-supervisor [style*="#0e918a"],
+.page-vsr [style*="#0e918a"],
+.page-merchandiser [style*="#0e918a"] {
+  color: #9ccc65 !important;
+}
+.page-supervisor [style*="#2563eb"],
+.page-vsr [style*="#2563eb"],
+.page-merchandiser [style*="#2563eb"] {
+  color: #9ccc65 !important;
+}
+.page-supervisor [style*="#0e918a"].primary,
+.page-vsr [style*="#0e918a"].primary,
+.page-merchandiser [style*="#0e918a"].primary {
+  background: #f58220 !important;
+  color: #000 !important;
+}
+
 /* Preserve the original signup experience while the dashboard uses Citrus dark mode. */
 .signup-page{background:#eef3f1;color:#102522}
 .signup-page .auth-brand{background:#123c35;color:#eff8f4;border-right:0}
