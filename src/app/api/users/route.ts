@@ -36,12 +36,12 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/users
- * Creates a new user (Merchandiser or VSR).
- * Only Supervisors and Super Admins can create users.
+ * Creates a new Supervisor, VSR, or Merchandiser.
+ * Only the Super Admin Console can create users.
  */
 export async function POST(request: Request) {
   try {
-    const currentUser = await requireRole("super_admin", "supervisor", "admin");
+    const currentUser = await requireRole("super_admin");
     const body = await request.json();
 
     const { email, name, role, phone, region, state, lga, territory, supervisorId, tsrId, clientId } = body;
@@ -54,11 +54,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Can only create merchandiser, vsr, or supervisor" }, { status: 400 });
     }
 
-    // Supervisors can only create merchandisers and VSRs
-    if (currentUser.role === "supervisor" && !["merchandiser", "vsr"].includes(role)) {
-      return NextResponse.json({ error: "Supervisors can only create merchandisers and VSRs" }, { status: 403 });
-    }
-
     const newUser = await createUser({
       email,
       name,
@@ -68,7 +63,7 @@ export async function POST(request: Request) {
       state,
       lga,
       territory,
-      supervisorId: supervisorId ?? (currentUser.role === "supervisor" ? currentUser.id : undefined),
+      supervisorId,
       tsrId,
       clientId: clientId ?? currentUser.clientId,
     });
