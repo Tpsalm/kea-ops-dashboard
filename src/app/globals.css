@@ -452,7 +452,7 @@ table td{color:#fff;border-color:#2a2a2a}
   color: #fff;
 }
 .sidebar {
-  background: #0b5f64;
+  background: #000;
   border-right-color: rgba(255, 255, 255, .12);
 }
 .brand {
@@ -518,17 +518,28 @@ nav button.active:before {
 .page-vsr [style*="#0e918a"],
 .page-merchandiser [style*="#0e918a"] {
   color: #9ccc65 !important;
+  background-color: #181818 !important;
 }
 .page-supervisor [style*="#2563eb"],
 .page-vsr [style*="#2563eb"],
 .page-merchandiser [style*="#2563eb"] {
   color: #9ccc65 !important;
+  background-color: #181818 !important;
 }
 .page-supervisor [style*="#0e918a"].primary,
 .page-vsr [style*="#0e918a"].primary,
 .page-merchandiser [style*="#0e918a"].primary {
   background: #f58220 !important;
   color: #000 !important;
+}
+.page-supervisor [style*="#14b8a6"],
+.page-vsr [style*="#14b8a6"],
+.page-merchandiser [style*="#14b8a6"],
+.page-supervisor [style*="#0d9488"],
+.page-vsr [style*="#0d9488"],
+.page-merchandiser [style*="#0d9488"] {
+  color: #9ccc65 !important;
+  background-color: #181818 !important;
 }
 
 /* Preserve the original signup experience while the dashboard uses Citrus dark mode. */
